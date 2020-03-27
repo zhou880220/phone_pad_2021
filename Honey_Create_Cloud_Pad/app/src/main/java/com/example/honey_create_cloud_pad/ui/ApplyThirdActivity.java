@@ -142,7 +142,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
             default:
                 break;
             case R.id.tv_publish:
-                Toast.makeText(ApplyThirdActivity.this, "1", Toast.LENGTH_SHORT).show();
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
@@ -150,13 +149,11 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 startActivity(intent);
                 break;
             case R.id.tv_myPublish:
-                Toast.makeText(ApplyThirdActivity.this, "2", Toast.LENGTH_SHORT).show();
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapplychange);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
                 break;
             case R.id.tv_relation:
-                Toast.makeText(ApplyThirdActivity.this, "3", Toast.LENGTH_SHORT).show();
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);

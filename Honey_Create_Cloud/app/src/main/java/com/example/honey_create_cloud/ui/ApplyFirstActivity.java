@@ -153,23 +153,18 @@ public class ApplyFirstActivity extends AppCompatActivity {
             default:
                 break;
             case R.id.tv_publish:
-                Toast.makeText(ApplyFirstActivity.this, "1", Toast.LENGTH_SHORT).show();
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
                 Intent intent = new Intent(ApplyFirstActivity.this,MainActivity.class);
                 startActivity(intent);
-
-
                 break;
             case R.id.tv_myPublish:
-                Toast.makeText(ApplyFirstActivity.this, "2", Toast.LENGTH_SHORT).show();
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapplychange);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
                 break;
             case R.id.tv_relation:
-                Toast.makeText(ApplyFirstActivity.this, "3", Toast.LENGTH_SHORT).show();
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);

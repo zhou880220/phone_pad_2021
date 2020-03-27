@@ -13,7 +13,6 @@ import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
@@ -41,7 +40,6 @@ public class NewsActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
-        Toast.makeText(this, ""+url, Toast.LENGTH_SHORT).show();
         webView(url);
     }
     /**

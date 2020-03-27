@@ -282,7 +282,6 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                Toast.makeText(MainActivity.this, "getTakeCamera" + data.toString(), Toast.LENGTH_SHORT).show();
                 gotoCamera();
             }
         });
@@ -292,7 +291,6 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                Toast.makeText(MainActivity.this, "getPhotoAlbum" + data, Toast.LENGTH_SHORT).show();
                 String replace1 = data.replace("\"", "");
                 String replace2 = replace1.replace("token:", "");
                 String replace3 = replace2.replace("{", "");
@@ -514,7 +512,6 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, 1);
         } else {
             mLodingTime();
-            Toast.makeText(this, "您已经申请了权限!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -527,7 +524,6 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 1) {
             for (int i = 0; i < permissions.length; i++) {
                 if (grantResults[i] == PERMISSION_GRANTED) {//选择了“始终允许”
-                    Toast.makeText(this, "" + "权限申请成功", Toast.LENGTH_SHORT).show();
                     mLodingTime();
                 } else {
                     if (!ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[i])) {//用户选择了禁止不再询问
@@ -685,7 +681,6 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void showApplyParams(String interfaceUrl, String appId, String token) {
-            Toast.makeText(context, "调用js的Toast" + interfaceUrl, Toast.LENGTH_SHORT).show();
             Log.i("调用js的Toast", interfaceUrl);
             Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
             intent.putExtra("url", interfaceUrl);
@@ -697,8 +692,6 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void showNewsParams(String addressUrl, String appId, String token) {
-            Log.i(TAG, "addressUrl---" + addressUrl);
-            Toast.makeText(context, "调用js的Toast" + addressUrl, Toast.LENGTH_SHORT).show();
             Log.i("调用js的Toast", addressUrl);
             Intent intent = new Intent(MainActivity.this, NewsActivity.class);
             intent.putExtra("url", addressUrl);
