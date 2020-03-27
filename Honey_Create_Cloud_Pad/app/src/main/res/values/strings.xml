@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">制造云Pad</string>
+
+    <string name="web_error">数据获取失败\n,  请检查网络后再重试 ~~~</string>
+</resources>
