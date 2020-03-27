@@ -47,7 +47,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
     @InjectView(R.id.newwebprogressbar)
     ProgressBar mNewwebprogressbar;
-    @InjectView(R.id.new_Web)
+    @InjectView(R.id.new_Web1)
     WebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
@@ -89,14 +89,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        // 不延伸显示区域到刘海
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-            setAndroidNativeLightStatusBar(ApplyFirstActivity.this, false);//黑色字体
-        }
-        getWindow().setAttributes(lp);
-
         setAndroidNativeLightStatusBar(ApplyFirstActivity.this, true);//黑色字体
         setContentView(R.layout.activity_apply);
         ButterKnife.inject(this);
@@ -258,7 +250,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        WebViewSetting.initweb(webSettings);
+        if (webSettings != null){
+            WebViewSetting.initweb(webSettings);
+        }
         mNewWeb.loadUrl(url);
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override

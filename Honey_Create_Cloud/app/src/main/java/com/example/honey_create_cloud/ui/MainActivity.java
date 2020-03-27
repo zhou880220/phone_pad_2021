@@ -1,6 +1,7 @@
 package com.example.honey_create_cloud.ui;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -31,7 +32,6 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -47,6 +47,7 @@ import com.example.honey_create_cloud.bean.HeadPic;
 import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
+import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
@@ -75,7 +76,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 
 public class MainActivity extends AppCompatActivity {
@@ -103,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
 
     //调用照相机返回图片文件
     private File tempFile;
-    private long exitTime;
     //权限
     private static final int NOT_NOTICE = 2;//如果勾选了不再询问
     private AlertDialog alertDialog;
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
     private String accessToken;
     private Handler myHandler = new Handler(new Handler.Callback() {
         @Override
-        public boolean handleMessage(@NonNull Message msg) {
+        public boolean handleMessage(Message msg) {
             if (msg.what == 1) {
                 newName = (String) msg.obj;
                 Log.i(TAG, "newName---" + newName);
@@ -190,21 +190,40 @@ public class MainActivity extends AppCompatActivity {
     private String backUrl;
     private int back;
 
+    @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
+        Log.i("rects----", "" + rects);
+        if (rects == true) {
+            //有刘海屏
+            setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
+//            WindowManager.LayoutParams lp = getWindow().getAttributes();
+//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+//            getWindow().setAttributes(lp);
+        } else if (rects == false) {
+            //无刘海屏
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            setAndroidNativeLightStatusBar(MainActivity.this, true);//黑色字体
+        }
 
         // 不延伸显示区域到刘海
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-            setAndroidNativeLightStatusBar(MainActivity.this, false);//黑色字体
-        }
-        getWindow().setAttributes(lp);
+//        WindowManager.LayoutParams lp = getWindow().getAttributes();
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+//            DisplayCutout displayCutout = getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
+//            if (displayCutout != null) {
+//                // 说明有刘海屏
+//                lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+//                setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
+//            }else{
+//                setAndroidNativeLightStatusBar(MainActivity.this, true);//黑色字体
+//            }
+//        }
+//        getWindow().setAttributes(lp);
 
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
@@ -225,17 +244,25 @@ public class MainActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        WebViewSetting.initweb(webSettings);
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+
+        webSettings.setUseWideViewPort(true);
+        webSettings.setLoadWithOverviewMode(true);
+
+        webSettings.setSupportZoom(true);
+        webSettings.setDisplayZoomControls(false);
+        webSettings.setBuiltInZoomControls(true);
+
+        webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        webSettings.setLoadsImagesAutomatically(true);
+        webSettings.setDefaultTextEncodingName("utf-8");
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         mNewWeb.setWebChromeClient(myChromeWebClient);
-        myChromeWebClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
-            @Override
-            public void onCloseClick(String name) {
-                backUrl = name;
-            }
-        });
+
 //        mNewWeb.setWebViewClient(new MWebViewClientw());
         mNewWeb.loadUrl(Constant.text_url);
 

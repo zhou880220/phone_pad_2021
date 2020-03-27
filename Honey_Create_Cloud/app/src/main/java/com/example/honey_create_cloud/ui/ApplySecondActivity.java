@@ -46,7 +46,7 @@ import okhttp3.Response;
 public class ApplySecondActivity extends AppCompatActivity {
     @InjectView(R.id.newwebprogressbar)
     ProgressBar mNewwebprogressbar;
-    @InjectView(R.id.new_Web)
+    @InjectView(R.id.new_Web2)
     WebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
@@ -91,14 +91,6 @@ public class ApplySecondActivity extends AppCompatActivity {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         setAndroidNativeLightStatusBar(ApplySecondActivity.this, true);//黑色字体
-        // 不延伸显示区域到刘海
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-            setAndroidNativeLightStatusBar(ApplySecondActivity.this, false);//黑色字体
-        }
-        getWindow().setAttributes(lp);
-
         setContentView(R.layout.activity_apply_second);
         ButterKnife.inject(this);
         ButterKnife.inject(this);
@@ -258,7 +250,9 @@ public class ApplySecondActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        WebViewSetting.initweb(webSettings);
+        if (webSettings != null){
+            WebViewSetting.initweb(webSettings);
+        }
         mNewWeb.loadUrl(url);
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override

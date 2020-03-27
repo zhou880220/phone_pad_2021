@@ -54,7 +54,9 @@ public class NewsActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        WebViewSetting.initweb(webSettings);
+        if (webSettings != null){
+            WebViewSetting.initweb(webSettings);
+        }
         mNewWeb.loadUrl(url);
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
