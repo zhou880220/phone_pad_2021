@@ -119,7 +119,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private void intentOkhttp() {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url("http://172.16.23.16:18080/api-apps/client/recentlyApps?equipmentId=3&userId=" + userid)
+                .url("http://139.9.172.71:18080/api-apps/client/recentlyApps?equipmentId=3&userId=" + userid)
                 .addHeader("Authorization", "Bearer " + token)
                 .get()
                 .build();

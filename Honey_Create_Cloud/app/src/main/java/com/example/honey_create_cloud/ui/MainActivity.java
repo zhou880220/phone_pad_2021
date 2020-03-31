@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.setWebChromeClient(myChromeWebClient);
 
 //        mNewWeb.setWebViewClient(new MWebViewClientw());
-        mNewWeb.loadUrl(Constant.text_url);
+        mNewWeb.loadUrl(Constant.Attention);
 
         //js交互接口定义
         mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");

@@ -72,8 +72,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
     @InjectView(R.id.fab_more)
     ImageView mFabMore;
 
-    private int[] icon = {R.mipmap.tabbar_contact_default, R.mipmap.tabbar_contact_pressed, R.mipmap.tabbar_sign_default};
-    private String[] iconName = {"通讯录", "日历", "浏览器"};
     private List<RecentlyApps.DataBean> listDatas;
     private MyContactAdapter adapter;
     private boolean isShow;
@@ -117,7 +115,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private void intentOkhttp() {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url("http://172.16.23.16:18080/api-apps/client/recentlyApps?equipmentId=3&userId=" + userid)
+                .url("http://139.9.172.71:18080/api-apps/client/recentlyApps?equipmentId=3&userId=" + userid)
                 .addHeader("Authorization", "Bearer " + token)
                 .get()
                 .build();
