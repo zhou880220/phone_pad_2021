@@ -198,7 +198,6 @@ public class MainActivity extends AppCompatActivity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
-        Log.i("rects----", "" + rects);
         if (rects == true) {
             //有刘海屏
             setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
@@ -211,19 +210,6 @@ public class MainActivity extends AppCompatActivity {
             setAndroidNativeLightStatusBar(MainActivity.this, true);//黑色字体
         }
 
-        // 不延伸显示区域到刘海
-//        WindowManager.LayoutParams lp = getWindow().getAttributes();
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-//            DisplayCutout displayCutout = getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
-//            if (displayCutout != null) {
-//                // 说明有刘海屏
-//                lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//                setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
-//            }else{
-//                setAndroidNativeLightStatusBar(MainActivity.this, true);//黑色字体
-//            }
-//        }
-//        getWindow().setAttributes(lp);
 
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
@@ -368,27 +354,50 @@ public class MainActivity extends AppCompatActivity {
      * 跳转到照相机
      */
     private void gotoCamera() {
-        Log.d(TAG, "*****************打开相机********************");
-        //创建拍照存储的图片文件
-        tempFile = new File(FileUtil.checkDirPath(Environment.getExternalStorageDirectory().getPath() + "/myImage/"), System.currentTimeMillis() + ".jpg");
+        Log.d("evan", "*****************打开相机********************");
 
+        //	获取图片沙盒文件夹
+        File dPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        //图片名称
+        String   mFileName = "IMG_" + System.currentTimeMillis() + ".jpg";
+        //图片路径
+        String  mFilePath = dPictures.getAbsolutePath()+"/"+mFileName;
+        //创建拍照存储的图片文件
+//        tempFile = new File(FileUtil.checkDirPath(Environment.getExternalStorageDirectory().getPath() + "/image/"), System.currentTimeMillis() + ".jpg");
+        tempFile = new File(mFilePath);
         //跳转到调用系统相机
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             //设置7.0中共享文件，分享路径定义在xml/file_paths.xml
             intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            Uri contentUri = FileProvider.getUriForFile(MainActivity.this, BuildConfig.APPLICATION_ID + ".fileprovider", tempFile);
+            Uri contentUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", tempFile);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
-            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-            for (ResolveInfo resolveInfo : resInfoList) {
-                String packageName = resolveInfo.activityInfo.packageName;
-                grantUriPermission(packageName, contentUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            }
-
         } else {
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(tempFile));
         }
         startActivityForResult(intent, REQUEST_CAPTURE);
+
+//        Log.d(TAG, "*****************打开相机********************");
+//        //创建拍照存储的图片文件
+//        tempFile = new File(FileUtil.checkDirPath(Environment.getExternalStorageDirectory().getPath() + "/myImage/"), System.currentTimeMillis() + ".jpg");
+//
+//        //跳转到调用系统相机
+//        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//            //设置7.0中共享文件，分享路径定义在xml/file_paths.xml
+//            intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+//            Uri contentUri = FileProvider.getUriForFile(MainActivity.this, BuildConfig.APPLICATION_ID + ".fileprovider", tempFile);
+//            intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
+//            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+//            for (ResolveInfo resolveInfo : resInfoList) {
+//                String packageName = resolveInfo.activityInfo.packageName;
+//                grantUriPermission(packageName, contentUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//            }
+//
+//        } else {
+//            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(tempFile));
+//        }
+//        startActivityForResult(intent, REQUEST_CAPTURE);
     }
 
     /**

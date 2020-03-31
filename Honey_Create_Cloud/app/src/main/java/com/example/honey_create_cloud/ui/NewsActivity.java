@@ -15,6 +15,7 @@ import android.webkit.WebView;
 import android.widget.ProgressBar;
 
 import com.example.honey_create_cloud.R;
+import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -33,9 +34,20 @@ public class NewsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        setAndroidNativeLightStatusBar(NewsActivity.this, true);//黑色字体
+        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
+        if (rects == true) {
+            //有刘海屏
+            setAndroidNativeLightStatusBar(NewsActivity.this, false);//白色字体
+//            WindowManager.LayoutParams lp = getWindow().getAttributes();
+//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+//            getWindow().setAttributes(lp);
+        } else if (rects == false) {
+            //无刘海屏
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            setAndroidNativeLightStatusBar(NewsActivity.this, true);//黑色字体
+        }
         setContentView(R.layout.activity_news);
         ButterKnife.inject(this);
         Intent intent = getIntent();

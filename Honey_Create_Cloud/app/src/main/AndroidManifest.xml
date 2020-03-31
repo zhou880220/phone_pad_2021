@@ -19,7 +19,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
-        android:resizeableActivity="true">
+        android:resizeableActivity="true"
+        android:requestLegacyExternalStorage="true">
         <meta-data android:name="android.notch_support" android:value="false"/>
         <activity android:name=".ui.ApplyThirdActivity"
             android:launchMode="singleInstance"></activity>

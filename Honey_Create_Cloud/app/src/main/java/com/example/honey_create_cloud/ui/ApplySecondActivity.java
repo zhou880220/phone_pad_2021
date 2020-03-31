@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.RecentlyApps;
+import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -89,8 +90,18 @@ public class ApplySecondActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        setAndroidNativeLightStatusBar(ApplySecondActivity.this, true);//黑色字体
+        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
+        if (rects == true) {
+            //有刘海屏
+            setAndroidNativeLightStatusBar(ApplySecondActivity.this, false);//白色字体
+//            WindowManager.LayoutParams lp = getWindow().getAttributes();
+//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+//            getWindow().setAttributes(lp);
+        } else if (rects == false) {
+            //无刘海屏
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            setAndroidNativeLightStatusBar(ApplySecondActivity.this, true);//黑色字体
+        }
         setContentView(R.layout.activity_apply_second);
         ButterKnife.inject(this);
         ButterKnife.inject(this);
@@ -110,7 +121,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     private void intentOkhttp() {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url("http://172.16.23.16:18080/api-apps-1/client/recentlyApps?equipmentId=3&userId=" + userid)
+                .url("http://172.16.23.16:18080/api-apps/client/recentlyApps?equipmentId=3&userId=" + userid)
                 .addHeader("Authorization", "Bearer " + token)
                 .get()
                 .build();
