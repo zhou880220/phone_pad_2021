@@ -1,7 +1,5 @@
 package com.example.honey_create_cloud.ui;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
@@ -13,6 +11,9 @@ import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
@@ -26,11 +27,12 @@ import butterknife.InjectView;
 public class NewsActivity extends AppCompatActivity {
     @InjectView(R.id.newwebprogressbar)
     ProgressBar mNewwebprogressbar;
-    @InjectView(R.id.new_Web)
+    @InjectView(R.id.new_Web_1)
     WebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
 
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,9 +42,9 @@ public class NewsActivity extends AppCompatActivity {
         if (rects == true) {
             //有刘海屏
             setAndroidNativeLightStatusBar(NewsActivity.this, false);//白色字体
-//            WindowManager.LayoutParams lp = getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            getWindow().setAttributes(lp);
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+            getWindow().setAttributes(lp);
         } else if (rects == false) {
             //无刘海屏
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
@@ -54,6 +56,7 @@ public class NewsActivity extends AppCompatActivity {
         String url = intent.getStringExtra("url");
         webView(url);
     }
+
     /**
      * webview初始化
      *
@@ -66,7 +69,7 @@ public class NewsActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        if (webSettings != null){
+        if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
         mNewWeb.loadUrl(url);

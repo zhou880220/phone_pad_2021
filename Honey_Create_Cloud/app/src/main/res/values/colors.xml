@@ -6,4 +6,6 @@
 
     <color name="colorError">#FFFFFF</color>
     <color name="colorFloating">#515151</color>
+
+    <color name="status_layout_manager_tip_text_color">#BFBFBF</color>
 </resources>

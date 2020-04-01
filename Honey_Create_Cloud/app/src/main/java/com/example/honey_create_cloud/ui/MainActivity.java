@@ -9,7 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -51,7 +51,6 @@ import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
-import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
@@ -91,8 +90,6 @@ public class MainActivity extends AppCompatActivity {
     View mWebError;
     @InjectView(R.id.head_image3)
     ImageView headImage3;
-    private android.webkit.ValueCallback<Uri[]> mUploadCallbackAboveL;
-    private android.webkit.ValueCallback<Uri> mUploadCallbackBelow;
     private Uri imageUri;
     private int REQUEST_CODE = 1234;
     //请求相机
@@ -175,6 +172,8 @@ public class MainActivity extends AppCompatActivity {
                                     });
                                 }
                             });
+                        } else {
+                            Toast.makeText(MainActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -201,9 +200,9 @@ public class MainActivity extends AppCompatActivity {
         if (rects == true) {
             //有刘海屏
             setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
-//            WindowManager.LayoutParams lp = getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            getWindow().setAttributes(lp);
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+            getWindow().setAttributes(lp);
         } else if (rects == false) {
             //无刘海屏
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
@@ -359,9 +358,9 @@ public class MainActivity extends AppCompatActivity {
         //	获取图片沙盒文件夹
         File dPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         //图片名称
-        String   mFileName = "IMG_" + System.currentTimeMillis() + ".jpg";
+        String mFileName = "IMG_" + System.currentTimeMillis() + ".jpg";
         //图片路径
-        String  mFilePath = dPictures.getAbsolutePath()+"/"+mFileName;
+        String mFilePath = dPictures.getAbsolutePath() + "/" + mFileName;
         //创建拍照存储的图片文件
 //        tempFile = new File(FileUtil.checkDirPath(Environment.getExternalStorageDirectory().getPath() + "/image/"), System.currentTimeMillis() + ".jpg");
         tempFile = new File(mFilePath);
@@ -462,7 +461,7 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
-
+                Log.e(TAG, "onResume");
             }
         });
         super.onResume();
@@ -475,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
-
+                Log.e(TAG, "onStart");
             }
         });
         super.onStart();
@@ -487,7 +486,7 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
-
+                Log.e(TAG, "onRestart");
             }
         });
         super.onRestart();
@@ -613,6 +612,21 @@ public class MainActivity extends AppCompatActivity {
         ClipImageActivity.goToClipActivity(this, uri);
     }
 
+    public static String getRealPathFromUri(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     /**
      * 获取用户权限
      */
@@ -631,7 +645,15 @@ public class MainActivity extends AppCompatActivity {
             case REQUEST_PICK:  //调用系统相册返回
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
-                    gotoClipActivity(uri);
+                    String realPathFromUri = getRealPathFromUri(this, uri);
+                    if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".PNG") || realPathFromUri.endsWith(".JPEG")){
+                        Log.e(TAG,""+realPathFromUri);
+                        gotoClipActivity(uri);
+                    }else{
+                        Log.e(TAG,""+realPathFromUri);
+                        Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
+                    }
+
                 }
                 break;
             case REQ_CLIP_AVATAR:  //剪切图片返回
@@ -690,6 +712,7 @@ public class MainActivity extends AppCompatActivity {
                                 Log.i(TAG, "pictureUpload.getMsg()---" + pictureUpload.getMsg());
                                 Log.i(TAG, "newName---" + MainActivity.this.newName);
                             } else {
+                                Toast.makeText(MainActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -795,5 +818,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return isOpened;
     }
+
+
 }
 

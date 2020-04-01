@@ -14,7 +14,7 @@
         android:progressDrawable="@drawable/progressbar" />
 
     <WebView
-        android:id="@+id/new_Web"
+        android:id="@+id/new_Web_1"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 

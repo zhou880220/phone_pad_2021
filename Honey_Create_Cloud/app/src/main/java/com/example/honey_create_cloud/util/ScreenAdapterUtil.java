@@ -26,9 +26,6 @@ public class ScreenAdapterUtil {
         // android  P 以上有标准 API 来判断是否有刘海屏
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             View decorView = activity.getWindow().getDecorView();
-//            WindowManager.LayoutParams lp = activity.getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            activity.getWindow().setAttributes(lp);
             WindowInsets windowInsets = decorView.getRootWindowInsets();
             if (windowInsets != null) {
                 DisplayCutout displayCutout = windowInsets.getDisplayCutout();

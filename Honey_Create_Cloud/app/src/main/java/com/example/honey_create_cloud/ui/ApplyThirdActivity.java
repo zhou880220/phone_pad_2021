@@ -19,6 +19,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -81,6 +82,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private static final String TAG = "ApplyThirdActivity_TAG";
     private List<RecentlyApps.DataBean> data;
 
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,9 +92,9 @@ public class ApplyThirdActivity extends AppCompatActivity {
         if (rects == true) {
             //有刘海屏
             setAndroidNativeLightStatusBar(ApplyThirdActivity.this, false);//白色字体
-//            WindowManager.LayoutParams lp = getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            getWindow().setAttributes(lp);
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+            getWindow().setAttributes(lp);
         } else if (rects == false) {
             //无刘海屏
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
@@ -104,7 +106,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
-        Log.i(TAG,url+token+userid);
+        Log.i(TAG, url + token + userid);
         webView(url);
         intentOkhttp();
     }
@@ -136,6 +138,8 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     String s = recentlyApps.toString();
                     Log.i(TAG, string);
                     Log.i(TAG, s);
+                } else {
+                    Toast.makeText(ApplyThirdActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -155,7 +159,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
-                Intent intent = new Intent(ApplyThirdActivity.this,MainActivity.class);
+                Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
                 startActivity(intent);
                 break;
             case R.id.tv_myPublish:
@@ -239,7 +243,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(ApplyThirdActivity.this);//添加布局管理器
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);//设置为横向水平滚动，默认是垂直
         mGridPopup.setLayoutManager(layoutManager);//设置布局管理器
-        adapter = new MyContactAdapter(data, this,userid,token,url);
+        adapter = new MyContactAdapter(data, this, userid, token, url);
         mGridPopup.setAdapter(adapter);
     }
 
@@ -256,7 +260,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        if (webSettings != null){
+        if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
         mNewWeb.loadUrl(url);

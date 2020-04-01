@@ -1,10 +1,5 @@
 package com.example.honey_create_cloud.ui;
 
-import androidx.annotation.NonNull;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentActivity;
-
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -16,6 +11,10 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
+
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ClipView;
 import com.example.honey_create_cloud.util.ClipViewLayout;
@@ -25,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class ClipImageActivity extends AppCompatActivity implements View.OnClickListener{
+public class ClipImageActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "ClipImageActivity";
 
     public static final String TYPE = "type";
@@ -116,6 +115,7 @@ public class ClipImageActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
     }
+
     /**
      * 生成Uri并且通过setResult返回给打开的activity
      */

@@ -16,9 +16,7 @@
     <com.github.lzyzsd.jsbridge.BridgeWebView
         android:id="@+id/new_Web"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-    </com.github.lzyzsd.jsbridge.BridgeWebView>
+        android:layout_height="match_parent"/>
 
     <include
         android:id="@+id/web_error"
