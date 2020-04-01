@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
             public void handler(String data, CallBackFunction function) {
                 if (!mVersionName.isEmpty()) {
 //                    mEditText.setText("通过调用Native方法接收数据：\n" + data);
-                    function.onCallBack("版本号V" + mVersionName);
+                    function.onCallBack("V" + mVersionName);
                 }
             }
         });
@@ -646,7 +646,7 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
                     String realPathFromUri = getRealPathFromUri(this, uri);
-                    if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".PNG") || realPathFromUri.endsWith(".JPEG")){
+                    if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")){
                         Log.e(TAG,""+realPathFromUri);
                         gotoClipActivity(uri);
                     }else{
