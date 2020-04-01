@@ -21,7 +21,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.honey_create_cloud_pad.R;
 import com.example.honey_create_cloud_pad.adapter.MyContactAdapter;
@@ -114,7 +113,6 @@ public class ApplySecondActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Toast.makeText(ApplySecondActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
