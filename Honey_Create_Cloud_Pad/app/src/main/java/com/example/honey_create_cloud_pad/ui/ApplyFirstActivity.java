@@ -25,7 +25,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.honey_create_cloud_pad.R;
 import com.example.honey_create_cloud_pad.adapter.MyContactAdapter;
-import com.example.honey_create_cloud_pad.bean.ProductListBean;
 import com.example.honey_create_cloud_pad.bean.RecentlyApps;
 import com.example.honey_create_cloud_pad.webclient.MWebChromeClient;
 import com.example.honey_create_cloud_pad.webclient.MWebViewClient;
@@ -33,7 +32,6 @@ import com.example.honey_create_cloud_pad.webclient.WebViewSetting;
 import com.google.gson.Gson;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -53,6 +51,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
     WebView mNewWeb;
     @InjectView(R.id.error_iv)
     View mWebError;
+    @InjectView(R.id.loading_page)
+    View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
     @InjectView(R.id.grid_popup)
@@ -83,6 +83,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String url;
     private String userid;
     private List<RecentlyApps.DataBean> data;
+    private MWebChromeClient mWebChromeClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,10 +99,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         Log.i(TAG, "token---" + token);
-        Log.i(TAG,url+token+userid);
+        Log.i(TAG, url + token + userid);
         webView(url);
         intentOkhttp();
     }
+
     /**
      * 获取悬浮窗接口信息
      */
@@ -148,7 +150,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
-                Intent intent = new Intent(ApplyFirstActivity.this,MainActivity.class);
+                Intent intent = new Intent(ApplyFirstActivity.this, MainActivity.class);
                 startActivity(intent);
 
 
@@ -235,7 +237,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(ApplyFirstActivity.this);//添加布局管理器
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);//设置为横向水平滚动，默认是垂直
         mGridPopup.setLayoutManager(layoutManager);//设置布局管理器
-        adapter = new MyContactAdapter(data, this,userid,token,url);
+        adapter = new MyContactAdapter(data, this, userid, token, url);
         mGridPopup.setAdapter(adapter);
     }
 
@@ -267,6 +269,17 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         });
         wvClientSetting(mNewWeb);
+
+        mWebChromeClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
+            @Override
+            public void onCloseClick(int progress) {
+                if (progress == 100) {
+                    mLoadingPage.setVisibility(View.GONE);
+                } else {
+                    mLoadingPage.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     /**
@@ -277,7 +290,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private void wvClientSetting(WebView ead_web) {
         MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
         ead_web.setWebViewClient(mWebViewClient);
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar,mWebError);
+        mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

@@ -1,9 +1,5 @@
 package com.example.honey_create_cloud_pad.ui;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
@@ -21,6 +17,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.honey_create_cloud_pad.R;
 import com.example.honey_create_cloud_pad.adapter.MyContactAdapter;
@@ -49,6 +49,8 @@ public class ApplyThirdActivity extends AppCompatActivity {
     WebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
+    @InjectView(R.id.loading_page)
+    View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
     @InjectView(R.id.grid_popup)
@@ -78,6 +80,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private String userid;
     private static final String TAG = "ApplyThirdActivity_TAG";
     private List<RecentlyApps.DataBean> data;
+    private MWebChromeClient mWebChromeClient;
 
 
     @Override
@@ -93,7 +96,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
-        Log.i(TAG,url+token+userid);
+        Log.i(TAG, url + token + userid);
         webView(url);
         intentOkhttp();
     }
@@ -143,7 +146,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
-                Intent intent = new Intent(ApplyThirdActivity.this,MainActivity.class);
+                Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
                 startActivity(intent);
                 break;
             case R.id.tv_myPublish:
@@ -227,7 +230,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(ApplyThirdActivity.this);//添加布局管理器
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);//设置为横向水平滚动，默认是垂直
         mGridPopup.setLayoutManager(layoutManager);//设置布局管理器
-        adapter = new MyContactAdapter(data, this,userid,token,url);
+        adapter = new MyContactAdapter(data, this, userid, token, url);
         mGridPopup.setAdapter(adapter);
     }
 
@@ -259,6 +262,17 @@ public class ApplyThirdActivity extends AppCompatActivity {
             }
         });
         wvClientSetting(mNewWeb);
+
+        mWebChromeClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
+            @Override
+            public void onCloseClick(int progress) {
+                if (progress == 100) {
+                    mLoadingPage.setVisibility(View.GONE);
+                } else {
+                    mLoadingPage.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     /**
@@ -269,7 +283,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private void wvClientSetting(WebView ead_web) {
         MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
         ead_web.setWebViewClient(mWebViewClient);
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
+        mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

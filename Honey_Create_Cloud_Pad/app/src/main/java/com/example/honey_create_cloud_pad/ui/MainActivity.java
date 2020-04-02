@@ -28,6 +28,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -213,15 +214,8 @@ public class MainActivity extends AppCompatActivity {
         WebViewSetting.initweb(webSettings);
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
-        myChromeWebClient = new MWebChromeClient(this, mNewwebprogressbar,mWebError);
+        myChromeWebClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         mNewWeb.setWebChromeClient(myChromeWebClient);
-        myChromeWebClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
-            @Override
-            public void onCloseClick(String name) {
-                backUrl = name;
-            }
-        });
-//        mNewWeb.setWebViewClient(new MWebViewClientw());
         mNewWeb.loadUrl(Constant.text_url);
 
         //js交互接口定义
@@ -631,21 +625,31 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showApplyParams(String interfaceUrl, String appId, String token) {
             Log.i("调用js的Toast", interfaceUrl);
-            Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
-            intent.putExtra("url", interfaceUrl);
-            intent.putExtra("token", usertoken1);
-            intent.putExtra("userid", userid1);
-            Log.i(TAG, "showApplyParamstoken1---" + usertoken1 + "____" + userid1);
-            startActivity(intent);
+            if (!interfaceUrl.isEmpty()) {
+                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                intent.putExtra("url", interfaceUrl);
+                intent.putExtra("token", usertoken1);
+                intent.putExtra("userid", userid1);
+                Log.i(TAG, "showApplyParamstoken1---" + usertoken1 + "____" + userid1);
+                startActivity(intent);
+            } else {
+                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
+            }
+
         }
 
         @JavascriptInterface
         public void showNewsParams(String addressUrl, String appId, String token) {
-            Log.i("调用js的Toast", addressUrl);
-            Intent intent = new Intent(MainActivity.this, NewsActivity.class);
-            intent.putExtra("url", addressUrl);
-            intent.putExtra("token", token1);
-            startActivity(intent);
+            if (!addressUrl.isEmpty()) {
+                Log.i("调用js的Toast", addressUrl);
+                Intent intent = new Intent(MainActivity.this, NewsActivity.class);
+                intent.putExtra("url", addressUrl);
+                intent.putExtra("token", token1);
+                startActivity(intent);
+            } else {
+                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
+            }
+
         }
 
         /**
