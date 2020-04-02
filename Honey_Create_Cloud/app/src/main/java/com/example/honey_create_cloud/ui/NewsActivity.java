@@ -1,6 +1,8 @@
 package com.example.honey_create_cloud.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -8,6 +10,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
@@ -57,11 +60,13 @@ public class NewsActivity extends AppCompatActivity {
         webView(url);
     }
 
+
     /**
      * webview初始化
      *
      * @param url
      */
+    @SuppressLint("JavascriptInterface")
     private void webView(String url) {
         if (Build.VERSION.SDK_INT >= 19) {
             mNewWeb.getSettings().setLoadsImagesAutomatically(true);
@@ -73,6 +78,8 @@ public class NewsActivity extends AppCompatActivity {
             WebViewSetting.initweb(webSettings);
         }
         mNewWeb.loadUrl(url);
+        //js交互接口定义
+        mNewWeb.addJavascriptInterface(new MyJavaScriptInterface(getApplicationContext()), "ApplyFunc");
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -86,6 +93,22 @@ public class NewsActivity extends AppCompatActivity {
             }
         });
         wvClientSetting(mNewWeb);
+    }
+
+
+    class MyJavaScriptInterface {
+        private Context context;
+
+        public MyJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        @JavascriptInterface
+        public void backNewParams(String flag) {
+            if (!flag.isEmpty()) {
+                finish();
+            }
+        }
     }
 
     /**
