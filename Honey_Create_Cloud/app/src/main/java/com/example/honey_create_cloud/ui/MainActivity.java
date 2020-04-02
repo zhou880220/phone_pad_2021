@@ -741,21 +741,29 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showApplyParams(String interfaceUrl, String appId, String token) {
             Log.i("调用js的Toast", interfaceUrl);
-            Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
-            intent.putExtra("url", interfaceUrl);
-            intent.putExtra("token", usertoken1);
-            intent.putExtra("userid", userid1);
-            Log.i(TAG, "showApplyParamstoken1---" + usertoken1 + "____" + userid1);
-            startActivity(intent);
+            if (!interfaceUrl.isEmpty()){
+                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                intent.putExtra("url", interfaceUrl);
+                intent.putExtra("token", usertoken1);
+                intent.putExtra("userid", userid1);
+                Log.i(TAG, "showApplyParamstoken1---" + usertoken1 + "____" + userid1);
+                startActivity(intent);
+            }else {
+                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
+            }
         }
 
         @JavascriptInterface
         public void showNewsParams(String addressUrl, String appId, String token) {
             Log.i("调用js的Toast", addressUrl);
-            Intent intent = new Intent(MainActivity.this, NewsActivity.class);
-            intent.putExtra("url", addressUrl);
-            intent.putExtra("token", token1);
-            startActivity(intent);
+            if (!addressUrl.isEmpty()){
+                Intent intent = new Intent(MainActivity.this, NewsActivity.class);
+                intent.putExtra("url", addressUrl);
+                intent.putExtra("token", token1);
+                startActivity(intent);
+            } else{
+                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
+            }
         }
 
         /**

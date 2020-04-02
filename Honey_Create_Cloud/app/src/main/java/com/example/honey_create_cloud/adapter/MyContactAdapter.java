@@ -104,8 +104,6 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                     intent.putExtra("url",url);
                     context.startActivity(intent);
                 }
-
-                Toast.makeText(view.getContext(), dataBean.getAppName(), Toast.LENGTH_SHORT).show();
             }
         });
         return viewHolder;
