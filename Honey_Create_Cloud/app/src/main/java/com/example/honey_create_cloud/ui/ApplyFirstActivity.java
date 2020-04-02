@@ -53,6 +53,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
     WebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
+    @InjectView(R.id.loading_page)
+    View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
     @InjectView(R.id.grid_popup)
@@ -75,15 +77,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
     ImageView mFabMore;
 
     private static final String TAG = "ApplyFirstActivity_TAG";
-    private int[] icon = {R.mipmap.tabbar_contact_default, R.mipmap.tabbar_contact_pressed, R.mipmap.tabbar_sign_default};
-    private String[] iconName = {"通讯录", "日历", "浏览器"};
-
     private MyContactAdapter adapter;
     private boolean isShow;
     private String token;
     private String url;
     private String userid;
     private List<RecentlyApps.DataBean> data;
+    private MWebChromeClient mWebChromeClient;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -269,6 +269,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             WebViewSetting.initweb(webSettings);
         }
         mNewWeb.loadUrl(url);
+
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -282,6 +283,16 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         });
         wvClientSetting(mNewWeb);
+        mWebChromeClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
+            @Override
+            public void onCloseClick(int progress) {
+                if (progress == 100){
+                    mLoadingPage.setVisibility(View.GONE);
+                }else{
+                    mLoadingPage.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     /**
@@ -292,7 +303,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private void wvClientSetting(WebView ead_web) {
         MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
         ead_web.setWebViewClient(mWebViewClient);
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
+        mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

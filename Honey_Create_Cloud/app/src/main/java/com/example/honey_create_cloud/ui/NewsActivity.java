@@ -34,6 +34,9 @@ public class NewsActivity extends AppCompatActivity {
     WebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
+    @InjectView(R.id.loading_page)
+    View mLoadigPage;
+    private MWebChromeClient mWebChromeClient;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -93,6 +96,17 @@ public class NewsActivity extends AppCompatActivity {
             }
         });
         wvClientSetting(mNewWeb);
+
+        mWebChromeClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
+            @Override
+            public void onCloseClick(int progress) {
+                if (progress == 100) {
+                    mLoadigPage.setVisibility(View.GONE);
+                } else {
+                    mLoadigPage.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
 
@@ -119,7 +133,7 @@ public class NewsActivity extends AppCompatActivity {
     private void wvClientSetting(WebView ead_web) {
         MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
         ead_web.setWebViewClient(mWebViewClient);
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
+        mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

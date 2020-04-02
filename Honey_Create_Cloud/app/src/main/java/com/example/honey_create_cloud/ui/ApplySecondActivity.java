@@ -52,6 +52,8 @@ public class ApplySecondActivity extends AppCompatActivity {
     WebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
+    @InjectView(R.id.loading_page)
+    View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
     @InjectView(R.id.grid_popup)
@@ -82,6 +84,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     private String userid;
     private String TAG = "ApplySecondActivity_TAG";
     private List<RecentlyApps.DataBean> data;
+    private MWebChromeClient mWebChromeClient;
 
 
     @RequiresApi(api = Build.VERSION_CODES.P)
@@ -280,6 +283,17 @@ public class ApplySecondActivity extends AppCompatActivity {
             }
         });
         wvClientSetting(mNewWeb);
+
+        mWebChromeClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
+            @Override
+            public void onCloseClick(int progress) {
+                if (progress == 100) {
+                    mLoadingPage.setVisibility(View.GONE);
+                } else {
+                    mLoadingPage.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     /**
@@ -290,7 +304,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     private void wvClientSetting(WebView ead_web) {
         MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
         ead_web.setWebViewClient(mWebViewClient);
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
+        mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

@@ -52,7 +52,7 @@ public class MWebChromeClient extends WebChromeClient {
         Log.i("当前页面",view.getUrl());
 
         if (onCloseListener != null) {
-            onCloseListener.onCloseClick(view.getUrl());
+            onCloseListener.onCloseClick(newProgress);
         }
 
         super.onProgressChanged(view, newProgress);
@@ -78,6 +78,6 @@ public class MWebChromeClient extends WebChromeClient {
     }
 
     public interface OnCloseListener{
-        void onCloseClick(String name);
+        void onCloseClick(int progress);
     }
 }
