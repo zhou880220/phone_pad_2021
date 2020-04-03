@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
@@ -38,6 +39,8 @@ public class NewsActivity extends AppCompatActivity {
     View mLoadigPage;
     private MWebChromeClient mWebChromeClient;
 
+    private String TAG = "NewsActivity";
+
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +72,6 @@ public class NewsActivity extends AppCompatActivity {
      *
      * @param url
      */
-    @SuppressLint("JavascriptInterface")
     private void webView(String url) {
         if (Build.VERSION.SDK_INT >= 19) {
             mNewWeb.getSettings().setLoadsImagesAutomatically(true);
@@ -119,8 +121,11 @@ public class NewsActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void backNewParams(String flag) {
+            Log.e(TAG,flag);
             if (!flag.isEmpty()) {
                 finish();
+            }else{
+
             }
         }
     }
