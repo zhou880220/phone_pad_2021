@@ -261,7 +261,21 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                gotoCamera();
+                if (!data.isEmpty()){
+                    String replace1 = data.replace("\"", "");
+                    String replace2 = replace1.replace("token:", "");
+                    String replace3 = replace2.replace("{", "");
+                    String replace4 = replace3.replace("}", "");
+                    String[] s = replace4.split(" ");
+                    Log.i(TAG, "replace---" + replace1);
+                    token1 = s[0];
+                    userid = s[1];
+                    Log.i(TAG, "token1---" + token1);
+                    Log.i(TAG, "userid---" + userid);
+                    gotoCamera();
+                }else{
+
+                }
             }
         });
 
@@ -270,17 +284,22 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                String replace1 = data.replace("\"", "");
-                String replace2 = replace1.replace("token:", "");
-                String replace3 = replace2.replace("{", "");
-                String replace4 = replace3.replace("}", "");
-                String[] s = replace4.split(" ");
-                Log.i(TAG, "replace---" + replace1);
-                token1 = s[0];
-                userid = s[1];
-                Log.i(TAG, "token1---" + token1);
-                Log.i(TAG, "userid---" + userid);
-                gotoPhoto();
+                if (!data.isEmpty()){
+                    String replace1 = data.replace("\"", "");
+                    String replace2 = replace1.replace("token:", "");
+                    String replace3 = replace2.replace("{", "");
+                    String replace4 = replace3.replace("}", "");
+                    String[] s = replace4.split(" ");
+                    Log.i(TAG, "replace---" + replace1);
+                    token1 = s[0];
+                    userid = s[1];
+                    Log.i(TAG, "token1---" + token1);
+                    Log.i(TAG, "userid---" + userid);
+                    gotoPhoto();
+                }else{
+
+                }
+
             }
         });
 

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -16,7 +15,7 @@
     <WebView
         android:id="@+id/new_Web"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <include
         android:id="@+id/web_error"
@@ -44,9 +43,9 @@
         android:layout_height="50dp"
         android:layout_alignRight="@id/fab_more"
         android:layout_alignBottom="@+id/fab_more"
-        android:layout_marginRight="45dp"
+        android:layout_marginRight="34dp"
         android:layout_marginBottom="2dp"
-        android:alpha="0.7"
+        android:alpha="0.95"
         android:background="@drawable/gird_radius"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -125,13 +124,16 @@
 
     <ImageView
         android:id="@+id/fab_more"
-        android:layout_width="69dp"
-        android:layout_height="56dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:layout_marginRight="6dp"
         android:layout_marginBottom="50dp"
+        android:alpha="0.95"
+        android:background="@drawable/add_radius"
         android:onClick="onClick"
+        android:padding="16dp"
         android:src="@mipmap/floating" />
 
     <include
