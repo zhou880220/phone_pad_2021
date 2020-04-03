@@ -30,11 +30,13 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
+        android:layout_centerInParent="true"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
-        android:alpha="0.8"
         android:background="@drawable/gird_radius"
         android:numColumns="3"
+        android:padding="10dp"
+        android:alpha="0.95"
         android:visibility="gone" />
 
     <LinearLayout
@@ -43,9 +45,9 @@
         android:layout_height="50dp"
         android:layout_alignRight="@id/fab_more"
         android:layout_alignBottom="@+id/fab_more"
-        android:layout_marginRight="45dp"
+        android:layout_marginRight="34dp"
         android:layout_marginBottom="2dp"
-        android:alpha="0.7"
+        android:alpha="0.95"
         android:background="@drawable/gird_radius"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -112,7 +114,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:src="@android:color/black" />
+            android:src="@android:color/black"/>
 
         <TextView
             android:id="@+id/tt_course_none"
@@ -124,14 +126,17 @@
 
     <ImageView
         android:id="@+id/fab_more"
-        android:layout_width="69dp"
-        android:layout_height="56dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:padding="16dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:layout_marginRight="6dp"
         android:layout_marginBottom="50dp"
         android:onClick="onClick"
-        android:src="@mipmap/floating" />
+        android:src="@mipmap/floating"
+        android:background="@drawable/add_radius"
+        android:alpha="0.95"/>
 
     <include
         android:id="@+id/loading_page"

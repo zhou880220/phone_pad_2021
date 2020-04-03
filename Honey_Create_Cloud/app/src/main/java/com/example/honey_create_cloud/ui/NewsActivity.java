@@ -111,7 +111,9 @@ public class NewsActivity extends AppCompatActivity {
         });
     }
 
-
+    /**
+     * JS交互
+     */
     class MyJavaScriptInterface {
         private Context context;
 
