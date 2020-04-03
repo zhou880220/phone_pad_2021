@@ -1,12 +1,15 @@
 package com.example.honey_create_cloud_pad.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
@@ -32,6 +35,8 @@ public class NewsActivity extends AppCompatActivity {
     @InjectView(R.id.loading_page)
     View mLoadingPage;
     private MWebChromeClient mWebChromeClient;
+
+    private String TAG = "NewsActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +65,8 @@ public class NewsActivity extends AppCompatActivity {
         WebSettings webSettings = mNewWeb.getSettings();
         WebViewSetting.initweb(webSettings);
         mNewWeb.loadUrl(url);
+        //js交互接口定义
+        mNewWeb.addJavascriptInterface(new MyJavaScriptInterface(getApplicationContext()), "ApplyFunc");
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -84,6 +91,27 @@ public class NewsActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    /**
+     * JS交互
+     */
+    class MyJavaScriptInterface {
+        private Context context;
+
+        public MyJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        @JavascriptInterface
+        public void backNewParams(String flag) {
+            Log.e(TAG,flag);
+            if (!flag.isEmpty()) {
+                finish();
+            }else{
+
+            }
+        }
     }
 
     /**
