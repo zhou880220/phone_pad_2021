@@ -12,7 +12,7 @@ public class Constant {
 
     public static final String address_Home_Url = "http://172.16.23.210:3001/home";//本地首页网址
 
-    public static final String text_url = "http://172.16.23.210:3001/home";
+    public static final String text_url = "http://139.9.172.71/yyzx/";
 
     //接口调用
     public static final String upload_multifile= "http://172.16.23.16:18080/api-f/upload/multifile"; //上传图片
