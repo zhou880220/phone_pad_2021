@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -21,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
+import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -36,7 +38,7 @@ public class NewsActivity extends AppCompatActivity {
     @InjectView(R.id.web_error)
     View mWebError;
     @InjectView(R.id.loading_page)
-    View mLoadigPage;
+    View mLoadingPage;
     private MWebChromeClient mWebChromeClient;
 
     private String TAG = "NewsActivity";
@@ -64,6 +66,7 @@ public class NewsActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
         webView(url);
+        mLodingTime();
     }
 
 
@@ -99,16 +102,20 @@ public class NewsActivity extends AppCompatActivity {
         });
         wvClientSetting(mNewWeb);
 
-        mWebChromeClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
+    }
+
+    /**
+     * 初始页加载
+     */
+    private void mLodingTime() {
+        final AnimationView hideAnimation = new AnimationView();
+        new Handler().postDelayed(new Runnable() {
             @Override
-            public void onCloseClick(int progress) {
-                if (progress == 100) {
-                    mLoadigPage.setVisibility(View.GONE);
-                } else {
-                    mLoadigPage.setVisibility(View.VISIBLE);
-                }
+            public void run() {
+                hideAnimation.getHideAnimation(mLoadingPage, 500);
+                mLoadingPage.setVisibility(View.GONE);
             }
-        });
+        }, 3000);
     }
 
     /**

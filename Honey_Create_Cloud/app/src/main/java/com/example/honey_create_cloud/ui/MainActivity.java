@@ -444,38 +444,6 @@ public class MainActivity extends AppCompatActivity {
         }, 3000);
     }
 
-    //自定义 WebChromeClient 辅助WebView处理图片上传操作【<input type=file> 文件上传标签,点击会自动调用】
-//    public class MyChromeWebClient extends WebChromeClient {
-//        @Override
-//        public void onReceivedTitle(WebView view, String title) {
-//            super.onReceivedTitle(view, title);
-//            // android 6.0 以下通过title获取判断
-//            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-//                if (title.contains("404") || title.contains("500") || title.contains("Error") || title.contains("找不到网页") || title.contains("网页无法打开")) {
-//                    view.loadUrl("about:blank");// 避免出现默认的错误界面
-//                    // 加载自定义错误页面
-//                }
-//            }
-//        }
-//
-//        @Override
-//        public void onProgressChanged(WebView view, int newProgress) {
-//            Log.i("当前页面", view.getUrl());
-//
-//            super.onProgressChanged(view, newProgress);
-//            if (newProgress == 100) {
-//                //进度条消失
-//                mNewwebprogressbar.setVisibility(View.GONE);
-//            } else {
-//                //进度跳显示
-//                mNewwebprogressbar.setVisibility(View.VISIBLE);
-//                mNewwebprogressbar.setProgress(newProgress);
-//            }
-//        }
-//
-//
-//    }
-
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onResume() {

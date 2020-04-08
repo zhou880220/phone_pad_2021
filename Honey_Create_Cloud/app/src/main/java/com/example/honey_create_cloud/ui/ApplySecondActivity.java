@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -28,6 +29,7 @@ import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.RecentlyApps;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
+import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -114,6 +116,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         userid = intent.getStringExtra("userid");
         Log.i(TAG, url + token + userid);
         webView(url);
+        mLodingTime();
         intentOkhttp();
     }
 
@@ -284,16 +287,20 @@ public class ApplySecondActivity extends AppCompatActivity {
         });
         wvClientSetting(mNewWeb);
 
-        mWebChromeClient.setOnCloseListener(new MWebChromeClient.OnCloseListener() {
+    }
+
+    /**
+     * 初始页加载
+     */
+    private void mLodingTime() {
+        final AnimationView hideAnimation = new AnimationView();
+        new Handler().postDelayed(new Runnable() {
             @Override
-            public void onCloseClick(int progress) {
-                if (progress == 100) {
-                    mLoadingPage.setVisibility(View.GONE);
-                } else {
-                    mLoadingPage.setVisibility(View.VISIBLE);
-                }
+            public void run() {
+                hideAnimation.getHideAnimation(mLoadingPage, 500);
+                mLoadingPage.setVisibility(View.GONE);
             }
-        });
+        }, 3000);
     }
 
     /**
