@@ -89,19 +89,19 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                     Intent intent = new Intent(context, ApplyFirstActivity.class);
                     intent.putExtra("userid",userid);
                     intent.putExtra("token",token);
-                    intent.putExtra("url",url);
+                    intent.putExtra("url",mContactList.get(0).getAppInterfaceUrl());
                     context.startActivity(intent);
                 }else if(position == 1){
                     Intent intent = new Intent(context, ApplySecondActivity.class);
                     intent.putExtra("userid",userid);
                     intent.putExtra("token",token);
-                    intent.putExtra("url",url);
+                    intent.putExtra("url",mContactList.get(1).getAppInterfaceUrl());
                     context.startActivity(intent);
                 }else if(position == 2){
                     Intent intent = new Intent(context, ApplyThirdActivity.class);
                     intent.putExtra("userid",userid);
                     intent.putExtra("token",token);
-                    intent.putExtra("url",url);
+                    intent.putExtra("url",mContactList.get(2).getAppInterfaceUrl());
                     context.startActivity(intent);
                 }
             }

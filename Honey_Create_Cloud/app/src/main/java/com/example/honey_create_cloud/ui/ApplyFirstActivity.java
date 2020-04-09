@@ -1,6 +1,7 @@
 package com.example.honey_create_cloud.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -28,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.RecentlyApps;
+import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
@@ -37,6 +40,7 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -105,14 +109,16 @@ public class ApplyFirstActivity extends AppCompatActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             setAndroidNativeLightStatusBar(ApplyFirstActivity.this, true);//黑色字体
         }
+
         setContentView(R.layout.activity_apply);
         ButterKnife.inject(this);
+        CleanDataUtils.clearAllCache(Objects.<Context>requireNonNull(ApplyFirstActivity.this));
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         Log.i(TAG, "token---" + token);
-        Log.i(TAG, url + token + userid);
+        Log.i("66", url + token + userid);
         webView(url);
         mLodingTime();
         intentOkhttp();
@@ -146,7 +152,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     Log.i(TAG, string);
                     Log.i(TAG, s);
                 } else {
-                    Toast.makeText(ApplyFirstActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
+
                 }
             }
         });
@@ -328,5 +334,23 @@ public class ApplyFirstActivity extends AppCompatActivity {
         } else {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mNewWeb != null) {
+            mNewWeb.loadUrl(null);
+            mNewWeb.clearHistory();
+            ((ViewGroup) mNewWeb.getParent()).removeView(mNewWeb);
+            mNewWeb.destroy();
+            mNewWeb = null;
+        }
+        super.onDestroy();
     }
 }
