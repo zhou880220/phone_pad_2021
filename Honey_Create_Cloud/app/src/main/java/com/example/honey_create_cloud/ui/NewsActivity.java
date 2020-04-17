@@ -1,6 +1,5 @@
 package com.example.honey_create_cloud.ui;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -69,7 +68,6 @@ public class NewsActivity extends AppCompatActivity {
         mLodingTime();
     }
 
-
     /**
      * webview初始化
      *
@@ -101,7 +99,6 @@ public class NewsActivity extends AppCompatActivity {
             }
         });
         wvClientSetting(mNewWeb);
-
     }
 
     /**
@@ -130,10 +127,10 @@ public class NewsActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void backNewParams(String flag) {
-            Log.e(TAG,flag);
+            Log.e(TAG, flag);
             if (!flag.isEmpty()) {
                 finish();
-            }else{
+            } else {
 
             }
         }
@@ -164,11 +161,5 @@ public class NewsActivity extends AppCompatActivity {
         } else {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        finish();
     }
 }

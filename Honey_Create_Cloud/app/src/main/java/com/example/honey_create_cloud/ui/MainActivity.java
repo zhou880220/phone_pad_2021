@@ -21,7 +21,6 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -51,6 +50,7 @@ import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
+import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
@@ -75,7 +75,9 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
+import static com.example.honey_create_cloud.ui.ApplyFirstActivity.returnActivityA;
+import static com.example.honey_create_cloud.ui.ApplySecondActivity.returnActivityB;
+import static com.example.honey_create_cloud.ui.ApplyThirdActivity.returnActivityC;
 import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 
 public class MainActivity extends AppCompatActivity {
@@ -113,6 +115,15 @@ public class MainActivity extends AppCompatActivity {
     private String totalCacheSize = "";
     private String clearSize = "";
     private int type;
+
+    private static final String[] PERMISSIONS_APPLICATION = {
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.CALL_PHONE,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.READ_PHONE_STATE};
+    private static final int VIDEO_PERMISSIONS_CODE = 1;
 
     private MyHandlerCallBack.OnSendDataListener mOnSendDataListener;
     private String token1;
@@ -177,8 +188,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
-
-
             }
             return false;
         }
@@ -209,14 +218,12 @@ public class MainActivity extends AppCompatActivity {
             setAndroidNativeLightStatusBar(MainActivity.this, true);//黑色字体
         }
 
-
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
         iniVersionName();
         myRequetPermission();
         webView();
     }
-
 
     /**
      * 初始化webview js交互
@@ -229,26 +236,13 @@ public class MainActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-
-        webSettings.setUseWideViewPort(true);
-        webSettings.setLoadWithOverviewMode(true);
-
-        webSettings.setSupportZoom(true);
-        webSettings.setDisplayZoomControls(false);
-        webSettings.setBuiltInZoomControls(true);
-
-        webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
-        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
-        webSettings.setLoadsImagesAutomatically(true);
-        webSettings.setDefaultTextEncodingName("utf-8");
+        if (webSettings != null) {
+            WebViewSetting.initweb(webSettings);
+        }
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         mNewWeb.setWebChromeClient(myChromeWebClient);
-
-//        mNewWeb.setWebViewClient(new MWebViewClientw());
         mNewWeb.loadUrl(Constant.Attention);
 
         //js交互接口定义
@@ -295,22 +289,26 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 Log.i(TAG, "replace---" + data);
-                if (!data.isEmpty()){
-                    String replace1 = data.replace("\"", "");
-                    String replace2 = replace1.replace("token:", "");
-                    String replace3 = replace2.replace("{", "");
-                    String replace4 = replace3.replace("}", "");
-                    String[] s = replace4.split(" ");
-                    Log.i(TAG, "getTakeCamerareplace---" + replace1);
-                    token1 = s[0];
-                    userid = s[1];
-                    Log.i(TAG, "getTakeCameratoken1---" + token1);
-                    Log.i(TAG, "getTakeCamerauserid---" + userid);
-                    gotoCamera();
-                }else{
+                //权限判断
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    //申请READ_EXTERNAL_STORAGE权限
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            VIDEO_PERMISSIONS_CODE);
+                } else {
+                    if (!data.isEmpty()) {
+                        String replace1 = data.replace("\"", "");
+                        String replace2 = replace1.replace("token:", "");
+                        String replace3 = replace2.replace("{", "");
+                        String replace4 = replace3.replace("}", "");
+                        String[] s = replace4.split(" ");
+                        token1 = s[0];
+                        userid = s[1];
+                        gotoCamera();
+                    } else {
 
+                    }
                 }
-
             }
         });
 
@@ -319,22 +317,29 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (!data.isEmpty()){
-                    String replace1 = data.replace("\"", "");
-                    String replace2 = replace1.replace("token:", "");
-                    String replace3 = replace2.replace("{", "");
-                    String replace4 = replace3.replace("}", "");
-                    String[] s = replace4.split(" ");
-                    Log.i(TAG, "replace---" + replace1);
-                    token1 = s[0];
-                    userid = s[1];
-                    Log.i(TAG, "token1---" + token1);
-                    Log.i(TAG, "userid---" + userid);
-                    gotoPhoto();
-                }else{
+                //权限判断
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    //申请READ_EXTERNAL_STORAGE权限
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                            VIDEO_PERMISSIONS_CODE);
+                } else {
+                    if (!data.isEmpty()) {
+                        String replace1 = data.replace("\"", "");
+                        String replace2 = replace1.replace("token:", "");
+                        String replace3 = replace2.replace("{", "");
+                        String replace4 = replace3.replace("}", "");
+                        String[] s = replace4.split(" ");
+                        Log.i(TAG, "replace---" + replace1);
+                        token1 = s[0];
+                        userid = s[1];
+                        Log.i(TAG, "token1---" + token1);
+                        Log.i(TAG, "userid---" + userid);
+                        gotoPhoto();
+                    } else {
 
+                    }
                 }
-
             }
         });
 
@@ -356,18 +361,18 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //回退监听
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        mNewWeb.goBack();
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
+//        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
+//            @Override
+//            public boolean onKey(View v, int keyCode, KeyEvent event) {
+//                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+//                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+//                        mNewWeb.goBack();
+//                        return true;
+//                    }
+//                }
+//                return false;
+//            }
+//        });
     }
 
     /**
@@ -396,28 +401,6 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(tempFile));
         }
         startActivityForResult(intent, REQUEST_CAPTURE);
-
-//        Log.d(TAG, "*****************打开相机********************");
-//        //创建拍照存储的图片文件
-//        tempFile = new File(FileUtil.checkDirPath(Environment.getExternalStorageDirectory().getPath() + "/myImage/"), System.currentTimeMillis() + ".jpg");
-//
-//        //跳转到调用系统相机
-//        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//            //设置7.0中共享文件，分享路径定义在xml/file_paths.xml
-//            intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-//            Uri contentUri = FileProvider.getUriForFile(MainActivity.this, BuildConfig.APPLICATION_ID + ".fileprovider", tempFile);
-//            intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
-//            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-//            for (ResolveInfo resolveInfo : resInfoList) {
-//                String packageName = resolveInfo.activityInfo.packageName;
-//                grantUriPermission(packageName, contentUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-//            }
-//
-//        } else {
-//            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(tempFile));
-//        }
-//        startActivityForResult(intent, REQUEST_CAPTURE);
     }
 
     /**
@@ -460,6 +443,23 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onStart() {
+        if (returnActivityA == true) {
+            returnActivityA = false;
+            Intent intent = new Intent();
+            intent.setClass(this, ApplyFirstActivity.class);
+            startActivity(intent);
+        } else if (returnActivityB == true) {
+            returnActivityB = false;
+            Intent intent = new Intent();
+            intent.setClass(this, ApplySecondActivity.class);
+            startActivity(intent);
+        } else if (returnActivityC == true) {
+            returnActivityC = false;
+            Intent intent = new Intent();
+            intent.setClass(this, ApplyThirdActivity.class);
+            startActivity(intent);
+        }
+
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
@@ -482,18 +482,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * webview 监听
-     *
-     * @param mNewWeb
-     */
-    private void wvClientSetting(BridgeWebView mNewWeb) {
-        mWebViewClient = new MWebViewClient(mNewWeb, this, mWebError);
-        mNewWeb.setWebViewClient(mWebViewClient);
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
-        mNewWeb.setWebChromeClient(mWebChromeClient);
-    }
-
-    /**
      * 修改顶部状态栏字体颜色
      *
      * @param activity
@@ -507,7 +495,6 @@ public class MainActivity extends AppCompatActivity {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
     }
-
 
     /**
      * 获取系统版本号
@@ -532,11 +519,15 @@ public class MainActivity extends AppCompatActivity {
      * 获取用户权限
      */
     private void myRequetPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA,Manifest.permission.RECORD_AUDIO}, 1);
-        } else {
-            mLodingTime();
+        // 当API大于 23 时，才动态申请权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_APPLICATION, VIDEO_PERMISSIONS_CODE);
         }
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, PERMISSIONS_APPLICATION, 1);
+//        } else {
+//            mLodingTime();
+//        }
     }
 
     /**
@@ -545,50 +536,49 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1) {
-            for (int i = 0; i < permissions.length; i++) {
-                if (grantResults[i] == PERMISSION_GRANTED) {//选择了“始终允许”
-                    mLodingTime();
-                } else {
-                    if (!ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[i])) {//用户选择了禁止不再询问
-                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                        builder.setTitle("permission")
-                                .setMessage("点击允许才可以使用我们的app哦")
-                                .setPositiveButton("去允许", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        if (mDialog != null && mDialog.isShowing()) {
-                                            mDialog.dismiss();
-                                        }
-                                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                        Uri uri = Uri.fromParts("package", getPackageName(), null);//注意就是"package",不用改成自己的包名
-                                        intent.setData(uri);
-                                        startActivityForResult(intent, NOT_NOTICE);
-                                    }
-                                });
-                        mDialog = builder.create();
-                        mDialog.setCanceledOnTouchOutside(false);
-                        mDialog.show();
-                        mLodingTime();
-                    } else {//选择禁止
-                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                        builder.setTitle("permission")
-                                .setMessage("点击允许才可以使用我们的app哦")
-                                .setPositiveButton("去允许", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        if (alertDialog != null && alertDialog.isShowing()) {
-                                            alertDialog.dismiss();
-                                        }
-                                        ActivityCompat.requestPermissions(MainActivity.this,
-                                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, 1);
-                                    }
-                                });
-                        alertDialog = builder.create();
-                        alertDialog.setCanceledOnTouchOutside(false);
-                        alertDialog.show();
+        switch (requestCode) {
+            case VIDEO_PERMISSIONS_CODE:
+                //权限请求失败
+                if (grantResults.length == PERMISSIONS_APPLICATION.length) {
+                    for (int result : grantResults) {
+                        if (result != PackageManager.PERMISSION_GRANTED) {
+                            //弹出对话框引导用户去设置
+                            showDialog();
+                            Toast.makeText(MainActivity.this, "请求权限被拒绝", Toast.LENGTH_LONG).show();
+                            mLodingTime();
+                            break;
+                        } else {
+                            mLodingTime();
+                        }
                     }
                 }
-            }
+                break;
         }
+    }
+
+    //弹出提示框
+    private void showDialog() {
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("若您取消权限可能会导致某些功能无法使用！！！")
+                .setPositiveButton("设置", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        goToAppSetting();
+                    }
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    // 跳转到当前应用的设置界面
+    private void goToAppSetting() {
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", getPackageName(), null);
+        intent.setData(uri);
+        startActivity(intent);
     }
 
     /**
@@ -604,7 +594,7 @@ public class MainActivity extends AppCompatActivity {
     public static String getRealPathFromUri(Context context, Uri contentUri) {
         Cursor cursor = null;
         try {
-            String[] proj = { MediaStore.Images.Media.DATA };
+            String[] proj = {MediaStore.Images.Media.DATA};
             cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
             int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();
@@ -635,11 +625,11 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
                     String realPathFromUri = getRealPathFromUri(this, uri);
-                    if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")){
-                        Log.e(TAG,""+realPathFromUri);
+                    if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
+                        Log.e(TAG, "" + realPathFromUri);
                         gotoClipActivity(uri);
-                    }else{
-                        Log.e(TAG,""+realPathFromUri);
+                    } else {
+                        Log.e(TAG, "" + realPathFromUri);
                         Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
                     }
 
@@ -730,14 +720,14 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showApplyParams(String interfaceUrl, String appId, String token) {
             Log.i("调用js的Toast", interfaceUrl);
-            if (!interfaceUrl.isEmpty()){
+            if (!interfaceUrl.isEmpty()) {
                 Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
                 intent.putExtra("url", interfaceUrl);
                 intent.putExtra("token", usertoken1);
                 intent.putExtra("userid", userid1);
                 Log.i(TAG, "showApplyParamstoken1---" + usertoken1 + "____" + userid1);
                 startActivity(intent);
-            }else {
+            } else {
                 Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
             }
         }
@@ -745,12 +735,12 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showNewsParams(String addressUrl, String appId, String token) {
             Log.i("调用js的Toast", addressUrl);
-            if (!addressUrl.isEmpty()){
+            if (!addressUrl.isEmpty()) {
                 Intent intent = new Intent(MainActivity.this, NewsActivity.class);
                 intent.putExtra("url", addressUrl);
                 intent.putExtra("token", token1);
                 startActivity(intent);
-            } else{
+            } else {
                 Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
             }
         }
@@ -760,7 +750,6 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void NewNotifiction() {
-            Log.i("radioCode--", "1321");
             gotoSet();
         }
 
@@ -772,7 +761,6 @@ public class MainActivity extends AppCompatActivity {
             usertoken1 = usertoken;
             userid1 = userid;
         }
-
     }
 
     /**
@@ -815,7 +803,5 @@ public class MainActivity extends AppCompatActivity {
         }
         return isOpened;
     }
-
-
 }
 

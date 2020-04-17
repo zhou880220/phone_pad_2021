@@ -1,7 +1,12 @@
 package com.example.honey_create_cloud.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +17,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
+import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ImageView;
@@ -77,15 +84,15 @@ public class ApplyThirdActivity extends AppCompatActivity {
     @InjectView(R.id.fab_more)
     ImageView mFabMore;
 
-    private List<RecentlyApps.DataBean> listDatas;
+    private static final String TAG = "ApplyThirdActivity_TAG";
     private MyContactAdapter adapter;
     private boolean isShow;
     private String token;
     private String url;
     private String userid;
-    private static final String TAG = "ApplyThirdActivity_TAG";
     private List<RecentlyApps.DataBean> data;
     private MWebChromeClient mWebChromeClient;
+    public static boolean returnActivityC;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -106,15 +113,19 @@ public class ApplyThirdActivity extends AppCompatActivity {
             setAndroidNativeLightStatusBar(ApplyThirdActivity.this, true);//黑色字体
         }
         setContentView(R.layout.activity_apply_third);
+        returnActivityC = true;
         ButterKnife.inject(this);
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
-        Log.i(TAG, url + token + userid);
         webView(url);
         mLodingTime();
         intentOkhttp();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("action.refreshPay");
+        registerReceiver(mRefreshBroadcastReceiver, intentFilter);
     }
 
     /**
@@ -130,22 +141,17 @@ public class ApplyThirdActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Toast.makeText(ApplyThirdActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.i(TAG, "response_______" + response);
                 if (response.code() == 200) {
                     String string = response.body().string();
                     Gson gson = new Gson();
                     RecentlyApps recentlyApps = gson.fromJson(string, RecentlyApps.class);
                     data = recentlyApps.getData();
                     String s = recentlyApps.toString();
-                    Log.i(TAG, string);
-                    Log.i(TAG, s);
                 } else {
-                    Toast.makeText(ApplyThirdActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -190,7 +196,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
 
                 break;
             case R.id.fab_more:
-
                 break;
         }
         switchPopup();
@@ -253,7 +258,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         mGridPopup.setAdapter(adapter);
     }
 
-
     /**
      * webview初始化
      *
@@ -270,6 +274,8 @@ public class ApplyThirdActivity extends AppCompatActivity {
             WebViewSetting.initweb(webSettings);
         }
         mNewWeb.loadUrl(url);
+        //js交互接口定义
+        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -284,6 +290,76 @@ public class ApplyThirdActivity extends AppCompatActivity {
         });
         wvClientSetting(mNewWeb);
 
+    }
+
+    class MJavaScriptInterface {
+        private Context context;
+
+        public MJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        @JavascriptInterface
+        public void purchaseOfEntry(String purchaseOfEntry) {
+            Intent intent = new Intent(ApplyThirdActivity.this, IntentOpenActivity.class);
+            intent.putExtra("purchaseOfEntry", purchaseOfEntry);
+            returnActivityC = true;
+            startActivity(intent);
+        }
+
+        @JavascriptInterface
+        public void openNotification() {
+            gotoSet();
+        }
+
+        @JavascriptInterface
+        public void cancelAuthorization() {
+            finish();
+        }
+    }
+
+    // broadcast receiver
+    private BroadcastReceiver mRefreshBroadcastReceiver = new BroadcastReceiver() {
+
+        @SuppressLint("NewApi")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("action.refreshPay"))
+            {
+                Toast.makeText(context, "123", Toast.LENGTH_SHORT).show();
+                mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+
+                    }
+                });
+            }
+        }
+    };
+
+    /**
+     * 跳转系统通知
+     */
+    private void gotoSet() {
+        Intent intent = new Intent();
+        if (Build.VERSION.SDK_INT >= 26) {
+            // android 8.0引导
+            intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+            intent.putExtra("android.provider.extra.APP_PACKAGE", this.getPackageName());
+        } else if (Build.VERSION.SDK_INT >= 21) {
+            // android 5.0-7.0
+            intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+            intent.putExtra("app_package", this.getPackageName());
+            intent.putExtra("app_uid", this.getApplicationInfo().uid);
+        } else {
+            // 其他
+//            getContext().getApplicationContext().getPackageName();
+            intent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
+            intent.setData(Uri.fromParts("package", this.getPackageName(), null));
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     /**
@@ -328,8 +404,32 @@ public class ApplyThirdActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        returnActivityC = false;
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
-        finish();
+        Log.e("wangpan", "onPause");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.e("wangpan", "onStart");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.e("wangpan", "onRestart");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.e("wangpan", "onResume");
     }
 }

@@ -24,8 +24,5 @@ public class WebViewSetting {
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         webSettings.setLoadsImagesAutomatically(true);
         webSettings.setDefaultTextEncodingName("utf-8");
-
     }
-
-
 }

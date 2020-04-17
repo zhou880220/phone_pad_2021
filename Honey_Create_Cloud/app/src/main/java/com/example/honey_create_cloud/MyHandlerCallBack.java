@@ -15,13 +15,13 @@ import com.github.lzyzsd.jsbridge.CallBackFunction;
 public class MyHandlerCallBack implements BridgeHandler {
     private OnSendDataListener mSendDataListener;
 
-    public MyHandlerCallBack(OnSendDataListener mSendDataListener){
+    public MyHandlerCallBack(OnSendDataListener mSendDataListener) {
         this.mSendDataListener = mSendDataListener;
     }
 
     @Override
     public void handler(String data, CallBackFunction function) {
-        Log.e("liuw","接收数据为：" + data);
+        Log.e("liuw", "接收数据为：" + data);
         if (!TextUtils.isEmpty(data) && mSendDataListener != null) {
             mSendDataListener.sendData(data);
         }

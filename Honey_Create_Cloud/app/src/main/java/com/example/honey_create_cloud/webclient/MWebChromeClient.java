@@ -49,7 +49,7 @@ public class MWebChromeClient extends WebChromeClient {
 
     @Override
     public void onProgressChanged(WebView view, int newProgress) {
-        Log.i("当前页面",view.getUrl());
+        Log.i("当前页面", view.getUrl());
 
         if (onCloseListener != null) {
             onCloseListener.onCloseClick(newProgress);
@@ -77,7 +77,7 @@ public class MWebChromeClient extends WebChromeClient {
         return super.onJsPrompt(view, url, message, defaultValue, result);
     }
 
-    public interface OnCloseListener{
+    public interface OnCloseListener {
         void onCloseClick(int progress);
     }
 }

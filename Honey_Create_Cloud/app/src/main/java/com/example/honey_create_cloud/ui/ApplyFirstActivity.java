@@ -1,19 +1,24 @@
 package com.example.honey_create_cloud.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
+import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ImageView;
@@ -30,17 +35,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.RecentlyApps;
-import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.google.gson.Gson;
+import com.xj.library.utils.ToastUtils;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -90,6 +94,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String userid;
     private List<RecentlyApps.DataBean> data;
     private MWebChromeClient mWebChromeClient;
+    public static boolean returnActivityA;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -111,18 +116,102 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_apply);
+        returnActivityA = true;
         ButterKnife.inject(this);
-        CleanDataUtils.clearAllCache(Objects.<Context>requireNonNull(ApplyFirstActivity.this));
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
-        Log.i(TAG, "token---" + token);
-        Log.i("66", url + token + userid);
-        webView(url);
+        webView("http://172.16.23.210:3006/src/view/example/noticeOfPayment.html");
         mLodingTime();
         intentOkhttp();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("action.refreshPay");
+        registerReceiver(mRefreshBroadcastReceiver, intentFilter);
     }
+
+    /**
+     * webview初始化
+     *
+     * @param url
+     */
+    @SuppressLint("JavascriptInterface")
+    private void webView(String url) {
+        if (Build.VERSION.SDK_INT >= 19) {
+            mNewWeb.getSettings().setLoadsImagesAutomatically(true);
+        } else {
+            mNewWeb.getSettings().setLoadsImagesAutomatically(false);
+        }
+        WebSettings webSettings = mNewWeb.getSettings();
+        if (webSettings != null) {
+            WebViewSetting.initweb(webSettings);
+        }
+        mNewWeb.loadUrl(url);
+        //js交互接口定义
+        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
+        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+                        mNewWeb.goBack();
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+        wvClientSetting(mNewWeb);
+    }
+
+    class MJavaScriptInterface {
+        private Context context;
+
+        public MJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        @JavascriptInterface
+        public void purchaseOfEntry(String purchaseOfEntry) {
+            if (!purchaseOfEntry.isEmpty()) {
+                Intent intent = new Intent(ApplyFirstActivity.this, IntentOpenActivity.class);
+                intent.putExtra("PurchaseOfEntry", purchaseOfEntry);
+                returnActivityA = true;
+                startActivity(intent);
+            }
+        }
+
+        @JavascriptInterface
+        public void openNotification() {
+            gotoSet();
+        }
+
+        @JavascriptInterface
+        public void cancelAuthorization() {
+            finish();
+        }
+    }
+
+    // broadcast receiver
+    private BroadcastReceiver mRefreshBroadcastReceiver = new BroadcastReceiver() {
+
+        @SuppressLint("NewApi")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("action.refreshPay"))
+            {
+                Toast.makeText(context, "123", Toast.LENGTH_SHORT).show();
+                mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+
+                    }
+                });
+            }
+        }
+    };
 
     /**
      * 获取悬浮窗接口信息
@@ -137,22 +226,17 @@ public class ApplyFirstActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Toast.makeText(ApplyFirstActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.i(TAG, "response_______" + response);
                 if (response.code() == 200) {
                     String string = response.body().string();
                     Gson gson = new Gson();
                     RecentlyApps recentlyApps = gson.fromJson(string, RecentlyApps.class);
                     data = recentlyApps.getData();
                     String s = recentlyApps.toString();
-                    Log.i(TAG, string);
-                    Log.i(TAG, s);
                 } else {
-
                 }
             }
         });
@@ -246,8 +330,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         }
-
-
     }
 
     /**
@@ -261,38 +343,28 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mGridPopup.setAdapter(adapter);
     }
 
-
     /**
-     * webview初始化
-     *
-     * @param url
+     * 跳转系统通知
      */
-    private void webView(String url) {
-        if (Build.VERSION.SDK_INT >= 19) {
-            mNewWeb.getSettings().setLoadsImagesAutomatically(true);
+    private void gotoSet() {
+        Intent intent = new Intent();
+        if (Build.VERSION.SDK_INT >= 26) {
+            // android 8.0引导
+            intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+            intent.putExtra("android.provider.extra.APP_PACKAGE", this.getPackageName());
+        } else if (Build.VERSION.SDK_INT >= 21) {
+            // android 5.0-7.0
+            intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+            intent.putExtra("app_package", this.getPackageName());
+            intent.putExtra("app_uid", this.getApplicationInfo().uid);
         } else {
-            mNewWeb.getSettings().setLoadsImagesAutomatically(false);
+            // 其他
+//            getContext().getApplicationContext().getPackageName();
+            intent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
+            intent.setData(Uri.fromParts("package", this.getPackageName(), null));
         }
-        WebSettings webSettings = mNewWeb.getSettings();
-        if (webSettings != null) {
-            WebViewSetting.initweb(webSettings);
-        }
-        mNewWeb.loadUrl(url);
-
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        mNewWeb.goBack();
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
-        wvClientSetting(mNewWeb);
-
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     /**
@@ -337,20 +409,38 @@ public class ApplyFirstActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        returnActivityA = false;
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
-        finish();
+        Log.e("wangpan", "onPause");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.e("wangpan", "onStart");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.e("wangpan", "onRestart");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.e("wangpan", "onResume");
     }
 
     @Override
     protected void onDestroy() {
-        if (mNewWeb != null) {
-            mNewWeb.loadUrl(null);
-            mNewWeb.clearHistory();
-            ((ViewGroup) mNewWeb.getParent()).removeView(mNewWeb);
-            mNewWeb.destroy();
-            mNewWeb = null;
-        }
         super.onDestroy();
+        unregisterReceiver(mRefreshBroadcastReceiver);
     }
 }
