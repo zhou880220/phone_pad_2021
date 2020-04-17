@@ -410,26 +410,8 @@ public class ApplyThirdActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        Log.e("wangpan", "onPause");
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.e("wangpan", "onStart");
-    }
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        Log.e("wangpan", "onRestart");
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.e("wangpan", "onResume");
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mRefreshBroadcastReceiver);
     }
 }
