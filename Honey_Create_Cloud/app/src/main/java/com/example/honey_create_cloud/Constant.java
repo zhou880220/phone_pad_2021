@@ -12,7 +12,7 @@ public class Constant {
 
     //测试
     //入口
-    public static final String test_fileAssetsUrl = "http://172.16.23.69:3006/src/view/example/startIntentZing.html";
+    public static final String test_fileAssetsUrl = "http://172.16.23.69:3006/src/view/example/shareSDKData.html";
     //订单列表
     public static final String test_shoppingCart = "http://172.16.23.210:3001/shoppingCart";
 

@@ -3,6 +3,9 @@ package com.example.honey_create_cloud.util;
 import android.content.Context;
 import android.widget.Toast;
 
+import com.example.honey_create_cloud.bean.ShareSdkBean;
+import com.google.gson.Gson;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -22,6 +25,7 @@ import cn.sharesdk.wechat.moments.WechatMoments;
 public class ShareSDK_Web {
     private Context context;
     private String content;
+    private ShareSdkBean shareSdkBean;
 
     public ShareSDK_Web(Context context, String content) {
         this.context = context;
@@ -30,15 +34,17 @@ public class ShareSDK_Web {
     }
 
     private void init() {
+        Gson gson = new Gson();
+        shareSdkBean = gson.fromJson(content, new ShareSdkBean().getClass());
 
     }
 
     public void QQshowShare() {
         Platform.ShareParams sp = new Platform.ShareParams();
-        sp.setTitle("测试分享的标题");
-        sp.setTitleUrl("http://m.zhizaoyun.com/app/news/news.html"); // 标题的超链接
-        sp.setText("测试分享的文本");
-        sp.setImageUrl("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1587638830408&di=72286457faf0bf14766b5ecc1f7bb31c&imgtype=0&src=http%3A%2F%2Fbiaoqingba.cn%2Fwp-content%2Fuploads%2F2018%2F03%2Fcdf7475427f1807-3.jpeg");
+        sp.setTitle(shareSdkBean.getTitle());
+        sp.setTitleUrl(shareSdkBean.getUrl()); // 标题的超链接
+        sp.setText(shareSdkBean.getTxt());
+        sp.setImageUrl(shareSdkBean.getIcon());
 
         Platform qzone = ShareSDK.getPlatform(QQ.NAME);
         // 设置分享事件回调（注：回调放在不能保证在主线程调用，不可以在里面直接处理UI操作）
@@ -64,10 +70,10 @@ public class ShareSDK_Web {
 
     public void QZoneshowShare() {
         Platform.ShareParams sp = new Platform.ShareParams();
-        sp.setTitle("测试分享的标题");
-        sp.setTitleUrl("http://m.zhizaoyun.com/app/news/news.html"); // 标题的超链接
-        sp.setText("测试分享的文本");
-        sp.setImageUrl("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1587638830408&di=72286457faf0bf14766b5ecc1f7bb31c&imgtype=0&src=http%3A%2F%2Fbiaoqingba.cn%2Fwp-content%2Fuploads%2F2018%2F03%2Fcdf7475427f1807-3.jpeg");
+        sp.setTitle(shareSdkBean.getTitle());
+        sp.setTitleUrl(shareSdkBean.getUrl()); // 标题的超链接
+        sp.setText(shareSdkBean.getTxt());
+        sp.setImageUrl(shareSdkBean.getIcon());
 
         Platform qzone = ShareSDK.getPlatform(QZone.NAME);
         // 设置分享事件回调（注：回调放在不能保证在主线程调用，不可以在里面直接处理UI操作）
@@ -155,9 +161,10 @@ public class ShareSDK_Web {
 
     public void WechatMomentsshowShare() {
         Platform.ShareParams sp = new Platform.ShareParams();
-        sp.setTitle("测试分享的标题");
-        sp.setTitleUrl("http://m.zhizaoyun.com/app/news/news.html"); // 标题的超链接
-        sp.setImageUrl("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1587638830408&di=72286457faf0bf14766b5ecc1f7bb31c&imgtype=0&src=http%3A%2F%2Fbiaoqingba.cn%2Fwp-content%2Fuploads%2F2018%2F03%2Fcdf7475427f1807-3.jpeg");
+        sp.setTitle(shareSdkBean.getTitle());
+        sp.setTitleUrl(shareSdkBean.getUrl()); // 标题的超链接
+        sp.setText(shareSdkBean.getTxt());
+        sp.setImageUrl(shareSdkBean.getIcon());
         Platform qzone = ShareSDK.getPlatform(WechatMoments.NAME);
         // 设置分享事件回调（注：回调放在不能保证在主线程调用，不可以在里面直接处理UI操作）
         qzone.setPlatformActionListener(new PlatformActionListener() {
@@ -182,9 +189,10 @@ public class ShareSDK_Web {
 
     public void WechatshowShare() {
         Platform.ShareParams sp = new Platform.ShareParams();
-        sp.setTitle("测试分享的标题");
-        sp.setTitleUrl("http://m.zhizaoyun.com/app/news/news.html"); // 标题的超链接
-        sp.setImageUrl("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1587638830408&di=72286457faf0bf14766b5ecc1f7bb31c&imgtype=0&src=http%3A%2F%2Fbiaoqingba.cn%2Fwp-content%2Fuploads%2F2018%2F03%2Fcdf7475427f1807-3.jpeg");
+        sp.setTitle(shareSdkBean.getTitle());
+        sp.setTitleUrl(shareSdkBean.getUrl()); // 标题的超链接
+        sp.setText(shareSdkBean.getTxt());
+        sp.setImageUrl(shareSdkBean.getIcon());
         Platform qzone = ShareSDK.getPlatform(WechatMoments.NAME);
         // 设置分享事件回调（注：回调放在不能保证在主线程调用，不可以在里面直接处理UI操作）
         qzone.setPlatformActionListener(new PlatformActionListener() {

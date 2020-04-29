@@ -376,6 +376,13 @@ public class ApplySecondActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK){
             if (data != null){
                 String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
+                if (stringExtra.startsWith("http:") || stringExtra.startsWith("https:")){
+                    Intent intent = new Intent(ApplySecondActivity.this,ZingWebActivity.class);
+                    intent.putExtra("url",stringExtra);
+                    startActivity(intent);
+                }else{
+                    Toast.makeText(this, "该路径解析错误", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
