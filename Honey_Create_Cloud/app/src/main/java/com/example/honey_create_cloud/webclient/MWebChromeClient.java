@@ -1,7 +1,6 @@
 package com.example.honey_create_cloud.webclient;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.webkit.JsPromptResult;
@@ -39,23 +38,18 @@ public class MWebChromeClient extends WebChromeClient {
     @Override
     public void onReceivedTitle(WebView view, String title) {
         super.onReceivedTitle(view, title);
+
+//        if (title.contains("404") || title.contains("500") || title.contains("Error") || title.contains("找不到网页") || title.contains("网页无法打开")) {
+//            mWebError.setVisibility(View.VISIBLE);
+//        }
         // android 6.0 以下通过title获取判断
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            if (title.contains("404") || title.contains("500") || title.contains("Error") || title.contains("找不到网页") || title.contains("网页无法打开")) {
-                mWebError.setVisibility(View.VISIBLE);
-            }
-        }
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+//
+//        }
     }
 
     @Override
     public void onProgressChanged(WebView view, int newProgress) {
-        Log.i("当前页面", view.getUrl());
-
-        if (onCloseListener != null) {
-            onCloseListener.onCloseClick(newProgress);
-        }
-
-        super.onProgressChanged(view, newProgress);
         if (newProgress == 100) {
             //进度条消失
             progressBar.setVisibility(View.GONE);
@@ -63,7 +57,13 @@ public class MWebChromeClient extends WebChromeClient {
             //进度跳显示
             progressBar.setVisibility(View.VISIBLE);
             progressBar.setProgress(newProgress);
+            Log.e("wangpan", newProgress + "");
         }
+
+        if (onCloseListener != null) {
+            onCloseListener.onCloseClick(newProgress);
+        }
+        super.onProgressChanged(view, newProgress);
     }
 
 

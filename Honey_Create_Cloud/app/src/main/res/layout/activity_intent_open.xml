@@ -6,17 +6,19 @@
     android:layout_height="match_parent"
     tools:context=".ui.IntentOpenActivity">
 
-    <ProgressBar
-        android:id="@+id/newwebprogressbar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:progressDrawable="@drawable/progressbar" />
+
 
     <com.github.lzyzsd.jsbridge.BridgeWebView
         android:id="@+id/intent_open_pay_web"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
+    <ProgressBar
+        android:id="@+id/NewWebProgressbar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:progressDrawable="@drawable/progressbar" />
 
     <include
         android:id="@+id/web_error"

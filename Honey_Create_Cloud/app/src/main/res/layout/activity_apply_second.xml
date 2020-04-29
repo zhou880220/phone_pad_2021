@@ -5,24 +5,19 @@
     android:layout_height="match_parent"
     tools:context=".ui.ApplySecondActivity">
 
+    <com.github.lzyzsd.jsbridge.BridgeWebView
+        android:id="@+id/new_Web2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <ProgressBar
-        android:id="@+id/newwebprogressbar"
+        android:id="@+id/NewWebProgressbar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="3dp"
         android:progressDrawable="@drawable/progressbar" />
 
-    <WebView
-        android:id="@+id/new_Web2"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 
-    <include
-        android:id="@+id/web_error"
-        layout="@layout/layout_load_error"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/grid_popup"
@@ -32,10 +27,10 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
-        android:padding="10dp"
+        android:alpha="0.95"
         android:background="@drawable/gird_radius"
         android:numColumns="3"
-        android:alpha="0.95"
+        android:padding="10dp"
         android:visibility="gone" />
 
     <LinearLayout
@@ -113,8 +108,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:src="@android:color/black"
-            android:alpha="0.95"/>
+            android:alpha="0.95"
+            android:src="@android:color/black" />
 
         <TextView
             android:id="@+id/tt_course_none"
@@ -128,20 +123,27 @@
         android:id="@+id/fab_more"
         android:layout_width="55dp"
         android:layout_height="55dp"
-        android:padding="16dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:layout_marginRight="6dp"
         android:layout_marginBottom="50dp"
-        android:onClick="onClick"
-        android:src="@mipmap/floating"
+        android:alpha="0.95"
         android:background="@drawable/add_radius"
-        android:alpha="0.95" />
+        android:onClick="onClick"
+        android:padding="16dp"
+        android:src="@mipmap/floating" />
 
     <include
         android:id="@+id/loading_page"
         layout="@layout/activity_loding"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <include
+        android:id="@+id/web_error"
+        layout="@layout/layout_load_error"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
 </RelativeLayout>

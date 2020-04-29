@@ -1,7 +1,7 @@
 package com.example.honey_create_cloud.bean;
 
 /**
- * Created by wangpan on 2020/3/24
+ * Created by wangpan on 2020/3/24  修改头像
  */
 public class HeadPic {
 

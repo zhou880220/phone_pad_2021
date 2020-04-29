@@ -1,61 +1,51 @@
 package com.example.honey_create_cloud.bean;
 
 /**
- * Created by wangpan on 2020/4/15
+ * Created by wangpan on 2020/4/15  获取页面传递的
  */
 public class PayBean {
 
+
     /**
-     * type : 1
-     * itemId : id1
-     * price : 6666
-     * number : 1
+     * payType : 1
+     * outTradeNo : id1
+     * userId : 6666
      */
 
-    private int type;
-    private String itemId;
-    private int price;
-    private int number;
+    private String payType;
+    private String outTradeNo;
+    private String userId;
 
-    public int getType() {
-        return type;
+    public String getPayType() {
+        return payType;
     }
 
-    public void setType(int type) {
-        this.type = type;
+    public void setPayType(String payType) {
+        this.payType = payType;
     }
 
-    public String getItemId() {
-        return itemId;
+    public String getOutTradeNo() {
+        return outTradeNo;
     }
 
-    public void setItemId(String itemId) {
-        this.itemId = itemId;
+    public void setOutTradeNo(String outTradeNo) {
+        this.outTradeNo = outTradeNo;
     }
 
-    public int getPrice() {
-        return price;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     @Override
     public String toString() {
         return "PayBean{" +
-                "type=" + type +
-                ", itemId='" + itemId + '\'' +
-                ", price=" + price +
-                ", number=" + number +
+                "payType='" + payType + '\'' +
+                ", outTradeNo='" + outTradeNo + '\'' +
+                ", userId='" + userId + '\'' +
                 '}';
     }
 }

@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -21,6 +22,7 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -82,8 +84,8 @@ import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATA
 
 public class MainActivity extends AppCompatActivity {
 
-    @InjectView(R.id.newwebprogressbar)
-    ProgressBar mNewwebprogressbar;
+    @InjectView(R.id.NewWebProgressbar)
+    ProgressBar mNewWebProgressbar;
     @InjectView(R.id.new_Web)
     BridgeWebView mNewWeb;
     @InjectView(R.id.loading_page)
@@ -105,8 +107,6 @@ public class MainActivity extends AppCompatActivity {
     private File tempFile;
     //权限
     private static final int NOT_NOTICE = 2;//如果勾选了不再询问
-    private AlertDialog alertDialog;
-    private AlertDialog mDialog;
     private MWebViewClient mWebViewClient;
     private boolean mBackKeyPressed = false;
     private long mTime;
@@ -135,7 +135,6 @@ public class MainActivity extends AppCompatActivity {
         public boolean handleMessage(Message msg) {
             if (msg.what == 1) {
                 newName = (String) msg.obj;
-                Log.i(TAG, "newName---" + newName);
                 OkHttpClient client1 = new OkHttpClient();
                 final FormBody formBody = new FormBody.Builder()
                         .add("userId", userid)
@@ -145,11 +144,9 @@ public class MainActivity extends AppCompatActivity {
                         "userId:'" + userid + '\'' +
                         ", url:'" + newName + '\'' +
                         '}';
-                Log.i(TAG, "post----" + post);
                 MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
                 StringBuffer stringBuffer = new StringBuffer();
                 stringBuffer.append(userid + "=" + newName);
-                Log.i(TAG, "stringBuffer----" + stringBuffer.toString());
                 RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, post);
                 Request request = new Request.Builder()
                         .addHeader("Authorization", accessToken)
@@ -171,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
                         if (headPic.getCode() == 200) {
                             final String msg1 = headPic.getMsg();
                             final String tete = "mytest";
-                            Log.i(TAG, "msg1---" + msg1);
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -184,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             });
                         } else {
-                            Toast.makeText(MainActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
+
                         }
                     }
                 });
@@ -197,6 +193,8 @@ public class MainActivity extends AppCompatActivity {
     private MWebChromeClient myChromeWebClient;
     private String backUrl;
     private int back;
+    public SharedPreferences sb;
+    private SharedPreferences.Editor edit;
 
     @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -241,9 +239,23 @@ public class MainActivity extends AppCompatActivity {
         }
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
-        myChromeWebClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
+        myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         mNewWeb.setWebChromeClient(myChromeWebClient);
-        mNewWeb.loadUrl(Constant.Attention);
+        mNewWeb.loadUrl(Constant.text_url);
+
+        //回退监听
+        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+                        mNewWeb.goBack();
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
 
         //js交互接口定义
         mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
@@ -263,7 +275,6 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getCache", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.i("totalCacheSize", totalCacheSize);
                 if (!totalCacheSize.isEmpty()) {
                     function.onCallBack(totalCacheSize);
                 }
@@ -288,7 +299,6 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.i(TAG, "replace---" + data);
                 //权限判断
                 if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA)
                         != PackageManager.PERMISSION_GRANTED) {
@@ -330,11 +340,8 @@ public class MainActivity extends AppCompatActivity {
                         String replace3 = replace2.replace("{", "");
                         String replace4 = replace3.replace("}", "");
                         String[] s = replace4.split(" ");
-                        Log.i(TAG, "replace---" + replace1);
                         token1 = s[0];
                         userid = s[1];
-                        Log.i(TAG, "token1---" + token1);
-                        Log.i(TAG, "userid---" + userid);
                         gotoPhoto();
                     } else {
 
@@ -350,8 +357,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 boolean enabled = isNotificationEnabled(MainActivity.this);
-
-                Log.i("enabled_first", enabled + "");
                 if (enabled == true) {
                     function.onCallBack("1");
                 } else {
@@ -360,27 +365,108 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //回退监听
-//        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-//            @Override
-//            public boolean onKey(View v, int keyCode, KeyEvent event) {
-//                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-//                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-//                        mNewWeb.goBack();
-//                        return true;
-//                    }
-//                }
-//                return false;
-//            }
-//        });
+        /**
+         * 获取用户基本信息
+         */
+        mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                function.onCallBack(sb.getString("userInfo", ""));
+            }
+        });
+    }
+
+    /**
+     * Android与js交互   设置功能
+     */
+    class MJavaScriptInterface {
+        private Context context;
+
+        public MJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        /**
+         * 获取第三放url路径
+         *
+         * @param interfaceUrl
+         * @param appId
+         */
+        @JavascriptInterface
+        public void showApplyParams(String interfaceUrl, String appId) {
+            if (!interfaceUrl.isEmpty()) {
+                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                intent.putExtra("url", interfaceUrl);
+                intent.putExtra("token", usertoken1);
+                intent.putExtra("userid", userid1);
+                intent.putExtra("appId", appId);
+                startActivity(intent);
+            } else {
+                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        /**
+         * 获取跳转头条url
+         */
+        @JavascriptInterface
+        public void showNewsParams(String addressUrl, String appId, String token) {
+            if (!addressUrl.isEmpty()) {
+                Intent intent = new Intent(MainActivity.this, NewsActivity.class);
+                intent.putExtra("url", addressUrl);
+                intent.putExtra("token", token1);
+                startActivity(intent);
+            } else {
+                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        /**
+         * 获取通知打开或者关闭
+         */
+        @JavascriptInterface
+        public void NewNotifiction() {
+            gotoSet();
+        }
+
+        /**
+         * 获取登录用户token  用于第三放页面悬浮按钮接口查询
+         */
+        @JavascriptInterface
+        public void getToken(String usertoken, String userid) {
+            if (!usertoken.isEmpty()) {
+                usertoken1 = usertoken;
+                userid1 = userid;
+            }
+        }
+
+        /**
+         * 获取用户登录信息,并存储，用于支付
+         */
+        @JavascriptInterface
+        public void setUserInfo(String userInfo) {
+            if (!userInfo.isEmpty()) {
+                sb = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                edit = sb.edit();
+                edit.putString("userInfo", userInfo);
+                edit.commit();
+            }
+        }
+
+        /**
+         * 清除用户登录信息
+         */
+        @JavascriptInterface
+        public void ClearUserInfo() {
+            edit.clear();
+            edit.commit();
+        }
     }
 
     /**
      * 跳转到照相机
      */
     private void gotoCamera() {
-        Log.d("evan", "*****************打开相机********************");
-
         //	获取图片沙盒文件夹
         File dPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         //图片名称
@@ -407,7 +493,6 @@ public class MainActivity extends AppCompatActivity {
      * 跳转到相册
      */
     private void gotoPhoto() {
-        Log.d(TAG, "*****************打开图库********************");
         //跳转到调用系统图库
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(Intent.createChooser(intent, "请选择图片"), REQUEST_PICK);
@@ -509,7 +594,6 @@ public class MainActivity extends AppCompatActivity {
             PackageInfo packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
             //获取版本号
             mVersionName = packageInfo.versionName;
-            Log.i("mVersionName_1", mVersionName);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -626,10 +710,8 @@ public class MainActivity extends AppCompatActivity {
                     Uri uri = intent.getData();
                     String realPathFromUri = getRealPathFromUri(this, uri);
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
-                        Log.e(TAG, "" + realPathFromUri);
                         gotoClipActivity(uri);
                     } else {
-                        Log.e(TAG, "" + realPathFromUri);
                         Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
                     }
 
@@ -643,7 +725,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
                     long fileSize = FileUtil.getFileSize(cropImagePath);
-                    Log.i(TAG, "onActivityResult: fileSize =" + fileSize * 1.0f / 1024);
                     Bitmap bitMap = BitmapFactory.decodeFile(cropImagePath);
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
                     String date = simpleDateFormat.format(new Date());
@@ -651,9 +732,7 @@ public class MainActivity extends AppCompatActivity {
                     //此处后面可以将bitMap转为二进制上传后台网络
                     //......
                     headImage3.setImageBitmap(bitMap);
-                    Log.i(TAG, "Bearer" + " " + token1);
                     accessToken = "Bearer" + " " + token1;
-                    Log.i(TAG, "accessToken---" + accessToken);
                     OkHttpClient client = new OkHttpClient();//创建okhttpClient
                     //创建body类型用于传值
                     MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
@@ -680,7 +759,6 @@ public class MainActivity extends AppCompatActivity {
                         public void onResponse(Call call, Response response) throws IOException {
                             String s = response.body().string();
                             Gson gson = new Gson();
-                            Log.i(TAG, "response---" + s);
                             PictureUpload pictureUpload = gson.fromJson(s, PictureUpload.class);
                             if (pictureUpload.getCode() == 200) {
                                 List<PictureUpload.DataBean> data = pictureUpload.getData();
@@ -688,10 +766,8 @@ public class MainActivity extends AppCompatActivity {
                                 message.obj = data.get(0).getNewName();
                                 message.what = 1;
                                 myHandler.sendMessage(message);
-                                Log.i(TAG, "pictureUpload.getMsg()---" + pictureUpload.getMsg());
-                                Log.i(TAG, "newName---" + MainActivity.this.newName);
                             } else {
-                                Toast.makeText(MainActivity.this, "数据异常", Toast.LENGTH_SHORT).show();
+
                             }
                         }
                     });
@@ -700,68 +776,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Android与js交互   设置功能
-     */
-    class MJavaScriptInterface {
-        private Context context;
-
-        public MJavaScriptInterface(Context context) {
-            this.context = context;
-        }
-
-        /**
-         * 获取首页url路径
-         *
-         * @param interfaceUrl
-         * @param appId
-         * @param token
-         */
-        @JavascriptInterface
-        public void showApplyParams(String interfaceUrl, String appId, String token) {
-            Log.i("调用js的Toast", interfaceUrl);
-            if (!interfaceUrl.isEmpty()) {
-                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
-                intent.putExtra("url", interfaceUrl);
-                intent.putExtra("token", usertoken1);
-                intent.putExtra("userid", userid1);
-                Log.i(TAG, "showApplyParamstoken1---" + usertoken1 + "____" + userid1);
-                startActivity(intent);
-            } else {
-                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
-            }
-        }
-
-        @JavascriptInterface
-        public void showNewsParams(String addressUrl, String appId, String token) {
-            Log.i("调用js的Toast", addressUrl);
-            if (!addressUrl.isEmpty()) {
-                Intent intent = new Intent(MainActivity.this, NewsActivity.class);
-                intent.putExtra("url", addressUrl);
-                intent.putExtra("token", token1);
-                startActivity(intent);
-            } else {
-                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
-            }
-        }
-
-        /**
-         * 获取通知打开或者关闭
-         */
-        @JavascriptInterface
-        public void NewNotifiction() {
-            gotoSet();
-        }
-
-        /**
-         * 获取登录用户token
-         */
-        @JavascriptInterface
-        public void getToken(String usertoken, String userid) {
-            usertoken1 = usertoken;
-            userid1 = userid;
-        }
-    }
 
     /**
      * 跳转系统通知

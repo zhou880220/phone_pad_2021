@@ -7,15 +7,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.honey_create_cloud.R;
-import com.example.honey_create_cloud.bean.ProductListBean;
 import com.example.honey_create_cloud.bean.RecentlyApps;
 import com.example.honey_create_cloud.ui.ApplyFirstActivity;
 import com.example.honey_create_cloud.ui.ApplySecondActivity;
@@ -23,8 +20,6 @@ import com.example.honey_create_cloud.ui.ApplyThirdActivity;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import retrofit2.http.PUT;
 
 /**
  * Created by wangpan on 2020/3/12
@@ -67,15 +62,6 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_gridview, parent, false);//解析layout
         final ViewHolder viewHolder = new ViewHolder(view);//新建一个viewHolder绑定解析到的view
-//        //监听每一项的点击事件
-//        viewHolder.contactView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                int position = viewHolder.getAdapterPosition();
-//                ProductListBean contact = mContactList.get(position);
-//                Toast.makeText(view.getContext(), contact.getImgUrl(), Toast.LENGTH_SHORT).show();
-//            }
-//        });
         //监听每一项里的控件的点击事件，如点击了ImageView
         viewHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,18 +76,21 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                     intent.putExtra("userid",userid);
                     intent.putExtra("token",token);
                     intent.putExtra("url",mContactList.get(0).getAppInterfaceUrl());
+                    intent.putExtra("appId",mContactList.get(0).getAppId());
                     context.startActivity(intent);
                 }else if(position == 1){
                     Intent intent = new Intent(context, ApplySecondActivity.class);
                     intent.putExtra("userid",userid);
                     intent.putExtra("token",token);
                     intent.putExtra("url",mContactList.get(1).getAppInterfaceUrl());
+                    intent.putExtra("appId",mContactList.get(1).getAppId());
                     context.startActivity(intent);
                 }else if(position == 2){
                     Intent intent = new Intent(context, ApplyThirdActivity.class);
                     intent.putExtra("userid",userid);
                     intent.putExtra("token",token);
                     intent.putExtra("url",mContactList.get(2).getAppInterfaceUrl());
+                    intent.putExtra("appId",mContactList.get(2).getAppId());
                     context.startActivity(intent);
                 }
             }
@@ -124,7 +113,4 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
     public interface OnClosePopupListener{
         void onClosePopupClick(String name);
     }
-
-
-
 }

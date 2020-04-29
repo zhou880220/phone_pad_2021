@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.MainActivity">
+    tools:context=".ui.ZingWebActivity">
 
     <com.github.lzyzsd.jsbridge.BridgeWebView
-        android:id="@+id/new_Web"
+        android:id="@+id/new_Web_zing"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+    </com.github.lzyzsd.jsbridge.BridgeWebView>
 
     <ProgressBar
         android:id="@+id/NewWebProgressbar"
@@ -22,22 +25,13 @@
         layout="@layout/layout_load_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:visibility="gone"/>
 
     <include
         android:id="@+id/loading_page"
         layout="@layout/activity_loding"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
-    <ImageView
-        android:id="@+id/head_image3"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginRight="50dp"
-        android:src="@mipmap/floatingappchange"
-        android:visibility="gone" />
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 
 </RelativeLayout>

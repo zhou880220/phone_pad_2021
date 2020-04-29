@@ -6,13 +6,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -23,10 +29,12 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,16 +42,24 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
+import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.RecentlyApps;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
+import com.example.honey_create_cloud.util.ShareSDK_Web;
+import com.example.honey_create_cloud.util.SystemUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
+import com.github.lzyzsd.jsbridge.BridgeHandler;
+import com.github.lzyzsd.jsbridge.BridgeWebView;
+import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.yzq.zxinglibrary.android.CaptureActivity;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -55,10 +71,10 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApplySecondActivity extends AppCompatActivity {
-    @InjectView(R.id.newwebprogressbar)
-    ProgressBar mNewwebprogressbar;
+    @InjectView(R.id.NewWebProgressbar)
+    ProgressBar mNewWebProgressbar;
     @InjectView(R.id.new_Web2)
-    WebView mNewWeb;
+    BridgeWebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
     @InjectView(R.id.loading_page)
@@ -93,6 +109,8 @@ public class ApplySecondActivity extends AppCompatActivity {
     private List<RecentlyApps.DataBean> data;
     private MWebChromeClient mWebChromeClient;
     public static boolean returnActivityB;
+    private String appId;
+    private int REQUEST_CODE_SCAN = 1;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -119,6 +137,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
+        appId = intent.getStringExtra("appId");
         webView(url);
         mLodingTime();
         intentOkhttp();
@@ -128,7 +147,198 @@ public class ApplySecondActivity extends AppCompatActivity {
         registerReceiver(mRefreshBroadcastReceiver, intentFilter);
     }
 
+    /**
+     * webview初始化
+     *
+     * @param url
+     */
+    private void webView(String url) {
+        if (Build.VERSION.SDK_INT >= 19) {
+            mNewWeb.getSettings().setLoadsImagesAutomatically(true);
+        } else {
+            mNewWeb.getSettings().setLoadsImagesAutomatically(false);
+        }
+        WebSettings webSettings = mNewWeb.getSettings();
+        if (webSettings != null) {
+            WebViewSetting.initweb(webSettings);
+        }
+        mNewWeb.loadUrl(url);
+        //js交互接口定义
+        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
+        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+                        mNewWeb.goBack();
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+        wvClientSetting(mNewWeb);
 
+        /**
+         * 获取版本号
+         */
+        mNewWeb.registerHandler("getSystemVersion", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                function.onCallBack(SystemUtil.getSystemVersion());
+            }
+        });
+        /**
+         * 获取手机唯一标识符
+         */
+        mNewWeb.registerHandler("getIdentifier", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                String imei = SystemUtil.getIMEI(ApplySecondActivity.this);
+                function.onCallBack(imei);
+            }
+        });
+        /**
+         * 读取第三方存储信息
+         */
+        mNewWeb.registerHandler("getStoreData", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                SharedPreferences sb = getSharedPreferences(appId, MODE_PRIVATE);
+                String storeData = sb.getString("storeData", "");
+                Log.e("wangpan", storeData);
+                function.onCallBack(storeData);
+            }
+        });
+    }
+
+    class MJavaScriptInterface implements View.OnClickListener {
+        private Context context;
+        private ShareSDK_Web shareSDK_web;
+        private PopupWindow popupWindow;
+
+        public MJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        //联系客服  打开通讯录
+        @JavascriptInterface
+        public void OpenPayIntent(String intentOpenPay) {
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+        //跳转支付页面
+        @JavascriptInterface
+        public void purchaseOfEntry(String purchaseOfEntry) {
+            Intent intent = new Intent(ApplySecondActivity.this, IntentOpenActivity.class);
+            intent.putExtra("purchaseOfEntry", purchaseOfEntry);
+            intent.putExtra("appId", appId);
+            returnActivityB = true;
+            startActivity(intent);
+        }
+
+        //打开系统通知界面
+        @JavascriptInterface
+        public void openNotification() {
+            gotoSet();
+        }
+
+        //用户取消权限
+        @JavascriptInterface
+        public void cancelAuthorization() {
+            finish();
+        }
+
+        @JavascriptInterface
+        public void shareSDKData(String shareData) {
+            Log.e("wangpan",shareData);
+            //集成分享类
+            shareSDK_web = new ShareSDK_Web(ApplySecondActivity.this, shareData);
+            View centerView = LayoutInflater.from(ApplySecondActivity.this).inflate(R.layout.popupwindow, null);
+            popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                    400);
+            popupWindow.setTouchable(true);
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+
+            View mWeChat = centerView.findViewById(R.id.wechat);
+            View mWeChatMoments = centerView.findViewById(R.id.wechatmoments);
+            View mSinaWeiBo = centerView.findViewById(R.id.sinaweibo);
+            View mQq = centerView.findViewById(R.id.qq);
+            View mQZone = centerView.findViewById(R.id.qzone);
+            TextView mDismiss = centerView.findViewById(R.id.popup_dismiss);
+
+            mWeChat.setOnClickListener(this);
+            mWeChatMoments.setOnClickListener(this);
+            mSinaWeiBo.setOnClickListener(this);
+            mQq.setOnClickListener(this);
+            mQZone.setOnClickListener(this);
+            mDismiss.setOnClickListener(this);
+        }
+
+        //存储本地数据
+        @JavascriptInterface
+        public void setStoreData(String storeData) {
+            Log.e("wangpan",appId);
+            SharedPreferences sp = context.getSharedPreferences(appId,MODE_PRIVATE);
+            SharedPreferences.Editor edit = sp.edit();
+            edit.putString("storeData",storeData);
+            edit.commit();
+        }
+
+        //扫一扫
+        @JavascriptInterface
+        public void startIntentZing() {
+            Intent intent = new Intent(ApplySecondActivity.this, CaptureActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_SCAN);
+        }
+
+        //启动本地浏览器
+        @JavascriptInterface
+        public void intentBrowser(String browser){
+            Log.e("wangpan",browser);
+            Gson gson = new Gson();
+            BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
+            if (!browser.isEmpty()) {
+                Intent intent = new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse(browserBean.getUrl());
+                intent.setData(content_url);
+                startActivity(intent);
+            }
+        }
+
+        @Override
+        public void onClick(View v) {
+            int id = v.getId();
+            switch (id) {
+                case R.id.wechat:
+                    shareSDK_web.WechatshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.wechatmoments:
+                    shareSDK_web.WechatMomentsshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.sinaweibo:
+                    shareSDK_web.SinaweiboshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.qq:
+                    shareSDK_web.QQshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.qzone:
+                    shareSDK_web.QZoneshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.popup_dismiss:
+                    popupWindow.dismiss();
+                    break;
+            }
+        }
+    }
     /**
      * 获取悬浮窗接口信息
      */
@@ -146,20 +356,103 @@ public class ApplySecondActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.i(TAG, "response_______" + response);
                 if (response.code() == 200) {
                     String string = response.body().string();
                     Gson gson = new Gson();
                     RecentlyApps recentlyApps = gson.fromJson(string, RecentlyApps.class);
                     data = recentlyApps.getData();
                     String s = recentlyApps.toString();
-                    Log.i(TAG, string);
-                    Log.i(TAG, s);
                 } else {
                 }
             }
         });
     }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        //扫一扫二维码返回
+        if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK){
+            if (data != null){
+                String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
+            }
+        }
+    }
+
+    //获取手机唯一标识
+    private String getId() {
+        StringBuilder deviceId = new StringBuilder();
+        // 渠道标志
+        deviceId.append("a");
+        try {
+            //IMEI（imei）
+            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
+            if (!TextUtils.isEmpty(imei)) {
+                deviceId.append("imei");
+                deviceId.append(imei);
+                return deviceId.toString();
+            }
+            //序列号（sn）
+            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
+            if (!TextUtils.isEmpty(sn)) {
+                deviceId.append("sn");
+                deviceId.append(sn);
+                return deviceId.toString();
+            }
+            //如果上面都没有， 则生成一个id：随机码
+            String uuid = getUUID();
+            if (!TextUtils.isEmpty(uuid)) {
+                deviceId.append("id");
+                deviceId.append(uuid);
+                return deviceId.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            deviceId.append("id").append(getUUID());
+        }
+        return deviceId.toString();
+    }
+
+    /**
+     * 得到全局唯一UUID
+     */
+    private String uuid;
+
+    public String getUUID() {
+        SharedPreferences mShare = getSharedPreferences("uuid", MODE_PRIVATE);
+        if (mShare != null) {
+            uuid = mShare.getString("uuid", "");
+        }
+        if (TextUtils.isEmpty(uuid)) {
+            uuid = UUID.randomUUID().toString();
+            mShare.edit().putString("uuid", uuid).commit();
+        }
+        return uuid;
+    }
+
+
+    // broadcast receiver
+    private BroadcastReceiver mRefreshBroadcastReceiver = new BroadcastReceiver() {
+
+        @SuppressLint("NewApi")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals("action.refreshPay")) {
+                Toast.makeText(context, "123", Toast.LENGTH_SHORT).show();
+                mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+
+                    }
+                });
+            }
+        }
+    };
+
+
 
     /**
      * 菜单展开按钮功能
@@ -263,84 +556,8 @@ public class ApplySecondActivity extends AppCompatActivity {
         mGridPopup.setAdapter(adapter);
     }
 
-    /**
-     * webview初始化
-     *
-     * @param url
-     */
-    private void webView(String url) {
-        if (Build.VERSION.SDK_INT >= 19) {
-            mNewWeb.getSettings().setLoadsImagesAutomatically(true);
-        } else {
-            mNewWeb.getSettings().setLoadsImagesAutomatically(false);
-        }
-        WebSettings webSettings = mNewWeb.getSettings();
-        if (webSettings != null) {
-            WebViewSetting.initweb(webSettings);
-        }
-        mNewWeb.loadUrl(url);
-        //js交互接口定义
-        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        mNewWeb.goBack();
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
-        wvClientSetting(mNewWeb);
-    }
 
-    class MJavaScriptInterface {
-        private Context context;
 
-        public MJavaScriptInterface(Context context) {
-            this.context = context;
-        }
-
-        @JavascriptInterface
-        public void purchaseOfEntry(String purchaseOfEntry) {
-            Intent intent = new Intent(ApplySecondActivity.this, IntentOpenActivity.class);
-            intent.putExtra("purchaseOfEntry", purchaseOfEntry);
-            returnActivityB = true;
-            startActivity(intent);
-        }
-
-        @JavascriptInterface
-        public void openNotification() {
-            gotoSet();
-        }
-
-        @JavascriptInterface
-        public void cancelAuthorization() {
-            finish();
-        }
-    }
-
-    // broadcast receiver
-    private BroadcastReceiver mRefreshBroadcastReceiver = new BroadcastReceiver() {
-
-        @SuppressLint("NewApi")
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals("action.refreshPay"))
-            {
-                Toast.makeText(context, "123", Toast.LENGTH_SHORT).show();
-                mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
-                    @Override
-                    public void onReceiveValue(String value) {
-
-                    }
-                });
-            }
-        }
-    };
 
     /**
      * 跳转系统通知
@@ -386,9 +603,9 @@ public class ApplySecondActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(WebView ead_web) {
-        MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
-        ead_web.setWebViewClient(mWebViewClient);
-        mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
+//        MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
+//        ead_web.setWebViewClient(mWebViewClient);
+        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

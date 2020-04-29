@@ -5,19 +5,19 @@
     android:layout_height="match_parent"
     tools:context=".ui.NewsActivity">
 
-    <ProgressBar
-        android:id="@+id/newwebprogressbar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:progressDrawable="@drawable/progressbar" />
-
-    <WebView
+    <com.github.lzyzsd.jsbridge.BridgeWebView
         android:id="@+id/new_Web_1"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </WebView>
+    </com.github.lzyzsd.jsbridge.BridgeWebView>
+
+    <ProgressBar
+        android:id="@+id/NewWebProgressbar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:progressDrawable="@drawable/progressbar" />
 
     <include
         android:id="@+id/web_error"
