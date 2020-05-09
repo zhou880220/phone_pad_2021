@@ -39,9 +39,9 @@ public class MWebChromeClient extends WebChromeClient {
     public void onReceivedTitle(WebView view, String title) {
         super.onReceivedTitle(view, title);
 
-//        if (title.contains("404") || title.contains("500") || title.contains("Error") || title.contains("找不到网页") || title.contains("网页无法打开")) {
-//            mWebError.setVisibility(View.VISIBLE);
-//        }
+        if (title.contains("404") || title.contains("500") || title.contains("Error") || title.contains("找不到网页") || title.contains("网页无法打开")) {
+            mWebError.setVisibility(View.VISIBLE);
+        }
         // android 6.0 以下通过title获取判断
 //        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
 //

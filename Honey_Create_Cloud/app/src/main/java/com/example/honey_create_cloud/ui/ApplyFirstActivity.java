@@ -36,7 +36,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -51,6 +50,7 @@ import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
+import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
@@ -115,7 +115,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private int REQUEST_CODE_SCAN = 1;
 
 
-
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,7 +142,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
-        webView(Constant.test_fileAssetsUrl);
+        webView(url);  //http://172.16.23.210:3006/src/view/example/shareSDKData.html
         mLodingTime();
         intentOkhttp();
 
@@ -264,7 +263,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //分享功能
         @JavascriptInterface
         public void shareSDKData(String shareData) {
-            Log.e("wangpan",shareData);
+            Log.e("wangpan", shareData);
             //集成分享类
             shareSDK_web = new ShareSDK_Web(ApplyFirstActivity.this, shareData);
             View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.popupwindow, null);
@@ -292,10 +291,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //存储本地数据
         @JavascriptInterface
         public void setStoreData(String storeData) {
-            Log.e("wangpan",appId);
-            SharedPreferences sp = context.getSharedPreferences(appId,MODE_PRIVATE);
+            Log.e("wangpan", appId);
+            SharedPreferences sp = context.getSharedPreferences(appId, MODE_PRIVATE);
             SharedPreferences.Editor edit = sp.edit();
-            edit.putString("storeData",storeData);
+            edit.putString("storeData", storeData);
             edit.commit();
         }
 
@@ -305,10 +304,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
             Intent intent = new Intent(ApplyFirstActivity.this, CaptureActivity.class);
             startActivityForResult(intent, REQUEST_CODE_SCAN);
         }
+
         //启动本地浏览器
         @JavascriptInterface
-        public void intentBrowser(String browser){
-            Log.e("wangpan",browser);
+        public void intentBrowser(String browser) {
+            Log.e("wangpan", browser);
             Gson gson = new Gson();
             BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
             if (!browser.isEmpty()) {
@@ -346,6 +346,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     break;
                 case R.id.popup_dismiss:
                     popupWindow.dismiss();
+                    break;
+                default:
                     break;
             }
         }
@@ -385,15 +387,15 @@ public class ApplyFirstActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         //扫一扫二维码返回
-        if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK){
-            if (data != null){
+        if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK) {
+            if (data != null) {
                 String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
-                if (stringExtra.startsWith("http:") || stringExtra.startsWith("https:")){
-                    Intent intent = new Intent(ApplyFirstActivity.this,ZingWebActivity.class);
-                    intent.putExtra("url",stringExtra);
+                if (stringExtra.startsWith("http:") || stringExtra.startsWith("https:")) {
+                    Intent intent = new Intent(ApplyFirstActivity.this, ZingWebActivity.class);
+                    intent.putExtra("url", stringExtra);
                     startActivity(intent);
-                }else{
-                    Toast.makeText(this, "该路径解析错误", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "解析失败，换个图片试试", Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -613,9 +615,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
      *
      * @param ead_web
      */
-    private void wvClientSetting(WebView ead_web) {
-//        MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
-//        ead_web.setWebViewClient(mWebViewClient);
+    private void wvClientSetting(BridgeWebView ead_web) {
+        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }

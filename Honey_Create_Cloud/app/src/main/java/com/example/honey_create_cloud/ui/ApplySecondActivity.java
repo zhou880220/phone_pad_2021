@@ -49,7 +49,7 @@ import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
-import com.example.honey_create_cloud.webclient.MWebViewClient;
+import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
@@ -228,6 +228,7 @@ public class ApplySecondActivity extends AppCompatActivity {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }
+
         //跳转支付页面
         @JavascriptInterface
         public void purchaseOfEntry(String purchaseOfEntry) {
@@ -252,7 +253,7 @@ public class ApplySecondActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void shareSDKData(String shareData) {
-            Log.e("wangpan",shareData);
+            Log.e("wangpan", shareData);
             //集成分享类
             shareSDK_web = new ShareSDK_Web(ApplySecondActivity.this, shareData);
             View centerView = LayoutInflater.from(ApplySecondActivity.this).inflate(R.layout.popupwindow, null);
@@ -280,10 +281,10 @@ public class ApplySecondActivity extends AppCompatActivity {
         //存储本地数据
         @JavascriptInterface
         public void setStoreData(String storeData) {
-            Log.e("wangpan",appId);
-            SharedPreferences sp = context.getSharedPreferences(appId,MODE_PRIVATE);
+            Log.e("wangpan", appId);
+            SharedPreferences sp = context.getSharedPreferences(appId, MODE_PRIVATE);
             SharedPreferences.Editor edit = sp.edit();
-            edit.putString("storeData",storeData);
+            edit.putString("storeData", storeData);
             edit.commit();
         }
 
@@ -296,8 +297,8 @@ public class ApplySecondActivity extends AppCompatActivity {
 
         //启动本地浏览器
         @JavascriptInterface
-        public void intentBrowser(String browser){
-            Log.e("wangpan",browser);
+        public void intentBrowser(String browser) {
+            Log.e("wangpan", browser);
             Gson gson = new Gson();
             BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
             if (!browser.isEmpty()) {
@@ -336,9 +337,12 @@ public class ApplySecondActivity extends AppCompatActivity {
                 case R.id.popup_dismiss:
                     popupWindow.dismiss();
                     break;
+                default:
+                    break;
             }
         }
     }
+
     /**
      * 获取悬浮窗接口信息
      */
@@ -373,15 +377,15 @@ public class ApplySecondActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         //扫一扫二维码返回
-        if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK){
-            if (data != null){
+        if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK) {
+            if (data != null) {
                 String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
-                if (stringExtra.startsWith("http:") || stringExtra.startsWith("https:")){
-                    Intent intent = new Intent(ApplySecondActivity.this,ZingWebActivity.class);
-                    intent.putExtra("url",stringExtra);
+                if (stringExtra.startsWith("http:") || stringExtra.startsWith("https:")) {
+                    Intent intent = new Intent(ApplySecondActivity.this, ZingWebActivity.class);
+                    intent.putExtra("url", stringExtra);
                     startActivity(intent);
-                }else{
-                    Toast.makeText(this, "该路径解析错误", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "解析失败，换个图片试试", Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -458,7 +462,6 @@ public class ApplySecondActivity extends AppCompatActivity {
             }
         }
     };
-
 
 
     /**
@@ -564,8 +567,6 @@ public class ApplySecondActivity extends AppCompatActivity {
     }
 
 
-
-
     /**
      * 跳转系统通知
      */
@@ -609,9 +610,8 @@ public class ApplySecondActivity extends AppCompatActivity {
      *
      * @param ead_web
      */
-    private void wvClientSetting(WebView ead_web) {
-//        MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
-//        ead_web.setWebViewClient(mWebViewClient);
+    private void wvClientSetting(BridgeWebView ead_web) {
+        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }

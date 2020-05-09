@@ -17,17 +17,9 @@ public class MyWebViewClient extends BridgeWebViewClient {
     private BridgeWebView webView;
     private Context context;
     private View web_error;
-    private MWebViewClient.OnCityChangeListener onCityChangeListener;//定义对象
 
-    public void setOnCityClickListener(MWebViewClient.OnCityChangeListener listener) {
-        this.onCityChangeListener = listener;
-    }
-
-    public MyWebViewClient(BridgeWebView webView, Context context, View web_error) {
+    public MyWebViewClient(BridgeWebView webView) {
         super(webView);
-        this.webView = webView;
-        this.context = context;
-        this.web_error = web_error;
     }
 
     @Override
@@ -45,7 +37,7 @@ public class MyWebViewClient extends BridgeWebViewClient {
                 // ToastUtils.showShort("暂无应用打开此链接");
             }
         }
-        return true;
+        return super.shouldOverrideUrlLoading(view,url);
     }
 
     @Override
@@ -59,4 +51,8 @@ public class MyWebViewClient extends BridgeWebViewClient {
 
         super.onPageFinished(view, url);
     }
+
+
+
+
 }

@@ -6,23 +6,30 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
+import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
-import com.example.honey_create_cloud.webclient.MWebViewClient;
+import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 
@@ -118,19 +125,81 @@ public class NewsActivity extends AppCompatActivity {
     /**
      * JS交互
      */
-    class MyJavaScriptInterface {
+    class MyJavaScriptInterface implements View.OnClickListener {
         private Context context;
+        private ShareSDK_Web shareSDK_web;
+        private PopupWindow popupWindow;
 
         public MyJavaScriptInterface(Context context) {
             this.context = context;
         }
 
+        //分享功能
+        @JavascriptInterface
+        public void shareSDKData(String shareData) {
+            //集成分享类
+            shareSDK_web = new ShareSDK_Web(NewsActivity.this, shareData);
+            View centerView = LayoutInflater.from(NewsActivity.this).inflate(R.layout.popupwindow, null);
+            popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                    400);
+            popupWindow.setTouchable(true);
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+
+            View mWeChat = centerView.findViewById(R.id.wechat);
+            View mWeChatMoments = centerView.findViewById(R.id.wechatmoments);
+            View mSinaWeiBo = centerView.findViewById(R.id.sinaweibo);
+            View mQq = centerView.findViewById(R.id.qq);
+            View mQZone = centerView.findViewById(R.id.qzone);
+            TextView mDismiss = centerView.findViewById(R.id.popup_dismiss);
+
+            mWeChat.setOnClickListener(this);
+            mWeChatMoments.setOnClickListener(this);
+            mSinaWeiBo.setOnClickListener(this);
+            mQq.setOnClickListener(this);
+            mQZone.setOnClickListener(this);
+            mDismiss.setOnClickListener(this);
+        }
+
+        //关闭页面
         @JavascriptInterface
         public void backNewParams(String flag) {
             if (!flag.isEmpty()) {
                 finish();
             } else {
 
+            }
+        }
+
+        @Override
+        public void onClick(View v) {
+            int id = v.getId();
+            switch (id) {
+                case R.id.wechat:
+                    shareSDK_web.WechatshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.wechatmoments:
+                    shareSDK_web.WechatMomentsshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.sinaweibo:
+                    shareSDK_web.SinaweiboshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.qq:
+                    shareSDK_web.QQshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.qzone:
+                    shareSDK_web.QZoneshowShare();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.popup_dismiss:
+                    popupWindow.dismiss();
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -140,9 +209,8 @@ public class NewsActivity extends AppCompatActivity {
      *
      * @param ead_web
      */
-    private void wvClientSetting(WebView ead_web) {
-//        MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
-//        ead_web.setWebViewClient(mWebViewClient);
+    private void wvClientSetting(BridgeWebView ead_web) {
+        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }

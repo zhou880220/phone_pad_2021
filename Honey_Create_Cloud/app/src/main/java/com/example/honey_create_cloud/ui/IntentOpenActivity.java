@@ -26,7 +26,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.alipay.sdk.app.EnvUtils;
 import com.alipay.sdk.app.PayTask;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
@@ -34,9 +33,9 @@ import com.example.honey_create_cloud.bean.AppOrderInfo;
 import com.example.honey_create_cloud.bean.PayBean;
 import com.example.honey_create_cloud.util.PayResult;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
-import com.example.honey_create_cloud.util.SystemUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
+import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
@@ -101,7 +100,8 @@ public class IntentOpenActivity extends AppCompatActivity {
                                 });
                             }
                         });
-                        Toast.makeText(IntentOpenActivity.this, "支付成功：" + payResult, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(IntentOpenActivity.this, "支付成功", Toast.LENGTH_SHORT).show();
+                        Log.e("wangpan", payResult + "");
                     } else {
                         // 该笔订单真实的支付结果，需要依赖服务端的异步通知。
 
@@ -118,7 +118,8 @@ public class IntentOpenActivity extends AppCompatActivity {
                                 });
                             }
                         });
-                        Toast.makeText(IntentOpenActivity.this, "支付失败:" + payResult, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(IntentOpenActivity.this, "支付失败", Toast.LENGTH_SHORT).show();
+                        Log.e("wangpan", payResult + "");
                     }
                     break;
                 }
@@ -150,7 +151,6 @@ public class IntentOpenActivity extends AppCompatActivity {
     @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        EnvUtils.setEnv(EnvUtils.EnvEnum.SANDBOX);
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -177,10 +177,11 @@ public class IntentOpenActivity extends AppCompatActivity {
         mLodingTime();
     }
 
-    private void alipayOkhttp() {
+    private void alipayOkhttp(PayBean payBean) {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url(Constant.appOrderInfo + "2020888883")
+                .url(Constant.appOrderInfo + payBean.getOutTradeNo())
+//                .addHeader("Authorization",token)
                 .get()
                 .build();
         client.newCall(request).enqueue(new Callback() {
@@ -194,7 +195,6 @@ public class IntentOpenActivity extends AppCompatActivity {
                     String string = response.body().string();
                     Gson gson = new Gson();
                     AppOrderInfo appOrderInfo = gson.fromJson(string, AppOrderInfo.class);
-                    Log.e("wangpan", appOrderInfo.getData());
                     //orderInfo为通过接口获取的订单信息中的url
                     final String orderInfo = appOrderInfo.getData();
                     final Runnable payRunnable = new Runnable() {
@@ -301,11 +301,19 @@ public class IntentOpenActivity extends AppCompatActivity {
                 final PayBean payBean = gson.fromJson(data, PayBean.class);
                 Log.e(TAG, payBean.getPayType());
                 if (payBean.getPayType().equals("zhifubao")) { // 支付宝支付
-                    alipayOkhttp();
+                    alipayOkhttp(payBean);
                 } else if (payBean.getPayType().equals("weixin")) { //微信支付
 
                 }
             }
+        }
+
+        //联系客服  打开通讯录
+        @JavascriptInterface
+        public void OpenPayIntent(String intentOpenPay) {
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
         }
 
         /**
@@ -335,9 +343,8 @@ public class IntentOpenActivity extends AppCompatActivity {
      *
      * @param mIntentOpenPay
      */
-    private void wvClientSetting(WebView mIntentOpenPay) {
-//        MWebViewClient mWebViewClient = new MWebViewClient(mIntentOpenPay, this, mWebError);
-//        mIntentOpenPay.setWebViewClient(mWebViewClient);
+    private void wvClientSetting(BridgeWebView mIntentOpenPay) {
+        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay));
         MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         mIntentOpenPay.setWebChromeClient(mWebChromeClient);
     }

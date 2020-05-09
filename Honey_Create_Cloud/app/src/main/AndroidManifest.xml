@@ -30,11 +30,6 @@
         android:usesCleartextTraffic="true">
         <activity android:name=".ui.ZingWebActivity"></activity>
         <activity android:name=".ui.IntentOpenActivity"></activity>
-        <activity
-            android:name="com.alipay.sdk.app.H5PayActivity"
-            android:configChanges="orientation|keyboardHidden|navigation|screenSize"
-            android:exported="false"
-            android:screenOrientation="behind" />
 
         <meta-data
             android:name="android.notch_support"
@@ -49,7 +44,9 @@
         <activity android:name=".ui.NewsActivity" />
         <activity
             android:name=".ui.ApplyFirstActivity"
-            android:launchMode="singleInstance"></activity>
+            android:launchMode="singleInstance">
+
+        </activity>
         <activity
             android:name=".ui.MainActivity"
             android:launchMode="standard"

@@ -6,13 +6,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebSettings;
-import android.webkit.WebView;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,7 +21,6 @@ import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
-import com.example.honey_create_cloud.webclient.MWebViewClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
@@ -62,8 +61,11 @@ public class ZingWebActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
-        Log.e("wangpan",url);
-        webView(url);
+        if (!TextUtils.isEmpty(url)){
+            webView(url);
+        }else{
+
+        }
         mLodingTime();
     }
 
@@ -119,8 +121,7 @@ public class ZingWebActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-//        MWebViewClient mWebViewClient = new MWebViewClient(ead_web, this, mWebError);
-        ead_web.setWebViewClient(new MyWebViewClient(ead_web,this,mWebError));
+        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }

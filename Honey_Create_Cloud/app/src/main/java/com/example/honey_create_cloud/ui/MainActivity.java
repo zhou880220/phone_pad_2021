@@ -3,7 +3,6 @@ package com.example.honey_create_cloud.ui;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -44,6 +43,7 @@ import com.example.honey_create_cloud.BuildConfig;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.MyHandlerCallBack;
 import com.example.honey_create_cloud.R;
+import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.HeadPic;
 import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.file.CleanDataUtils;
@@ -51,7 +51,7 @@ import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
-import com.example.honey_create_cloud.webclient.MWebViewClient;
+import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
@@ -107,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
     private File tempFile;
     //权限
     private static final int NOT_NOTICE = 2;//如果勾选了不再询问
-    private MWebViewClient mWebViewClient;
     private boolean mBackKeyPressed = false;
     private long mTime;
 
@@ -218,16 +217,32 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
-        iniVersionName();
+        initVersionName();
         myRequetPermission();
-        webView();
+
+        Intent intent = getIntent();
+        Uri uri = intent.getData();
+        if (uri != null) {
+            String id = uri.getQueryParameter("id");
+            if (id != null) {
+                StringBuffer sb = new StringBuffer();
+                sb.append(Constant.text_url) //http://172.16.23.210:3001/home
+                        .append("?id=");
+                webView(sb.toString() + id);//http://172.16.23.210:3001/home?id=
+            } else {
+                webView(Constant.text_url);
+            }
+        } else {
+            webView(Constant.text_url);
+        }
     }
 
     /**
      * 初始化webview js交互
      */
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    private void webView() {
+    private void webView(String url) {
+        
         if (Build.VERSION.SDK_INT >= 19) {
             mNewWeb.getSettings().setLoadsImagesAutomatically(true);
         } else {
@@ -240,8 +255,9 @@ public class MainActivity extends AppCompatActivity {
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
+        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb));
         mNewWeb.setWebChromeClient(myChromeWebClient);
-        mNewWeb.loadUrl(Constant.text_url);
+        mNewWeb.loadUrl(url);
 
         //回退监听
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
@@ -386,6 +402,14 @@ public class MainActivity extends AppCompatActivity {
             this.context = context;
         }
 
+        //联系客服  打开通讯录
+        @JavascriptInterface
+        public void OpenPayIntent(String intentOpenPay) {
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+
         /**
          * 获取第三放url路径
          *
@@ -460,6 +484,19 @@ public class MainActivity extends AppCompatActivity {
         public void ClearUserInfo() {
             edit.clear();
             edit.commit();
+        }
+
+        @JavascriptInterface
+        public void intentBrowser(String browser) {
+            Gson gson = new Gson();
+            BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
+            if (!browser.isEmpty()) {
+                Intent intent = new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse(browserBean.getUrl());
+                intent.setData(content_url);
+                startActivity(intent);
+            }
         }
     }
 
@@ -585,7 +622,7 @@ public class MainActivity extends AppCompatActivity {
      * 获取系统版本号
      */
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    private void iniVersionName() {
+    private void initVersionName() {
         totalCacheSize = CleanDataUtils.getTotalCacheSize(Objects.requireNonNull(MainActivity.this));
         try {
             //获取包管理器
