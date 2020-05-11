@@ -26,7 +26,6 @@ import android.view.animation.ScaleAnimation;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
-import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -608,7 +607,18 @@ public class ApplyThirdActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
+        ead_web.setWebViewClient(myWebViewClient);
+        myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
+            @Override
+            public void onCityClick(String name) {
+                if (name.contains("/api-o/oauth")){
+                    mFabMore.setVisibility(View.GONE);
+                }else {
+                    mFabMore.setVisibility(View.VISIBLE);
+                }
+            }
+        });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }

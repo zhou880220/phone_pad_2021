@@ -18,6 +18,13 @@ public class MyWebViewClient extends BridgeWebViewClient {
     private BridgeWebView webView;
     private Context context;
     private View web_error;
+    private String TAG = "TAG";
+
+    private OnCityChangeListener onCityChangeListener;//定义对象
+
+    public void setOnCityClickListener(OnCityChangeListener listener) {
+        this.onCityChangeListener = listener;
+    }
 
     public MyWebViewClient(BridgeWebView webView) {
         super(webView);
@@ -38,7 +45,7 @@ public class MyWebViewClient extends BridgeWebViewClient {
                 // ToastUtils.showShort("暂无应用打开此链接");
             }
         }
-        return super.shouldOverrideUrlLoading(view,url);
+        return super.shouldOverrideUrlLoading(view, url);
     }
 
     @Override
@@ -49,11 +56,19 @@ public class MyWebViewClient extends BridgeWebViewClient {
 
     @Override
     public void onPageFinished(WebView view, String url) {
-
         super.onPageFinished(view, url);
     }
 
 
+    @Override
+    public void onLoadResource(WebView view, String url) {
+        if (onCityChangeListener != null) {
+            onCityChangeListener.onCityClick(view.getUrl());
+        }
+        super.onLoadResource(view, url);
+    }
 
-
+    public interface OnCityChangeListener {
+        void onCityClick(String name);
+    }
 }
