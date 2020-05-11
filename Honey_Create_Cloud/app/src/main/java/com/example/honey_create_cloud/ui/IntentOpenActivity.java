@@ -20,7 +20,6 @@ import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
-import android.webkit.WebView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -92,7 +91,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                             @SuppressLint("NewApi")
                             @Override
                             public void run() {
-                                mIntentOpenPayWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + paySuccess + "\")", new ValueCallback<String>() {
+                                mIntentOpenPayWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "1" + "\")", new ValueCallback<String>() {
                                     @Override
                                     public void onReceiveValue(String value) {
                                         Log.e("wangpan", "---");
@@ -102,15 +101,14 @@ public class IntentOpenActivity extends AppCompatActivity {
                         });
                         Toast.makeText(IntentOpenActivity.this, "支付成功", Toast.LENGTH_SHORT).show();
                         Log.e("wangpan", payResult + "");
-                    } else {
+                    } else if (TextUtils.equals(resultStatus, "4000")) {
                         // 该笔订单真实的支付结果，需要依赖服务端的异步通知。
-
                         //此功能用于在用户支付后回调通知页面支付成功/失败
                         mIntentOpenPayWeb.post(new Runnable() {
                             @SuppressLint("NewApi")
                             @Override
                             public void run() {
-                                mIntentOpenPayWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + payError + "\")", new ValueCallback<String>() {
+                                mIntentOpenPayWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "2" + "\")", new ValueCallback<String>() {
                                     @Override
                                     public void onReceiveValue(String value) {
                                         Log.e("wangpan", "---");
@@ -120,6 +118,14 @@ public class IntentOpenActivity extends AppCompatActivity {
                         });
                         Toast.makeText(IntentOpenActivity.this, "支付失败", Toast.LENGTH_SHORT).show();
                         Log.e("wangpan", payResult + "");
+                    } else if (TextUtils.equals(resultStatus, "8000")) {
+                        Toast.makeText(IntentOpenActivity.this, "正在处理中...", Toast.LENGTH_SHORT).show();
+                    } else if (TextUtils.equals(resultStatus, "6001")) {
+                        Toast.makeText(IntentOpenActivity.this, "支付未完成,用户取消", Toast.LENGTH_SHORT).show();
+                    } else if (TextUtils.equals(resultStatus, "5000")) {
+                        Toast.makeText(IntentOpenActivity.this, "重复请求", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(IntentOpenActivity.this, "支付异常", Toast.LENGTH_SHORT).show();
                     }
                     break;
                 }
@@ -169,7 +175,6 @@ public class IntentOpenActivity extends AppCompatActivity {
         setContentView(R.layout.activity_intent_open);
         ButterKnife.inject(this);
         webView(Constant.test_shoppingCart);
-//        webView("http://zhangsoon.devtest.zhizaoyun.com/src/view/example/openPay.html");
         Intent intent = getIntent();
         purchaseOfEntry = intent.getStringExtra("PurchaseOfEntry");
         appId = intent.getStringExtra("appId");
@@ -181,7 +186,6 @@ public class IntentOpenActivity extends AppCompatActivity {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
                 .url(Constant.appOrderInfo + payBean.getOutTradeNo())
-//                .addHeader("Authorization",token)
                 .get()
                 .build();
         client.newCall(request).enqueue(new Callback() {
@@ -203,7 +207,6 @@ public class IntentOpenActivity extends AppCompatActivity {
                         public void run() {
                             PayTask alipay = new PayTask(IntentOpenActivity.this);
                             Map<String, String> result = alipay.payV2(orderInfo, true);
-                            Log.i("msp", result.toString());
 
                             Message msg = new Message();
                             msg.what = SDK_PAY_FLAG;
@@ -221,6 +224,7 @@ public class IntentOpenActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressLint("NewApi")
     private void webView(String url) {
         if (Build.VERSION.SDK_INT >= 19) {
             mIntentOpenPayWeb.getSettings().setLoadsImagesAutomatically(true);
@@ -255,7 +259,6 @@ public class IntentOpenActivity extends AppCompatActivity {
         mIntentOpenPayWeb.registerHandler("getItemData", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e("wangpan1", purchaseOfEntry);
                 function.onCallBack(purchaseOfEntry);
             }
         });
@@ -298,9 +301,8 @@ public class IntentOpenActivity extends AppCompatActivity {
         public void openPay(String data) {
             if (!data.isEmpty()) {
                 Gson gson = new Gson();
-                final PayBean payBean = gson.fromJson(data, PayBean.class);
-                Log.e(TAG, payBean.getPayType());
-                if (payBean.getPayType().equals("zhifubao")) { // 支付宝支付
+                PayBean payBean = gson.fromJson(data, PayBean.class);
+                if (payBean.getPayType().equals("alipay")) { // 支付宝支付
                     alipayOkhttp(payBean);
                 } else if (payBean.getPayType().equals("weixin")) { //微信支付
 

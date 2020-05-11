@@ -28,8 +28,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".ui.ZingWebActivity"></activity>
-        <activity android:name=".ui.IntentOpenActivity"></activity>
+        <activity
+            android:name=".ui.ZingWebActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".ui.IntentOpenActivity"
+            android:screenOrientation="portrait"></activity>
 
         <meta-data
             android:name="android.notch_support"
@@ -37,16 +41,19 @@
 
         <activity
             android:name=".ui.ApplyThirdActivity"
-            android:launchMode="singleInstance" />
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".ui.ApplySecondActivity"
-            android:launchMode="singleInstance" />
-        <activity android:name=".ui.NewsActivity" />
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".ui.NewsActivity"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".ui.ApplyFirstActivity"
-            android:launchMode="singleInstance">
-
-        </activity>
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".ui.MainActivity"
             android:launchMode="standard"
@@ -70,7 +77,9 @@
                     android:scheme="test" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.ClipImageActivity" />
+        <activity
+            android:name=".ui.ClipImageActivity"
+            android:screenOrientation="portrait"></activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
