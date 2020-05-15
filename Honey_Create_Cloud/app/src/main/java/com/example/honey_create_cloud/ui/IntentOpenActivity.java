@@ -3,6 +3,7 @@ package com.example.honey_create_cloud.ui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -23,6 +24,7 @@ import android.webkit.WebSettings;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.alipay.sdk.app.PayTask;
@@ -30,6 +32,8 @@ import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.bean.AppOrderInfo;
 import com.example.honey_create_cloud.bean.PayBean;
+import com.example.honey_create_cloud.bean.PayType;
+import com.example.honey_create_cloud.bean.WxPayBean;
 import com.example.honey_create_cloud.util.PayResult;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.view.AnimationView;
@@ -40,6 +44,13 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.tencent.mm.opensdk.modelpay.PayReq;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.util.Map;
@@ -48,8 +59,10 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 
@@ -174,54 +187,16 @@ public class IntentOpenActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_intent_open);
         ButterKnife.inject(this);
+        EventBus.getDefault().register(this);
         webView(Constant.test_shoppingCart);
         Intent intent = getIntent();
         purchaseOfEntry = intent.getStringExtra("PurchaseOfEntry");
         appId = intent.getStringExtra("appId");
         token = intent.getStringExtra("token");
+        Log.e("wangpan", "onCreate: " + token);
         mLodingTime();
-    }
 
-    private void alipayOkhttp(PayBean payBean) {
-        OkHttpClient client = new OkHttpClient();
-        final Request request = new Request.Builder()
-                .url(Constant.appOrderInfo + payBean.getOutTradeNo())
-                .get()
-                .build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-            }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.code() == 200) {
-                    String string = response.body().string();
-                    Gson gson = new Gson();
-                    AppOrderInfo appOrderInfo = gson.fromJson(string, AppOrderInfo.class);
-                    //orderInfo为通过接口获取的订单信息中的url
-                    final String orderInfo = appOrderInfo.getData();
-                    final Runnable payRunnable = new Runnable() {
-
-                        @Override
-                        public void run() {
-                            PayTask alipay = new PayTask(IntentOpenActivity.this);
-                            Map<String, String> result = alipay.payV2(orderInfo, true);
-
-                            Message msg = new Message();
-                            msg.what = SDK_PAY_FLAG;
-                            msg.obj = result;
-                            mHandler.sendMessage(msg);
-                        }
-                    };
-                    // 必须异步调用
-                    Thread payThread = new Thread(payRunnable);
-                    payThread.start();
-                } else {
-
-                }
-            }
-        });
     }
 
     @SuppressLint("NewApi")
@@ -238,18 +213,6 @@ public class IntentOpenActivity extends AppCompatActivity {
         mIntentOpenPayWeb.loadUrl(url);
         //js交互接口定义
         mIntentOpenPayWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
-        mIntentOpenPayWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mIntentOpenPayWeb != null && mIntentOpenPayWeb.canGoBack()) {
-                        mIntentOpenPayWeb.goBack();
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
         wvClientSetting(mIntentOpenPayWeb);
 
 
@@ -302,10 +265,11 @@ public class IntentOpenActivity extends AppCompatActivity {
             if (!data.isEmpty()) {
                 Gson gson = new Gson();
                 PayBean payBean = gson.fromJson(data, PayBean.class);
+                Log.e(TAG, "openPay: " + data);
                 if (payBean.getPayType().equals("alipay")) { // 支付宝支付
-                    alipayOkhttp(payBean);
+                    alipaytypeOkhttp(payBean);
                 } else if (payBean.getPayType().equals("weixin")) { //微信支付
-
+                    wxpaytypeOkhttp(payBean);
                 }
             }
         }
@@ -337,6 +301,158 @@ public class IntentOpenActivity extends AppCompatActivity {
         public void goThirdApply() {
             finish();
         }
+    }
+
+    private void alipaytypeOkhttp(final PayBean payBean) {
+        String formBody = "{" +
+                "userId:'" + payBean.getUserId() + '\'' +
+                ", outTradeNo:'" + payBean.getOutTradeNo() + '\'' +
+                ", PayType:'" + payBean.getPayType() + '\'' +
+                '}';
+        MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, formBody);
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(Constant.payType)
+                .post(requestBody)
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String string = response.body().string();
+                Log.e(TAG, "onResponse: " + string);
+                Gson gson = new Gson();
+                PayType payType = gson.fromJson(string, PayType.class);
+                if (payType.getCode() == 200) {
+                    alipayOkhttp(payBean);
+                }
+            }
+        });
+
+    }
+
+    private void wxpaytypeOkhttp(final PayBean payBean) {
+        String formBody = "{" +
+                "userId:'" + payBean.getUserId() + '\'' +
+                ", outTradeNo:'" + payBean.getOutTradeNo() + '\'' +
+                ", PayType:'" + payBean.getPayType() + '\'' +
+                '}';
+        MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, formBody);
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(Constant.payType)
+                .post(requestBody)
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String string = response.body().string();
+                Log.e(TAG, "onResponse: " + string);
+                Gson gson = new Gson();
+                PayType payType = gson.fromJson(string, PayType.class);
+                if (payType.getCode() == 200) {
+                    wxPayOkhttp(payBean);
+                }
+            }
+        });
+    }
+
+    private void alipayOkhttp(PayBean payBean) {
+        OkHttpClient client = new OkHttpClient();
+        final Request request = new Request.Builder()
+                .url(Constant.appOrderInfo + payBean.getOutTradeNo())
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.code() == 200) {
+                    String string = response.body().string();
+                    Log.e(TAG, "onResponse: " + string);
+                    Gson gson = new Gson();
+                    AppOrderInfo appOrderInfo = gson.fromJson(string, AppOrderInfo.class);
+                    //orderInfo为通过接口获取的订单信息中的url
+                    final String orderInfo = appOrderInfo.getData();
+                    final Runnable payRunnable = new Runnable() {
+
+                        @Override
+                        public void run() {
+                            PayTask alipay = new PayTask(IntentOpenActivity.this);
+                            Map<String, String> result = alipay.payV2(orderInfo, true);
+
+                            Message msg = new Message();
+                            msg.what = SDK_PAY_FLAG;
+                            msg.obj = result;
+                            mHandler.sendMessage(msg);
+                        }
+                    };
+                    // 必须异步调用
+                    Thread payThread = new Thread(payRunnable);
+                    payThread.start();
+                } else {
+
+                }
+            }
+        });
+    }
+
+    private void wxPayOkhttp(PayBean payBean) {
+        final IWXAPI msgApi = WXAPIFactory.createWXAPI(this, null);
+        // 将该app注册到微信
+        msgApi.registerApp(Constant.APP_ID);
+
+        OkHttpClient client = new OkHttpClient();
+        final Request request = new Request.Builder()
+                .url(Constant.wxPay_appOrderInfo + payBean.getOutTradeNo())
+                .addHeader("Authorization", "Bearer " + token)
+                .get()
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.code() == 200) {
+                    String string = response.body().string();
+                    Gson gson = new Gson();
+                    WxPayBean wxPayBean = gson.fromJson(string, WxPayBean.class);
+                    PayReq request = new PayReq();
+                    request.appId = wxPayBean.getData().getAppid();
+                    request.partnerId = wxPayBean.getData().getPartnerid();
+                    request.prepayId = wxPayBean.getData().getPrepayid();
+                    request.packageValue = wxPayBean.getData().getWxPackage();
+                    request.nonceStr = wxPayBean.getData().getNoncestr();
+                    request.timeStamp = wxPayBean.getData().getTimestamp();
+                    request.sign = wxPayBean.getData().getSign();
+                    msgApi.sendReq(request);
+                    Log.e(TAG, "onResponse: " + string);
+                } else {
+
+                }
+            }
+        });
     }
 
 
@@ -380,11 +496,79 @@ public class IntentOpenActivity extends AppCompatActivity {
         }
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN) //在ui线程执行
+    public void onMessageEvent(String event) {
+        if (event.equals("支付成功")) {
+            // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
+            mIntentOpenPayWeb.post(new Runnable() {
+                @SuppressLint("NewApi")
+                @Override
+                public void run() {
+                    mIntentOpenPayWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "1" + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            Log.e("wangpan", "---");
+                        }
+                    });
+                }
+            });
+        } else if (event.equals("支付失败")) {
+            // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
+            mIntentOpenPayWeb.post(new Runnable() {
+                @SuppressLint("NewApi")
+                @Override
+                public void run() {
+                    mIntentOpenPayWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "2" + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            Log.e("wangpan", "---");
+                        }
+                    });
+                }
+            });
+        }
+        Toast.makeText(this, event, Toast.LENGTH_SHORT).show();
+    }
+
+    // 用来计算返回键的点击间隔时间
+    private long exitTime = 0;
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK
+                && event.getAction() == KeyEvent.ACTION_DOWN) {
+            if ((System.currentTimeMillis() - exitTime) > 2000) {
+                //弹出提示，可以有多种方式
+                exitTime = System.currentTimeMillis();
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.app_tip)
+                        .setMessage(R.string.close_page)
+                        .setCancelable(false)
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        })
+                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .show();
+            }
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
     /**
      * 清除页面数据
      */
     @Override
     protected void onDestroy() {
+        EventBus.getDefault().unregister(this);
         if (mIntentOpenPayWeb != null) {
             mIntentOpenPayWeb.loadUrl(null);
             mIntentOpenPayWeb.clearHistory();

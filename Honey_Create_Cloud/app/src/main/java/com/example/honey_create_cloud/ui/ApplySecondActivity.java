@@ -39,6 +39,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.BrowserBean;
@@ -68,6 +69,9 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
+import static com.example.honey_create_cloud.ui.ApplyFirstActivity.returnActivityA;
+import static com.example.honey_create_cloud.ui.ApplyThirdActivity.returnActivityC;
 
 public class ApplySecondActivity extends AppCompatActivity {
     @InjectView(R.id.NewWebProgressbar)
@@ -247,6 +251,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         //用户取消权限
         @JavascriptInterface
         public void cancelAuthorization() {
+            returnActivityB = false;
             finish();
         }
 
@@ -348,7 +353,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     private void intentOkhttp() {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url("http://139.9.172.71:18080/api-apps/client/recentlyApps?equipmentId=3&userId=" + userid)
+                .url(Constant.Apply_Details + userid)
                 .addHeader("Authorization", "Bearer " + token)
                 .get()
                 .build();
@@ -477,7 +482,10 @@ public class ApplySecondActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
-                Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
+                returnActivityA = false;
+                returnActivityB = false;
+                returnActivityC = false;
+                Intent intent = new Intent(ApplySecondActivity.this,MainActivity.class);
                 startActivity(intent);
                 break;
             case R.id.tv_myPublish:
@@ -617,6 +625,7 @@ public class ApplySecondActivity extends AppCompatActivity {
             public void onCityClick(String name) {
                 if (name.contains("/api-o/oauth")) {
                     mFabMore.setVisibility(View.GONE);
+                    mLlPopup.setVisibility(View.GONE);
                 } else {
                     mFabMore.setVisibility(View.VISIBLE);
                 }

@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">蜂巢制造云</string>
     <string name="web_error">网络异常\n, 请稍后再试 ~~~</string>
+    <string name="app_tip">提示</string>
+    <string name="pay_result_callback_msg" formatted="false">微信支付结果：%s</string>
+    <!-- WXPayEntryActivity -->
+    <!-- WXPayEntryActivity -->
+    <string name="pay_result_tip">这个界面用于显示第三方app通过微信支付的结果</string>
+    <string name="wechat_pay_success">支付成功</string>
+    <string name="wechat_pay_error">支付失败</string>
+    <string name="wechat_pay_cancel">取消支付</string>
+    <string name="back_apply">返回应用</string>
+    <string name="close_page">关闭收银台，即将跳转第三方应用</string>
 </resources>

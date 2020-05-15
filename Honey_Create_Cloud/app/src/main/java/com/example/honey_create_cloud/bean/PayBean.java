@@ -7,7 +7,7 @@ public class PayBean {
 
 
     /**
-     * payType : 1
+     * PayType : 1
      * outTradeNo : id1
      * userId : 6666
      */
@@ -43,7 +43,7 @@ public class PayBean {
     @Override
     public String toString() {
         return "PayBean{" +
-                "payType='" + payType + '\'' +
+                "PayType='" + payType + '\'' +
                 ", outTradeNo='" + outTradeNo + '\'' +
                 ", userId='" + userId + '\'' +
                 '}';

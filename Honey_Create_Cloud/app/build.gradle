@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.example.honey_create_cloud"
-        minSdkVersion 16
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -34,44 +34,39 @@ static def releaseTime(){
 MobSDK {
     appKey "2f1eb529f51fd"
     appSecret "a2e8d170cdc297dccff2e38acac644d5"
-
     ShareSDK {
         //平台配置信息
         devInfo {
             Wechat {
-                appId "wx4868b35061f87885"
-                appSecret "64020361b8ec4c99936c0e3999a9f249"
-                shareByAppClient true
+                appId "wx5b3f59728cb6aa71"
+                appSecret "aec3817169a863ebac2b37e2552f923a"
+                shareByAppClient false
                 bypassApproval true
             }
             QQ {
                 appId "100371282"
                 appKey "aed9b0303e3ed1e27bae87c33761161d"
-                shareByAppClient true
-            }
-            WechatMoments {
-                appId "wx4868b35061f87885"
-                appSecret "64020361b8ec4c99936c0e3999a9f249"
-                bypassApproval true
                 shareByAppClient false
             }
             QZone {
                 appId "100371282"
                 appKey "aed9b0303e3ed1e27bae87c33761161d"
-                shareByAppClient true
-                bypassApproval false
-                enable true
+                shareByAppClient false
+                bypassApproval true
+            }
+            WechatMoments {
+                appId "wx5b3f59728cb6aa71"
+                appSecret "aec3817169a863ebac2b37e2552f923a"
+                shareByAppClient false
+                bypassApproval true
             }
             SinaWeibo {
                 appKey "2555816423"
                 appSecret "3de62fc19d81540659e9da9d003c87d5"
-                shareByAppClient true
-                bypassApproval false
             }
         }
     }
 }
-
 
 repositories {
     maven { url "https://jitpack.io" }
@@ -112,4 +107,8 @@ dependencies {
     implementation(name: 'alipaySdk-15.7.4-20200228192259', ext: 'aar')
     /*扫一扫*/
     implementation 'com.github.yuzhiqiang1993:zxing:2.0.0'
+    //微信支付
+    api 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:+'
+    //EventBus
+    implementation 'org.greenrobot:eventbus:3.0.0'
 }

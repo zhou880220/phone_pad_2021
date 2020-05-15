@@ -28,17 +28,30 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+        <meta-data
+            android:name="android.notch_support"
+            android:value="false" />
+
+        <activity
+            android:name=".ui.ClipImageActivity"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".ui.ZingWebActivity"
             android:screenOrientation="portrait"></activity>
         <activity
             android:name=".ui.IntentOpenActivity"
             android:screenOrientation="portrait"></activity>
-
-        <meta-data
-            android:name="android.notch_support"
-            android:value="false" />
-
+        <activity
+            android:name=".ui.NewsActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity
+            android:name=".wxapi.WXPayEntryActivity"
+            android:exported="true"
+            android:launchMode="singleTop"></activity>
+        <activity
+            android:name=".ui.ApplyFirstActivity"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".ui.ApplyThirdActivity"
             android:launchMode="singleInstance"
@@ -47,13 +60,7 @@
             android:name=".ui.ApplySecondActivity"
             android:launchMode="singleInstance"
             android:screenOrientation="portrait"></activity>
-        <activity
-            android:name=".ui.NewsActivity"
-            android:screenOrientation="portrait"></activity>
-        <activity
-            android:name=".ui.ApplyFirstActivity"
-            android:launchMode="singleInstance"
-            android:screenOrientation="portrait"></activity>
+
         <activity
             android:name=".ui.MainActivity"
             android:launchMode="standard"
@@ -61,7 +68,6 @@
             android:theme="@style/AppThemeTwo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
@@ -77,9 +83,6 @@
                     android:scheme="test" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.ClipImageActivity"
-            android:screenOrientation="portrait"></activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -91,5 +94,4 @@
                 android:resource="@xml/file_paths" />
         </provider>
     </application>
-
 </manifest>

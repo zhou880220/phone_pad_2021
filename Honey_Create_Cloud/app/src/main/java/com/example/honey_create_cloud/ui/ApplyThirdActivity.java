@@ -39,6 +39,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.BrowserBean;
@@ -68,6 +69,9 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
+import static com.example.honey_create_cloud.ui.ApplyFirstActivity.returnActivityA;
+import static com.example.honey_create_cloud.ui.ApplySecondActivity.returnActivityB;
 
 public class ApplyThirdActivity extends AppCompatActivity {
     @InjectView(R.id.NewWebProgressbar)
@@ -247,6 +251,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         //用户取消权限
         @JavascriptInterface
         public void cancelAuthorization() {
+            returnActivityC = true;
             finish();
         }
 
@@ -349,7 +354,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private void intentOkhttp() {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url("http://139.9.172.71:18080/api-apps/client/recentlyApps?equipmentId=3&userId=" + userid)
+                .url(Constant.Apply_Details + userid)
                 .addHeader("Authorization", "Bearer " + token)
                 .get()
                 .build();
@@ -475,6 +480,9 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
+                returnActivityA = false;
+                returnActivityB = false;
+                returnActivityC = false;
                 Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
                 startActivity(intent);
                 break;
@@ -612,9 +620,10 @@ public class ApplyThirdActivity extends AppCompatActivity {
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
             public void onCityClick(String name) {
-                if (name.contains("/api-o/oauth")){
+                if (name.contains("/api-o/oauth")) {
                     mFabMore.setVisibility(View.GONE);
-                }else {
+                    mLlPopup.setVisibility(View.GONE);
+                } else {
                     mFabMore.setVisibility(View.VISIBLE);
                 }
             }

@@ -165,7 +165,10 @@ public class ShareSDK_Web {
         sp.setTitle(shareSdkBean.getTitle());
         sp.setTitleUrl(shareSdkBean.getUrl()); // 标题的超链接
         sp.setText(shareSdkBean.getTxt());
-        sp.setImageUrl(shareSdkBean.getIcon());
+//        Bitmap logo = BitmapFactory.decodeResource(context.getResources(),R.drawable.wechat);
+//        sp.setImageData(logo);
+        sp.setImagePath("/sdcard/FindYou/lottie/img_9.png");
+//        sp.setImageUrl(shareSdkBean.getIcon());  /sdcard/FindYou/lottie/img_9.png
 
         Platform qzone = ShareSDK.getPlatform(WechatMoments.NAME);
         // 设置分享事件回调（注：回调放在不能保证在主线程调用，不可以在里面直接处理UI操作）
@@ -191,10 +194,14 @@ public class ShareSDK_Web {
 
     public void WechatshowShare() {
         Platform.ShareParams sp = new Platform.ShareParams();
+        sp.setShareType(Platform.SHARE_WEBPAGE);
         sp.setTitle(shareSdkBean.getTitle());
         sp.setTitleUrl(shareSdkBean.getUrl()); // 标题的超链接
         sp.setText(shareSdkBean.getTxt());
-        sp.setImageUrl(shareSdkBean.getIcon());
+//        Bitmap logo = BitmapFactory.decodeResource(context.getResources(),R.drawable.wechat);
+//        sp.setImageData(logo);
+//        sp.setImageUrl(shareSdkBean.getIcon());
+        sp.setImagePath("/sdcard/FindYou/lottie/img_9.png");
 
         Platform qzone = ShareSDK.getPlatform(Wechat.NAME);
         // 设置分享事件回调（注：回调放在不能保证在主线程调用，不可以在里面直接处理UI操作）
