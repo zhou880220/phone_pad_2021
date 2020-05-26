@@ -104,4 +104,6 @@ public class WXPayEntryActivity extends Activity implements IWXAPIEventHandler, 
             Log.e(TAG, "backNoticeCashier: "+s );
         }
     }
+
+    
 }

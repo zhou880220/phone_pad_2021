@@ -14,6 +14,7 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -21,6 +22,7 @@ import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -28,6 +30,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.alipay.sdk.app.PayTask;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.bean.AppOrderInfo;
@@ -73,16 +77,15 @@ public class IntentOpenActivity extends AppCompatActivity {
     BridgeWebView mIntentOpenPayWeb;
     @InjectView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.loading_page)
+    @InjectView(R.id.glide_gif)
     View mLoadingPage;
 
-    private int paySuccess = 1;
-    private int payError = 2;
     private String purchaseOfEntry;
     private String appId;
     private static final int SDK_PAY_FLAG = 1;
     private static final int SDK_AUTH_FLAG = 2;
     private String TAG = "TAG";
+    private String paySuccessroError = "";
 
     @SuppressLint("HandlerLeak")
     private Handler mHandler = new Handler() {
@@ -113,6 +116,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                             }
                         });
                         Toast.makeText(IntentOpenActivity.this, "支付成功", Toast.LENGTH_SHORT).show();
+                        paySuccessroError = "支付成功";
                         Log.e("wangpan", payResult + "");
                     } else if (TextUtils.equals(resultStatus, "4000")) {
                         // 该笔订单真实的支付结果，需要依赖服务端的异步通知。
@@ -130,6 +134,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                             }
                         });
                         Toast.makeText(IntentOpenActivity.this, "支付失败", Toast.LENGTH_SHORT).show();
+                        paySuccessroError = "支付失败";
                         Log.e("wangpan", payResult + "");
                     } else if (TextUtils.equals(resultStatus, "8000")) {
                         Toast.makeText(IntentOpenActivity.this, "正在处理中...", Toast.LENGTH_SHORT).show();
@@ -165,6 +170,7 @@ public class IntentOpenActivity extends AppCompatActivity {
         }
     };
     private String token;
+    private PayBean payBean;
 
 
     @SuppressLint("NewApi")
@@ -193,10 +199,8 @@ public class IntentOpenActivity extends AppCompatActivity {
         purchaseOfEntry = intent.getStringExtra("PurchaseOfEntry");
         appId = intent.getStringExtra("appId");
         token = intent.getStringExtra("token");
-        Log.e("wangpan", "onCreate: " + token);
+        Log.e("wangpan", "onCreate: " + token+purchaseOfEntry);
         mLodingTime();
-
-
     }
 
     @SuppressLint("NewApi")
@@ -214,7 +218,6 @@ public class IntentOpenActivity extends AppCompatActivity {
         //js交互接口定义
         mIntentOpenPayWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
         wvClientSetting(mIntentOpenPayWeb);
-
 
         /**
          * 传递用户订单信息
@@ -235,6 +238,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                 String userInfo = sb.getString("userInfo", "");
                 if (!userInfo.isEmpty()) {
                     function.onCallBack(userInfo);
+                    Log.e(TAG, "handler: "+userInfo);
                 } else {
                     Toast.makeText(IntentOpenActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
                 }
@@ -245,6 +249,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!appId.isEmpty()) {
+                    Log.e(TAG, "handler: appid"+appId);
                     function.onCallBack(appId);
                 }
             }
@@ -264,12 +269,18 @@ public class IntentOpenActivity extends AppCompatActivity {
         public void openPay(String data) {
             if (!data.isEmpty()) {
                 Gson gson = new Gson();
-                PayBean payBean = gson.fromJson(data, PayBean.class);
+                payBean = gson.fromJson(data, PayBean.class);
                 Log.e(TAG, "openPay: " + data);
                 if (payBean.getPayType().equals("alipay")) { // 支付宝支付
                     alipaytypeOkhttp(payBean);
                 } else if (payBean.getPayType().equals("weixin")) { //微信支付
-                    wxpaytypeOkhttp(payBean);
+                    boolean wxAppInstalled = isWxAppInstalled(IntentOpenActivity.this);
+                    if (wxAppInstalled == true){
+                        Log.e(TAG, "openPay: "+wxAppInstalled);
+                        wxpaytypeOkhttp(payBean);
+                    }else{
+                        Toast.makeText(context, "未安装微信，请安装微信后在进行支付", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
@@ -286,10 +297,12 @@ public class IntentOpenActivity extends AppCompatActivity {
          * 支付成功/失败  用户点击返回按钮关闭页面前通知第三方 刷新数据
          */
         @JavascriptInterface
-        public void closePay() {
+        public void closePay() {  //订单号  支付状态
             // 广播通知
+            String backNotification  =  "{success: "+ paySuccessroError +",tradeNo:" +payBean.getOutTradeNo()+"}";
             Intent intent = new Intent();
             intent.setAction("action.refreshPay");
+            intent.putExtra("paySuccessError","nihao");
             sendBroadcast(intent);
             finish();
         }
@@ -301,6 +314,19 @@ public class IntentOpenActivity extends AppCompatActivity {
         public void goThirdApply() {
             finish();
         }
+    }
+
+    /**
+     * 判断微信是否安装
+     * @param context
+     * @return true 已安装   false 未安装
+     */
+    public  static boolean isWxAppInstalled(Context context) {
+        IWXAPI wxApi = WXAPIFactory.createWXAPI(context, null);
+        wxApi.registerApp(Constant.APP_ID);
+        boolean bIsWXAppInstalled = false;
+        bIsWXAppInstalled = wxApi.isWXAppInstalled();
+        return bIsWXAppInstalled;
     }
 
     private void alipaytypeOkhttp(final PayBean payBean) {
@@ -455,14 +481,13 @@ public class IntentOpenActivity extends AppCompatActivity {
         });
     }
 
-
     /**
      * 初始化
      *
      * @param mIntentOpenPay
      */
     private void wvClientSetting(BridgeWebView mIntentOpenPay) {
-        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay));
+        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay,mLoadingPage));
         MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         mIntentOpenPay.setWebChromeClient(mWebChromeClient);
     }
@@ -471,14 +496,13 @@ public class IntentOpenActivity extends AppCompatActivity {
      * 初始页加载
      */
     private void mLodingTime() {
-        final AnimationView hideAnimation = new AnimationView();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideAnimation.getHideAnimation(mLoadingPage, 500);
-                mLoadingPage.setVisibility(View.GONE);
-            }
-        }, 3000);
+        ImageView imageView = findViewById(R.id.image_view);
+        int res= R.drawable.glide_gif;
+        Glide.with(this).
+                load(res).placeholder(res).
+                error(res).
+                diskCacheStrategy(DiskCacheStrategy.NONE).
+                into(imageView);
     }
 
     /**
@@ -500,6 +524,7 @@ public class IntentOpenActivity extends AppCompatActivity {
     public void onMessageEvent(String event) {
         if (event.equals("支付成功")) {
             // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
+            paySuccessroError = "支付成功";
             mIntentOpenPayWeb.post(new Runnable() {
                 @SuppressLint("NewApi")
                 @Override
@@ -514,6 +539,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             });
         } else if (event.equals("支付失败")) {
             // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
+            paySuccessroError = "支付失败";
             mIntentOpenPayWeb.post(new Runnable() {
                 @SuppressLint("NewApi")
                 @Override
@@ -547,6 +573,11 @@ public class IntentOpenActivity extends AppCompatActivity {
                         .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                String backNotification  =  "{success: "+ paySuccessroError +",tradeNo:" +payBean.getOutTradeNo()+"}";
+                                Intent intent = new Intent();
+                                intent.setAction("action.refreshPay");
+                                intent.putExtra("paySuccessroError",backNotification);
+                                sendBroadcast(intent);
                                 finish();
                             }
                         })

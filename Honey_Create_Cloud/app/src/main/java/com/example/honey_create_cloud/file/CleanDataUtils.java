@@ -32,6 +32,7 @@ public class CleanDataUtils {
      */
     public static void clearAllCache(Context context) {
         deleteDir(context.getCacheDir());
+        deleteDir(context.getCacheDir().getAbsoluteFile());
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             deleteDir(context.getExternalCacheDir());
             //TODO 有网页清理时注意排错，是否存在/data/data/应用package目录下找不到database文件夹的问题

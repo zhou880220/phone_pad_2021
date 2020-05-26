@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,15 +40,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.RecentlyApps;
+import com.example.honey_create_cloud.recorder.AudioManager;
+import com.example.honey_create_cloud.recorder.AudioRecorderButton;
+import com.example.honey_create_cloud.recorder.DialogManager;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
 import com.example.honey_create_cloud.view.AnimationView;
+import com.example.honey_create_cloud.view.SoundTextView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -57,7 +64,15 @@ import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 
+import org.apache.commons.codec.binary.Base64;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -81,7 +96,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     BridgeWebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.loading_page)
+    @InjectView(R.id.glide_gif)
     View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
@@ -115,7 +130,29 @@ public class ApplyFirstActivity extends AppCompatActivity {
     public static boolean returnActivityA;
     private String appId;
     private int REQUEST_CODE_SCAN = 1;
+    private String recorder = "";
 
+    /**采样频率*/
+    private static final int SAMPLE_RATE = 11025;
+
+
+    //手指滑动 距离
+    private static final int DISTANCE_Y_CANCEL = 50;
+    //状态
+    private static final int STATE_NORMAL = 1;
+    private static final int STATE_RECORDING = 2;
+    private static final int STATE_WANT_TO_CANCEL = 3;
+    //当前状态
+    private int mCurState = STATE_NORMAL;
+    //已经开始录音
+    public static boolean isRecording = false;
+
+    private DialogManager mDialogManager;
+    public static AudioManager mAudioManager;
+
+    private float mTime;
+    //是否触发onlongclick
+    public static boolean mReady;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -186,7 +223,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         });
         wvClientSetting(mNewWeb);
 
-
         /**
          * 获取版本号
          */
@@ -218,7 +254,23 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 function.onCallBack(storeData);
             }
         });
+        /**
+         * 传递用户登录信息
+         */
+        mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                String userInfo = sb.getString("userInfo", "");
+                if (!userInfo.isEmpty()) {
+                    function.onCallBack(userInfo);
+                } else {
+                    Toast.makeText(ApplyFirstActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
+
 
     class MJavaScriptInterface implements View.OnClickListener {
         private Context context;
@@ -323,6 +375,37 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         }
 
+        @JavascriptInterface
+        public void openVoice() {
+            Log.e(TAG, "handler: 11");
+            View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.recorder_layout, null);
+            PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT, 290);
+            popupWindow.setTouchable(true);
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+
+            AudioRecorderButton mAudioRecorderButton = centerView.findViewById(R.id.id_recorder_button);
+            mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
+                @Override
+                public void onFinish(float seconds, String filePath) {
+                    String s = tobase64(filePath);
+                    mNewWeb.post(new Runnable() {
+                        @SuppressLint("NewApi")
+                        @Override
+                        public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.openVoice(\"" + s + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                    Log.e("wangpan", "---");
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+
         @Override
         public void onClick(View v) {
             int id = v.getId();
@@ -356,6 +439,57 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
     }
 
+    public static void copy(File source, File dest, int bufferSize) {
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = new FileInputStream(source);
+            out = new FileOutputStream(dest);
+
+            byte[] buffer = new byte[bufferSize];
+            int len;
+
+            while ((len = in.read(buffer)) > 0) {
+                out.write(buffer, 0, len);
+            }
+        } catch (Exception e) {
+            Log.w(TAG + ":copy", "error occur while copy", e);
+        } finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public String tobase64(String url) {
+        try {
+            File file = new File(url);
+            // 下载网络文件
+            int bytesum = 0;
+            int byteread = 0;
+            InputStream inStream = new FileInputStream(file);
+            int size = inStream.available();
+            byte[] buffer = new byte[size];
+            while ((byteread = inStream.read(buffer)) != -1) {
+                inStream.read(buffer);
+                inStream.close();
+                byte[] bytes = Base64.encodeBase64(buffer);
+                String str = new String(bytes);
+                if (str != null) {
+                    str = str.replaceAll(System.getProperty("line.separator"), "");
+                    str = str.replaceAll("=", "");
+                    str = str.replaceAll(" ", "");
+                }
+                return str;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     /**
      * 获取悬浮窗接口信息
@@ -385,6 +519,38 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         });
     }
+
+    //读取信息
+    private String read(String mFileName) {
+        File f = new File(mFileName);
+        InputStream in = null;
+        try {
+            in = new FileInputStream(f);
+            StringBuilder sb = new StringBuilder();
+            int len = 0;
+            byte[] buff = new byte[1024];
+
+            while ((len = in.read(buff)) > 0) {
+                sb.append(new String(buff, 0, len));
+            }
+            Log.e(TAG, "read: " + sb);
+            return sb.toString();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -463,6 +629,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            String paySuccessError = intent.getStringExtra("paySuccessError");
+            Log.e(TAG, "onReceive: "+paySuccessError );
             if (action.equals("action.refreshPay")) {
                 mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
                     @Override
@@ -603,14 +771,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
      * 初始页加载
      */
     private void mLodingTime() {
-        final AnimationView hideAnimation = new AnimationView();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideAnimation.getHideAnimation(mLoadingPage, 500);
-                mLoadingPage.setVisibility(View.GONE);
-            }
-        }, 3000);
+        ImageView imageView = findViewById(R.id.image_view);
+        int res= R.drawable.glide_gif;
+        Glide.with(this).
+                load(res).placeholder(res).
+                error(res).
+                diskCacheStrategy(DiskCacheStrategy.NONE).
+                into(imageView);
     }
 
     /**
@@ -619,14 +786,19 @@ public class ApplyFirstActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web,mLoadingPage);
         ead_web.setWebViewClient(myWebViewClient);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
             public void onCityClick(String name) {
-                if (name.contains("/api-o/oauth")){
-                    mFabMore.setVisibility(View.GONE);
-                }else{
+                Log.e(TAG, "onCityClick: "+name );
+                try {
+                    if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
+                        mFabMore.setVisibility(View.GONE);
+                    } else {
+                        mFabMore.setVisibility(View.VISIBLE);
+                    }
+                } catch (Exception e) {
                     mFabMore.setVisibility(View.VISIBLE);
                 }
             }

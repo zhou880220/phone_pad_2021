@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.IntentOpenActivity">
 
 
-
     <com.github.lzyzsd.jsbridge.BridgeWebView
         android:id="@+id/intent_open_pay_web"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <ProgressBar
         android:id="@+id/NewWebProgressbar"
@@ -27,10 +25,18 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <include
-        android:id="@+id/loading_page"
-        layout="@layout/activity_loding"
+    <RelativeLayout
+        android:id="@+id/glide_gif"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="@android:color/white"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/image_view"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
 
 </RelativeLayout>

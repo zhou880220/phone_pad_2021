@@ -5,21 +5,22 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebSettings;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
-import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -35,7 +36,7 @@ public class ZingWebActivity extends AppCompatActivity {
     BridgeWebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.loading_page)
+    @InjectView(R.id.glide_gif)
     View mLoadingPage;
     private MWebChromeClient mWebChromeClient;
 
@@ -61,9 +62,9 @@ public class ZingWebActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
-        if (!TextUtils.isEmpty(url)){
+        if (!TextUtils.isEmpty(url)) {
             webView(url);
-        }else{
+        } else {
 
         }
         mLodingTime();
@@ -105,14 +106,13 @@ public class ZingWebActivity extends AppCompatActivity {
      * 初始页加载
      */
     private void mLodingTime() {
-        final AnimationView hideAnimation = new AnimationView();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideAnimation.getHideAnimation(mLoadingPage, 500);
-                mLoadingPage.setVisibility(View.GONE);
-            }
-        }, 3000);
+        ImageView imageView = findViewById(R.id.image_view);
+        int res= R.drawable.glide_gif;
+        Glide.with(this).
+                load(res).placeholder(res).
+                error(res).
+                diskCacheStrategy(DiskCacheStrategy.NONE).
+                into(imageView);
     }
 
     /**
@@ -121,7 +121,7 @@ public class ZingWebActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
+        ead_web.setWebViewClient(new MyWebViewClient(ead_web,mLoadingPage));
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }

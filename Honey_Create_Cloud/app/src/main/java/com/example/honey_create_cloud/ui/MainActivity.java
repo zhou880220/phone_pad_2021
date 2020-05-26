@@ -3,6 +3,10 @@ package com.example.honey_create_cloud.ui;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -29,7 +33,6 @@ import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -37,6 +40,7 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -49,6 +53,7 @@ import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.bean.AppOrderInfo;
 import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.HeadPic;
+import com.example.honey_create_cloud.bean.NotificationBean;
 import com.example.honey_create_cloud.bean.PayBean;
 import com.example.honey_create_cloud.bean.PayType;
 import com.example.honey_create_cloud.bean.PictureUpload;
@@ -65,9 +70,19 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import com.tencent.mm.opensdk.modelpay.PayReq;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,12 +91,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import me.leolin.shortcutbadger.ShortcutBadger;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -89,6 +105,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static android.app.Notification.DEFAULT_ALL;
 import static com.example.honey_create_cloud.ui.ApplyFirstActivity.returnActivityA;
 import static com.example.honey_create_cloud.ui.ApplySecondActivity.returnActivityB;
 import static com.example.honey_create_cloud.ui.ApplyThirdActivity.returnActivityC;
@@ -106,95 +123,11 @@ public class MainActivity extends AppCompatActivity {
     View mWebError;
     @InjectView(R.id.head_image3)
     ImageView headImage3;
-    private Uri imageUri;
-    private int REQUEST_CODE = 1234;
-    //请求相机
-    private static final int REQUEST_CAPTURE = 100;
-    //请求相册
-    private static final int REQUEST_PICK = 101;
 
-    private static final String TAG = "MainActivity_TAG";
 
-    //调用照相机返回图片文件
-    private File tempFile;
-    //权限
-    private static final int NOT_NOTICE = 2;//如果勾选了不再询问
-    private boolean mBackKeyPressed = false;
-    private long mTime;
-
-    private String mVersionName = "";
-    private String totalCacheSize = "";
-    private String clearSize = "";
-    private int type;
-
-    private static final String[] PERMISSIONS_APPLICATION = {
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.CALL_PHONE,
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.READ_PHONE_STATE};
-    private static final int VIDEO_PERMISSIONS_CODE = 1;
-
-    private MyHandlerCallBack.OnSendDataListener mOnSendDataListener;
-    private String token1;
-    private String userid;
-    private String newName = "";
-    private String accessToken;
-    private static final int SDK_PAY_FLAG = 1;
     private Handler myHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
-            if (msg.what == 2) {
-                newName = (String) msg.obj;
-                OkHttpClient client1 = new OkHttpClient();
-                final FormBody formBody = new FormBody.Builder()
-                        .add("userId", userid)
-                        .add("url", newName)
-                        .build();
-//                String post = "{" +
-//                        "userId:'" + userid + '\'' +
-//                        ", url:'" + newName + '\'' +
-//                        '}';
-                MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
-//                RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, post);
-                Request request = new Request.Builder()
-                        .addHeader("Authorization", accessToken)
-                        .url(Constant.headPic)
-                        .post(formBody)
-                        .build();
-                client1.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-
-                    }
-
-                    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        String string = response.body().string();
-                        Gson gson = new Gson();
-                        HeadPic headPic = gson.fromJson(string, HeadPic.class);
-                        if (headPic.getCode() == 200) {
-                            final String msg1 = headPic.getMsg();
-                            final String tete = "mytest";
-                            mNewWeb.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mNewWeb.evaluateJavascript("window.sdk.double(\"" + tete + "\")", new ValueCallback<String>() {
-                                        @Override
-                                        public void onReceiveValue(String value) {
-
-                                        }
-                                    });
-                                }
-                            });
-                        } else {
-
-                        }
-                    }
-                });
-            }
 
             switch (msg.what) {
                 case SDK_PAY_FLAG: {
@@ -250,34 +183,133 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 }
-//                case SDK_AUTH_FLAG: {
-//                    @SuppressWarnings("unchecked")
-//                    AuthResult authResult = new AuthResult((Map<String, String>) msg.obj, true);
-//                    String resultStatus = authResult.getResultStatus();
-//
-//                    // 判断resultStatus 为“9000”且result_code
-//                    // 为“200”则代表授权成功，具体状态码代表含义可参考授权接口文档
-//                    if (TextUtils.equals(resultStatus, "9000") && TextUtils.equals(authResult.getResultCode(), "200")) {
-//                        // 获取alipay_open_id，调支付时作为参数extern_token 的value
-//                        // 传入，则支付账户为该授权账户
-//                        showAlert(PayDemoActivity.this, getString(R.string.auth_success) + authResult);
-//                    } else {
-//                        // 其他状态值则为授权失败
-//                        showAlert(PayDemoActivity.this, getString(R.string.auth_failed) + authResult);
-//                    }
-//                    break;
-//                }
+                case OPLOAD_IMAGE:
+                    Log.e(TAG, "handleMessage: " + msg.obj);
+                    newName = (String) msg.obj;
+                    OkHttpClient client1 = new OkHttpClient();
+//                    final FormBody formBody = new FormBody.Builder()
+//                            .add("userId", userid)
+//                            .add("url", newName)
+//                            .build();
+                    String post = "{" +
+                            "userId:'" + userid + '\'' +
+                            ", url:'" + newName + '\'' +
+                            '}';
+                    MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+                    RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, post);
+                    Request request = new Request.Builder()
+                            .addHeader("Authorization", accessToken)
+                            .url(Constant.headPic)
+                            .post(requestBody)
+                            .build();
+                    client1.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+
+                        }
+
+                        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            String string = response.body().string();
+                            Log.e(TAG, "onResponse: " + string);
+                            Gson gson = new Gson();
+                            HeadPic headPic = gson.fromJson(string, HeadPic.class);
+                            if (headPic.getCode() == 200) {
+                                final String tete = "mytest";
+                                mNewWeb.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mNewWeb.evaluateJavascript("window.sdk.double(\"" + tete + "\")", new ValueCallback<String>() {
+                                            @Override
+                                            public void onReceiveValue(String value) {
+                                            }
+                                        });
+                                    }
+                                });
+                            } else {
+
+                            }
+                        }
+                    });
+                    break;
+                case NOTIFICATION_MESSAGE: {
+                    String notificationMsg = (String) msg.obj;
+                    Gson gson = new Gson();
+                    Intent msgIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getPackageName());//获取启动Activity
+                    PendingIntent pendingIntent = PendingIntent.getActivity(getApplication(), 0, msgIntent, 0);
+                    NotificationBean notificationBean = gson.fromJson(notificationMsg, NotificationBean.class);
+                    Log.e(TAG, "handleMessage:123123123123123 " + "--------" + notificationBean.getUserId());
+                    if (!TextUtils.isEmpty(userid1) && !TextUtils.isEmpty(notificationBean.getUserId()) && userid1.equals(notificationBean.getUserId())) {
+                        Log.e(TAG, "handleDelivery: " + notificationMsg + "--------");
+                        ShortcutBadger.applyCount(MainActivity.this, badgeCount); //for 1.1.4+
+                        Notification notification = new NotificationCompat.Builder(MainActivity.this, channel_id)
+                                .setContentTitle(notificationBean.getTitle())
+                                .setContentText(notificationBean.getContent())
+                                .setWhen(System.currentTimeMillis())
+                                .setSmallIcon(R.mipmap.ic_launcher_back)
+                                .setDefaults(DEFAULT_ALL)
+                                .setContentIntent(pendingIntent)
+                                .setAutoCancel(true)
+                                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_back))
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .build();
+                        notificationManager.notify(badgeCount++, notification);
+                        Log.e(TAG, "badgeCount: "+""+badgeCount);
+                    } else {
+                        //不做处理
+                    }
+                }
+                break;
                 default:
                     break;
             }
             return false;
         }
     });
+
+    //请求相机
+    private static final int REQUEST_CAPTURE = 100;
+    //请求相册
+    private static final int REQUEST_PICK = 101;
+
+    private static final String TAG = "MainActivity_TAG";
+
+    //调用照相机返回图片文件
+    private File tempFile;
+    //权限
+    private static final int NOT_NOTICE = 2;//如果勾选了不再询问
+
+    private String mVersionName = "";
+    private String totalCacheSize = "";
+    private String clearSize = "";
+
+    private static final String[] PERMISSIONS_APPLICATION = {
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.CALL_PHONE,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.READ_PHONE_STATE};
+    private static final int VIDEO_PERMISSIONS_CODE = 1;
+
+    private MyHandlerCallBack.OnSendDataListener mOnSendDataListener;
+    private String token1;
+    private String userid;
+    private String newName = "";
+    private String accessToken;
+    private String channel_id = "myChannelId";
+    private String channel_name = "蜂巢制造云";
+    private String description = "通知的功能";
+    NotificationManager notificationManager;
+    private static final int SDK_PAY_FLAG = 1;  //支付回调
+    private static final int OPLOAD_IMAGE = 2;  //修改头像回调
+    private static final int NOTIFICATION_MESSAGE = 3;  //用户通知
+
     private String usertoken1;
     private String userid1;
     private MWebChromeClient myChromeWebClient;
-    private String backUrl;
-    private int back;
+    private int badgeCount = 0;
 
 
     @SuppressLint("NewApi")
@@ -299,9 +331,10 @@ public class MainActivity extends AppCompatActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             setAndroidNativeLightStatusBar(MainActivity.this, true);//黑色字体
         }
-
         setContentView(R.layout.activity_main);
+        createNotificationChannel();
         ButterKnife.inject(this);
+        EventBus.getDefault().register(this);
         initVersionName();
         myRequetPermission();
 
@@ -340,10 +373,9 @@ public class MainActivity extends AppCompatActivity {
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
-        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb));
+        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb,mLoadingPage));
         mNewWeb.setWebChromeClient(myChromeWebClient);
         mNewWeb.loadUrl(url);
-
         //回退监听
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -377,6 +409,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!totalCacheSize.isEmpty()) {
+                    Log.e(TAG, "handler: " + totalCacheSize);
                     function.onCallBack(totalCacheSize);
                 }
             }
@@ -387,9 +420,10 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                CleanDataUtils.clearAllCache(Objects.<Context>requireNonNull(MainActivity.this));
-                clearSize = CleanDataUtils.getTotalCacheSize(Objects.<Context>requireNonNull(MainActivity.this));
+                CleanDataUtils.clearAllCache(Objects.requireNonNull(MainActivity.this));
+                clearSize = CleanDataUtils.getTotalCacheSize(Objects.requireNonNull(MainActivity.this));
                 if (!clearSize.isEmpty()) {
+                    Log.e(TAG, "handler: " + clearSize);
                     function.onCallBack(clearSize);
                 }
             }
@@ -474,10 +508,10 @@ public class MainActivity extends AppCompatActivity {
             public void handler(String data, CallBackFunction function) {
                 SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                 String userInfo = sb.getString("userInfo", "");
-                Log.e("wangpan",userInfo);
-                if (!userInfo.isEmpty()){
+                Log.e("wangpan", userInfo);
+                if (!userInfo.isEmpty()) {
                     function.onCallBack(sb.getString("userInfo", ""));
-                }else{
+                } else {
 
                 }
             }
@@ -490,6 +524,7 @@ public class MainActivity extends AppCompatActivity {
     class MJavaScriptInterface {
         private Context context;
 
+
         public MJavaScriptInterface(Context context) {
             this.context = context;
         }
@@ -499,7 +534,7 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void setUserInfo(String userInfo) {
-            Log.e("wangpan",userInfo);
+            Log.e("wangpan", userInfo);
             if (!userInfo.isEmpty()) {
                 SharedPreferences sb = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sb.edit();
@@ -561,13 +596,29 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /**
-         * 获取登录用户token  用于第三放页面悬浮按钮接口查询
+         * 获取登录用户token  用于第三方页面悬浮按钮接口查询
          */
         @JavascriptInterface
         public void getToken(String usertoken, String userid) {
             if (!usertoken.isEmpty()) {
                 usertoken1 = usertoken;
                 userid1 = userid;
+                SharedPreferences sb = context.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+                SharedPreferences.Editor edit = sb.edit();
+                edit.putString("NotifyUserId", userid);
+                edit.commit();
+
+                //获取userId用于通知
+                String notifyUserId = sb.getString("NotifyUserId", "");
+                Log.e(TAG, "getToken: " + notifyUserId);
+                if (!TextUtils.isEmpty(notifyUserId)) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            basicConsume(myHandler);
+                        }
+                    }).start();
+                }
             }
         }
 
@@ -662,7 +713,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 
     private void wxpaytypeOkhttp(final PayBean payBean) {
@@ -782,6 +832,113 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void createNotificationChannel() {
+        //Android8.0(API26)以上需要调用下列方法，但低版本由于支持库旧，不支持调用
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(channel_id, channel_name, importance);
+            channel.setDescription(description);
+            notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+        } else {
+            notificationManager = (NotificationManager)
+                    getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN) //在ui线程执行
+    public void onMessageEvent(String event) {
+        if (event.equals("支付成功")) {
+            // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
+            mNewWeb.post(new Runnable() {
+                @SuppressLint("NewApi")
+                @Override
+                public void run() {
+                    mNewWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "1" + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            Log.e("wangpan", "---");
+                        }
+                    });
+                }
+            });
+        } else if (event.equals("支付失败")) {
+            // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
+            mNewWeb.post(new Runnable() {
+                @SuppressLint("NewApi")
+                @Override
+                public void run() {
+                    mNewWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "2" + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            Log.e("wangpan", "---");
+                        }
+                    });
+                }
+            });
+        }
+        Toast.makeText(this, event, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 收消息（从发布者那边订阅消息）
+     */
+    private void basicConsume(final Handler handler) {
+        String userId = "3B9B1E217F86D5E493FCE81A5B800770";
+        Log.e(TAG, "run:1 ");
+        try {
+            //连接
+            Connection connection = getConnection();
+            if (connection != null) {
+                Log.e(TAG, "run:2 ");
+                //通道
+                final Channel channel = connection.createChannel();
+                AMQP.Queue.DeclareOk declareOk = channel.queueDeclare("app.notice.queue", true, false, false, null);
+                channel.queueBind(declareOk.getQueue(), "app.notice.exchange", "notice.key");
+                DefaultConsumer defaultConsumer = new DefaultConsumer(channel) {
+
+                    // 获取到达的消息
+                    @Override
+                    public void handleDelivery(String consumerTag,
+                                               Envelope envelope,
+                                               AMQP.BasicProperties properties,
+                                               byte[] body)
+                            throws IOException {
+                        super.handleDelivery(consumerTag, envelope, properties, body);
+                        String receiveMsg = new String(body, "UTF-8");
+                        Log.e(TAG, "handleDelivery: " + receiveMsg);
+                        Message message = new Message();
+                        message.what = NOTIFICATION_MESSAGE;
+                        message.obj = receiveMsg;
+                        handler.sendMessage(message);
+                    }
+                };
+                channel.basicConsume("app.notice.queue", true, defaultConsumer);
+                Log.e(TAG, "run: 3");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 连接设置
+     */
+    private Connection getConnection() {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("119.3.28.24");
+        factory.setPort(5672);
+        factory.setUsername("honeycomb");
+        factory.setPassword("honeycomb");
+        factory.setVirtualHost("/");
+        try {
+            return factory.newConnection();
+        } catch (IOException | TimeoutException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     /**
      * 跳转到照相机
      */
@@ -834,13 +991,49 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onResume() {
+        Log.e(TAG, "onResume");
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
                 Log.e(TAG, "onResume");
             }
         });
+        boolean notificationEnabled = isNotificationEnabled(this);
+
+        Log.e(TAG, "badgeCount: "+""+badgeCount);
+        Log.e(TAG, "onResume: " + notificationEnabled);
+        if (notificationEnabled == true){
+//            notificationChange(userid1,"1");
+        }else {
+//            notificationChange(userid1,"-1");
+        }
+
         super.onResume();
+    }
+
+    private void notificationChange(String userid1, String s) {
+        OkHttpClient client = new OkHttpClient();
+        final Request request = new Request.Builder()
+                .url(Constant.NOTICE_OPEN_SWITCH+userid1+"/"+s )
+                .addHeader("Authorization", "Bearer " + usertoken1)
+                .put(null)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.code() == 200) {
+                    String string = response.body().string();
+                    Log.e(TAG, "notificationChange: " + string);
+
+                } else {
+
+                }
+            }
+        });
     }
 
 
@@ -876,13 +1069,30 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
+        Log.e(TAG, "onRestart");
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
                 Log.e(TAG, "onRestart");
             }
         });
+        SharedPreferences sb = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+        String notifyUserId = sb.getString("NotifyUserId", "");
+        if (!TextUtils.isEmpty(notifyUserId)) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    basicConsume(myHandler);
+                }
+            }).start();
+        }
         super.onRestart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        ShortcutBadger.applyCount(MainActivity.this, badgeCount); //for 1.1.4+
     }
 
     /**
@@ -948,10 +1158,8 @@ public class MainActivity extends AppCompatActivity {
                             //弹出对话框引导用户去设置
                             showDialog();
                             Toast.makeText(MainActivity.this, "请求权限被拒绝", Toast.LENGTH_LONG).show();
-                            mLodingTime();
                             break;
                         } else {
-                            mLodingTime();
                         }
                     }
                 }
@@ -1077,13 +1285,14 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onResponse(Call call, Response response) throws IOException {
                             String s = response.body().string();
+                            Log.e(TAG, "onResponse: " + s);
                             Gson gson = new Gson();
                             PictureUpload pictureUpload = gson.fromJson(s, PictureUpload.class);
                             if (pictureUpload.getCode() == 200) {
                                 List<PictureUpload.DataBean> data = pictureUpload.getData();
                                 Message message = myHandler.obtainMessage();
                                 message.obj = data.get(0).getNewName();
-                                message.what = 2;
+                                message.what = OPLOAD_IMAGE;
                                 myHandler.sendMessage(message);
                             } else {
 
@@ -1135,6 +1344,12 @@ public class MainActivity extends AppCompatActivity {
             isOpened = false;
         }
         return isOpened;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 }
 

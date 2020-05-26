@@ -39,6 +39,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
@@ -80,7 +82,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     BridgeWebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.loading_page)
+    @InjectView(R.id.glide_gif)
     View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
@@ -599,14 +601,13 @@ public class ApplyThirdActivity extends AppCompatActivity {
      * 初始页加载
      */
     private void mLodingTime() {
-        final AnimationView hideAnimation = new AnimationView();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideAnimation.getHideAnimation(mLoadingPage, 500);
-                mLoadingPage.setVisibility(View.GONE);
-            }
-        }, 3000);
+        ImageView imageView = findViewById(R.id.image_view);
+        int res= R.drawable.glide_gif;
+        Glide.with(this).
+                load(res).placeholder(res).
+                error(res).
+                diskCacheStrategy(DiskCacheStrategy.NONE).
+                into(imageView);
     }
 
     /**
@@ -615,19 +616,8 @@ public class ApplyThirdActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web,mLoadingPage);
         ead_web.setWebViewClient(myWebViewClient);
-        myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
-            @Override
-            public void onCityClick(String name) {
-                if (name.contains("/api-o/oauth")) {
-                    mFabMore.setVisibility(View.GONE);
-                    mLlPopup.setVisibility(View.GONE);
-                } else {
-                    mFabMore.setVisibility(View.VISIBLE);
-                }
-            }
-        });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
@@ -650,6 +640,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        mLlPopup.setVisibility(View.GONE);
         returnActivityC = false;
     }
 

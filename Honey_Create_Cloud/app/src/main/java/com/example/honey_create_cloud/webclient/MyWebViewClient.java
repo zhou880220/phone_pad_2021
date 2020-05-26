@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 
@@ -19,6 +18,9 @@ public class MyWebViewClient extends BridgeWebViewClient {
     private Context context;
     private View web_error;
     private String TAG = "TAG";
+    private View mLoadingPage;
+
+
 
     private OnCityChangeListener onCityChangeListener;//定义对象
 
@@ -26,8 +28,9 @@ public class MyWebViewClient extends BridgeWebViewClient {
         this.onCityChangeListener = listener;
     }
 
-    public MyWebViewClient(BridgeWebView webView) {
+    public MyWebViewClient(BridgeWebView webView,View mLoadingPage) {
         super(webView);
+        this.mLoadingPage = mLoadingPage;
     }
 
     @Override
@@ -57,6 +60,7 @@ public class MyWebViewClient extends BridgeWebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
+        mLoadingPage.setVisibility(View.GONE);
     }
 
 

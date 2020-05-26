@@ -18,6 +18,10 @@
         android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <!--安卓8.0系统安装app 未知来源权限-->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_back"
@@ -51,7 +55,9 @@
         <activity
             android:name=".ui.ApplyFirstActivity"
             android:launchMode="singleInstance"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait">
+
+        </activity>
         <activity
             android:name=".ui.ApplyThirdActivity"
             android:launchMode="singleInstance"

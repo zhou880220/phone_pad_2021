@@ -18,7 +18,6 @@
         android:progressDrawable="@drawable/progressbar" />
 
 
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/grid_popup"
         android:layout_width="wrap_content"
@@ -133,18 +132,23 @@
         android:padding="16dp"
         android:src="@mipmap/floating" />
 
-    <include
-        android:id="@+id/loading_page"
-        layout="@layout/activity_loding"
+    <RelativeLayout
+        android:id="@+id/glide_gif"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="@android:color/white"
+        android:visibility="gone">
+        <ImageView
+            android:id="@+id/image_view"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_centerInParent="true"/>
+    </RelativeLayout>
 
     <include
         android:id="@+id/web_error"
         layout="@layout/layout_load_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
-
-
+        android:visibility="gone"/>
 </RelativeLayout>

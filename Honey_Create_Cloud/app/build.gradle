@@ -8,9 +8,14 @@ android {
         minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0"
+        versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
+
+        ndk {
+            //设置支持的SO库架构
+            abiFilters "armeabi-v7a"
+        }
     }
     buildTypes {
         release {
@@ -24,6 +29,10 @@ android {
             variant.outputs.all {
                 outputFileName = "zhizaoyun-${defaultConfig.versionName}-${releaseTime()}.apk"
             }
+    }
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
     }
 }
 
@@ -111,4 +120,12 @@ dependencies {
     api 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:+'
     //EventBus
     implementation 'org.greenrobot:eventbus:3.0.0'
+    //base64
+    implementation 'commons-codec:commons-codec:1.11'
+    implementation files('libs/flame.jar')
+    implementation 'com.yanzhenjie:permission:2.0.0-rc4'
+    //rabbitmq
+    implementation 'com.rabbitmq:amqp-client:5.7.0'
+    //角标
+    implementation "me.leolin:ShortcutBadger:1.1.22@aar"
 }

@@ -1,20 +1,32 @@
 package com.example.honey_create_cloud.webclient;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
+
+import java.io.File;
 
 public class MWebChromeClient extends WebChromeClient {
     private Context context;
     private ProgressBar progressBar;
     private OnCloseListener onCloseListener;
     private View mWebError;
+    private String mFileName;
 
+    public String getmFileName() {
+        return mFileName;
+    }
+
+    public void setmFileName(String mFileName) {
+        this.mFileName = mFileName;
+    }
 
     public void setOnCloseListener(OnCloseListener onCloseListener) {
         this.onCloseListener = onCloseListener;
@@ -66,7 +78,6 @@ public class MWebChromeClient extends WebChromeClient {
         super.onProgressChanged(view, newProgress);
     }
 
-
     @Override
     public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
         return super.onJsConfirm(view, url, message, result);
@@ -79,5 +90,16 @@ public class MWebChromeClient extends WebChromeClient {
 
     public interface OnCloseListener {
         void onCloseClick(int progress);
+    }
+
+
+    @Override
+    public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+        File f = new File(mFileName);
+        if(f.exists()){
+            Uri u = Uri.fromFile(f);
+            filePathCallback.onReceiveValue(new Uri[]{u});
+        }
+        return super.onShowFileChooser(webView, filePathCallback, fileChooserParams);
     }
 }
