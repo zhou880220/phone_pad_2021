@@ -7,11 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -53,8 +51,6 @@ import com.example.honey_create_cloud.recorder.DialogManager;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
-import com.example.honey_create_cloud.view.AnimationView;
-import com.example.honey_create_cloud.view.SoundTextView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -65,6 +61,7 @@ import com.google.gson.Gson;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 
 import org.apache.commons.codec.binary.Base64;
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -130,9 +127,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
     public static boolean returnActivityA;
     private String appId;
     private int REQUEST_CODE_SCAN = 1;
-    private String recorder = "";
 
-    /**采样频率*/
+    /**
+     * 采样频率
+     */
     private static final int SAMPLE_RATE = 11025;
 
 
@@ -270,7 +268,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         });
     }
-
 
     class MJavaScriptInterface implements View.OnClickListener {
         private Context context;
@@ -510,6 +507,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             public void onResponse(Call call, Response response) throws IOException {
                 if (response.code() == 200) {
                     String string = response.body().string();
+                    Log.e(TAG, "onResponse: " + string);
                     Gson gson = new Gson();
                     RecentlyApps recentlyApps = gson.fromJson(string, RecentlyApps.class);
                     data = recentlyApps.getData();
@@ -630,7 +628,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             String paySuccessError = intent.getStringExtra("paySuccessError");
-            Log.e(TAG, "onReceive: "+paySuccessError );
+            Log.e(TAG, "onReceive: " + paySuccessError);
             if (action.equals("action.refreshPay")) {
                 mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
                     @Override
@@ -664,6 +662,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapplychange);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
+                returnActivityA = false;
+                returnActivityB = false;
+                returnActivityC = false;
+                EventBus.getDefault().post("打开应用");
+                finish();
                 break;
             case R.id.tv_relation:
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
@@ -772,7 +775,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res= R.drawable.glide_gif;
+        int res = R.drawable.glide_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).
@@ -786,12 +789,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web,mLoadingPage);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web, mLoadingPage);
         ead_web.setWebViewClient(myWebViewClient);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
             public void onCityClick(String name) {
-                Log.e(TAG, "onCityClick: "+name );
+                Log.e(TAG, "onCityClick: " + name);
                 try {
                     if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
                         mFabMore.setVisibility(View.GONE);
@@ -826,6 +829,33 @@ public class ApplyFirstActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         returnActivityA = false;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String s = "{tradeNo':123}";
+        String s1 = "{\"tradeNo\":\"123\"}";
+        String s2 = "{tradeNo:123}";
+        String s3 = "{'tradeNo':'123'}";
+        String s4 = "{tradeNo:'123'}";
+        mNewWeb.post(new Runnable() {
+            @Override
+            public void run() {
+                mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment(\"" + s2 + "\")", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                        Log.e(TAG, "onReceiveValue" + s2);
+                    }
+                });
+            }
+        });
     }
 
     @Override

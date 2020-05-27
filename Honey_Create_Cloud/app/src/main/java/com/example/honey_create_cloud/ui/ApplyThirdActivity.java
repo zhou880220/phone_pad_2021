@@ -46,6 +46,7 @@ import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.RecentlyApps;
+import com.example.honey_create_cloud.recorder.AudioRecorderButton;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
@@ -59,7 +60,13 @@ import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 
+import org.apache.commons.codec.binary.Base64;
+import org.greenrobot.eventbus.EventBus;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -116,6 +123,10 @@ public class ApplyThirdActivity extends AppCompatActivity {
     public static boolean returnActivityC;
     private String appId;
     private int REQUEST_CODE_SCAN = 1;
+    //状态
+    private static final int STATE_NORMAL = 1;
+    //当前状态
+    private int mCurState = STATE_NORMAL;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -215,6 +226,21 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 function.onCallBack(storeData);
             }
         });
+        /**
+         * 传递用户登录信息
+         */
+        mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                String userInfo = sb.getString("userInfo", "");
+                if (!userInfo.isEmpty()) {
+                    function.onCallBack(userInfo);
+                } else {
+                    Toast.makeText(ApplyThirdActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     class MJavaScriptInterface implements View.OnClickListener {
@@ -237,11 +263,13 @@ public class ApplyThirdActivity extends AppCompatActivity {
         //跳转支付页面
         @JavascriptInterface
         public void purchaseOfEntry(String purchaseOfEntry) {
-            Intent intent = new Intent(ApplyThirdActivity.this, IntentOpenActivity.class);
-            intent.putExtra("purchaseOfEntry", purchaseOfEntry);
-            intent.putExtra("appId", appId);
-            returnActivityC = true;
-            startActivity(intent);
+            if (!purchaseOfEntry.isEmpty()){
+                Intent intent = new Intent(ApplyThirdActivity.this, IntentOpenActivity.class);
+                intent.putExtra("purchaseOfEntry", purchaseOfEntry);
+                intent.putExtra("appId", appId);
+                returnActivityC = true;
+                startActivity(intent);
+            }
         }
 
         //打开系统通知界面
@@ -317,6 +345,36 @@ public class ApplyThirdActivity extends AppCompatActivity {
             }
         }
 
+        @JavascriptInterface
+        public void openVoice() {
+            Log.e(TAG, "handler: 11");
+            View centerView = LayoutInflater.from(ApplyThirdActivity.this).inflate(R.layout.recorder_layout, null);
+            PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT, 290);
+            popupWindow.setTouchable(true);
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+
+            AudioRecorderButton mAudioRecorderButton = centerView.findViewById(R.id.id_recorder_button);
+            mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
+                @Override
+                public void onFinish(float seconds, String filePath) {
+                    String s = tobase64(filePath);
+                    mNewWeb.post(new Runnable() {
+                        @SuppressLint("NewApi")
+                        @Override
+                        public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.openVoice(\"" + s + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                    Log.e("wangpan", "---");
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
         @Override
         public void onClick(View v) {
             int id = v.getId();
@@ -348,6 +406,34 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     break;
             }
         }
+    }
+
+    public String tobase64(String url) {
+        try {
+            File file = new File(url);
+            // 下载网络文件
+            int bytesum = 0;
+            int byteread = 0;
+            InputStream inStream = new FileInputStream(file);
+            int size = inStream.available();
+            byte[] buffer = new byte[size];
+            while ((byteread = inStream.read(buffer)) != -1) {
+                inStream.read(buffer);
+                inStream.close();
+                byte[] bytes = Base64.encodeBase64(buffer);
+                String str = new String(bytes);
+                if (str != null) {
+                    str = str.replaceAll(System.getProperty("line.separator"), "");
+                    str = str.replaceAll("=", "");
+                    str = str.replaceAll(" ", "");
+                }
+                return str;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -492,6 +578,12 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapplychange);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
+                returnActivityA = false;
+                returnActivityB = false;
+                returnActivityC = false;
+                EventBus.getDefault().post("打开应用");
+                Intent intent1 = new Intent(ApplyThirdActivity.this, MainActivity.class);
+                startActivity(intent1);
                 break;
             case R.id.tv_relation:
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
@@ -618,6 +710,21 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private void wvClientSetting(BridgeWebView ead_web) {
         MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web,mLoadingPage);
         ead_web.setWebViewClient(myWebViewClient);
+        myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
+            @Override
+            public void onCityClick(String name) {
+                Log.e(TAG, "onCityClick: " + name);
+                try {
+                    if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
+                        mFabMore.setVisibility(View.GONE);
+                    } else {
+                        mFabMore.setVisibility(View.VISIBLE);
+                    }
+                } catch (Exception e) {
+                    mFabMore.setVisibility(View.VISIBLE);
+                }
+            }
+        });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
@@ -642,6 +749,17 @@ public class ApplyThirdActivity extends AppCompatActivity {
         super.onBackPressed();
         mLlPopup.setVisibility(View.GONE);
         returnActivityC = false;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String value) {
+
+            }
+        });
     }
 
     @Override

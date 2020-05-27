@@ -255,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                                 .build();
                         notificationManager.notify(badgeCount++, notification);
-                        Log.e(TAG, "badgeCount: "+""+badgeCount);
+                        Log.e(TAG, "badgeCount: " + "" + badgeCount);
                     } else {
                         //不做处理
                     }
@@ -310,6 +310,7 @@ public class MainActivity extends AppCompatActivity {
     private String userid1;
     private MWebChromeClient myChromeWebClient;
     private int badgeCount = 0;
+    private boolean ChaceSize = true;
 
 
     @SuppressLint("NewApi")
@@ -373,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
-        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb,mLoadingPage));
+        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb, mLoadingPage));
         mNewWeb.setWebChromeClient(myChromeWebClient);
         mNewWeb.loadUrl(url);
         //回退监听
@@ -408,9 +409,12 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getCache", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (!totalCacheSize.isEmpty()) {
-                    Log.e(TAG, "handler: " + totalCacheSize);
-                    function.onCallBack(totalCacheSize);
+                if(ChaceSize == true){
+                    if (!totalCacheSize.isEmpty()) {
+                        function.onCallBack(totalCacheSize);
+                    }
+                }else{
+                    function.onCallBack("0.00MB");
                 }
             }
         });
@@ -423,6 +427,7 @@ public class MainActivity extends AppCompatActivity {
                 CleanDataUtils.clearAllCache(Objects.requireNonNull(MainActivity.this));
                 clearSize = CleanDataUtils.getTotalCacheSize(Objects.requireNonNull(MainActivity.this));
                 if (!clearSize.isEmpty()) {
+                    ChaceSize = false;
                     Log.e(TAG, "handler: " + clearSize);
                     function.onCallBack(clearSize);
                 }
@@ -679,6 +684,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+
     }
 
     private void alipaytypeOkhttp(final PayBean payBean) {
@@ -877,7 +884,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-        Toast.makeText(this, event, Toast.LENGTH_SHORT).show();
+        if (event.equals("打开应用")) {
+            webView(Constant.apply_url);
+        }
     }
 
     /**
@@ -1000,11 +1009,11 @@ public class MainActivity extends AppCompatActivity {
         });
         boolean notificationEnabled = isNotificationEnabled(this);
 
-        Log.e(TAG, "badgeCount: "+""+badgeCount);
+        Log.e(TAG, "badgeCount: " + "" + badgeCount);
         Log.e(TAG, "onResume: " + notificationEnabled);
-        if (notificationEnabled == true){
+        if (notificationEnabled == true) {
 //            notificationChange(userid1,"1");
-        }else {
+        } else {
 //            notificationChange(userid1,"-1");
         }
 
@@ -1014,7 +1023,7 @@ public class MainActivity extends AppCompatActivity {
     private void notificationChange(String userid1, String s) {
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url(Constant.NOTICE_OPEN_SWITCH+userid1+"/"+s )
+                .url(Constant.NOTICE_OPEN_SWITCH + userid1 + "/" + s)
                 .addHeader("Authorization", "Bearer " + usertoken1)
                 .put(null)
                 .build();

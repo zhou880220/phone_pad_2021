@@ -14,7 +14,6 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -40,7 +39,6 @@ import com.example.honey_create_cloud.bean.PayType;
 import com.example.honey_create_cloud.bean.WxPayBean;
 import com.example.honey_create_cloud.util.PayResult;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
-import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -84,8 +82,8 @@ public class IntentOpenActivity extends AppCompatActivity {
     private String appId;
     private static final int SDK_PAY_FLAG = 1;
     private static final int SDK_AUTH_FLAG = 2;
+    private static final int AONMALY = 0;
     private String TAG = "TAG";
-    private String paySuccessroError = "";
 
     @SuppressLint("HandlerLeak")
     private Handler mHandler = new Handler() {
@@ -116,7 +114,6 @@ public class IntentOpenActivity extends AppCompatActivity {
                             }
                         });
                         Toast.makeText(IntentOpenActivity.this, "支付成功", Toast.LENGTH_SHORT).show();
-                        paySuccessroError = "支付成功";
                         Log.e("wangpan", payResult + "");
                     } else if (TextUtils.equals(resultStatus, "4000")) {
                         // 该笔订单真实的支付结果，需要依赖服务端的异步通知。
@@ -134,7 +131,6 @@ public class IntentOpenActivity extends AppCompatActivity {
                             }
                         });
                         Toast.makeText(IntentOpenActivity.this, "支付失败", Toast.LENGTH_SHORT).show();
-                        paySuccessroError = "支付失败";
                         Log.e("wangpan", payResult + "");
                     } else if (TextUtils.equals(resultStatus, "8000")) {
                         Toast.makeText(IntentOpenActivity.this, "正在处理中...", Toast.LENGTH_SHORT).show();
@@ -164,6 +160,11 @@ public class IntentOpenActivity extends AppCompatActivity {
 //                    }
 //                    break;
 //                }
+                case AONMALY: {
+                    String aonmaly = (String) msg.obj;
+                    Toast.makeText(IntentOpenActivity.this, aonmaly, Toast.LENGTH_SHORT).show();
+                    break;
+                }
                 default:
                     break;
             }
@@ -199,7 +200,7 @@ public class IntentOpenActivity extends AppCompatActivity {
         purchaseOfEntry = intent.getStringExtra("PurchaseOfEntry");
         appId = intent.getStringExtra("appId");
         token = intent.getStringExtra("token");
-        Log.e("wangpan", "onCreate: " + token+purchaseOfEntry);
+        Log.e("wangpan", "onCreate: " + token + purchaseOfEntry);
         mLodingTime();
     }
 
@@ -238,7 +239,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                 String userInfo = sb.getString("userInfo", "");
                 if (!userInfo.isEmpty()) {
                     function.onCallBack(userInfo);
-                    Log.e(TAG, "handler: "+userInfo);
+                    Log.e(TAG, "handler: " + userInfo);
                 } else {
                     Toast.makeText(IntentOpenActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
                 }
@@ -249,12 +250,11 @@ public class IntentOpenActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!appId.isEmpty()) {
-                    Log.e(TAG, "handler: appid"+appId);
+                    Log.e(TAG, "handler: appid" + appId);
                     function.onCallBack(appId);
                 }
             }
         });
-
     }
 
     class MJavaScriptInterface {
@@ -275,10 +275,10 @@ public class IntentOpenActivity extends AppCompatActivity {
                     alipaytypeOkhttp(payBean);
                 } else if (payBean.getPayType().equals("weixin")) { //微信支付
                     boolean wxAppInstalled = isWxAppInstalled(IntentOpenActivity.this);
-                    if (wxAppInstalled == true){
-                        Log.e(TAG, "openPay: "+wxAppInstalled);
+                    if (wxAppInstalled == true) {
+                        Log.e(TAG, "openPay: " + wxAppInstalled);
                         wxpaytypeOkhttp(payBean);
-                    }else{
+                    } else {
                         Toast.makeText(context, "未安装微信，请安装微信后在进行支付", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -299,29 +299,38 @@ public class IntentOpenActivity extends AppCompatActivity {
         @JavascriptInterface
         public void closePay() {  //订单号  支付状态
             // 广播通知
-            String backNotification  =  "{success: "+ paySuccessroError +",tradeNo:" +payBean.getOutTradeNo()+"}";
             Intent intent = new Intent();
             intent.setAction("action.refreshPay");
-            intent.putExtra("paySuccessError","nihao");
+            intent.putExtra("paySuccessError", "chengong");
             sendBroadcast(intent);
             finish();
         }
 
         /**
-         * 返回关闭支付页面
+         * 返回关闭支付页面 暂时废弃
          */
         @JavascriptInterface
         public void goThirdApply() {
             finish();
         }
+
+        /**
+         * 弹框提示用户是否关闭
+         */
+        @JavascriptInterface
+        public void CashierDeskBack(){
+            showAlterDialog();
+        }
+
     }
 
     /**
      * 判断微信是否安装
+     *
      * @param context
      * @return true 已安装   false 未安装
      */
-    public  static boolean isWxAppInstalled(Context context) {
+    public static boolean isWxAppInstalled(Context context) {
         IWXAPI wxApi = WXAPIFactory.createWXAPI(context, null);
         wxApi.registerApp(Constant.APP_ID);
         boolean bIsWXAppInstalled = false;
@@ -358,6 +367,11 @@ public class IntentOpenActivity extends AppCompatActivity {
                 PayType payType = gson.fromJson(string, PayType.class);
                 if (payType.getCode() == 200) {
                     alipayOkhttp(payBean);
+                } else {
+                    Message message = new Message();
+                    message.what = AONMALY;
+                    message.obj = payType.getMsg();
+                    mHandler.sendMessage(message);
                 }
             }
         });
@@ -393,6 +407,11 @@ public class IntentOpenActivity extends AppCompatActivity {
                 PayType payType = gson.fromJson(string, PayType.class);
                 if (payType.getCode() == 200) {
                     wxPayOkhttp(payBean);
+                } else {
+                    Message message = new Message();
+                    message.what = AONMALY;
+                    message.obj = payType.getMsg();
+                    mHandler.sendMessage(message);
                 }
             }
         });
@@ -406,6 +425,9 @@ public class IntentOpenActivity extends AppCompatActivity {
                 .get()
                 .build();
         client.newCall(request).enqueue(new Callback() {
+
+            private AppOrderInfo appOrderInfo;
+
             @Override
             public void onFailure(Call call, IOException e) {
             }
@@ -416,11 +438,10 @@ public class IntentOpenActivity extends AppCompatActivity {
                     String string = response.body().string();
                     Log.e(TAG, "onResponse: " + string);
                     Gson gson = new Gson();
-                    AppOrderInfo appOrderInfo = gson.fromJson(string, AppOrderInfo.class);
+                    appOrderInfo = gson.fromJson(string, AppOrderInfo.class);
                     //orderInfo为通过接口获取的订单信息中的url
                     final String orderInfo = appOrderInfo.getData();
                     final Runnable payRunnable = new Runnable() {
-
                         @Override
                         public void run() {
                             PayTask alipay = new PayTask(IntentOpenActivity.this);
@@ -436,7 +457,10 @@ public class IntentOpenActivity extends AppCompatActivity {
                     Thread payThread = new Thread(payRunnable);
                     payThread.start();
                 } else {
-
+                    Message message = new Message();
+                    message.what = AONMALY;
+                    message.obj = appOrderInfo.getMsg();
+                    mHandler.sendMessage(message);
                 }
             }
         });
@@ -454,6 +478,9 @@ public class IntentOpenActivity extends AppCompatActivity {
                 .get()
                 .build();
         client.newCall(request).enqueue(new Callback() {
+
+            private WxPayBean wxPayBean;
+
             @Override
             public void onFailure(Call call, IOException e) {
             }
@@ -463,7 +490,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                 if (response.code() == 200) {
                     String string = response.body().string();
                     Gson gson = new Gson();
-                    WxPayBean wxPayBean = gson.fromJson(string, WxPayBean.class);
+                    wxPayBean = gson.fromJson(string, WxPayBean.class);
                     PayReq request = new PayReq();
                     request.appId = wxPayBean.getData().getAppid();
                     request.partnerId = wxPayBean.getData().getPartnerid();
@@ -475,7 +502,10 @@ public class IntentOpenActivity extends AppCompatActivity {
                     msgApi.sendReq(request);
                     Log.e(TAG, "onResponse: " + string);
                 } else {
-
+                    Message message = new Message();
+                    message.what = AONMALY;
+                    message.obj = wxPayBean.getMsg();
+                    mHandler.sendMessage(message);
                 }
             }
         });
@@ -487,7 +517,7 @@ public class IntentOpenActivity extends AppCompatActivity {
      * @param mIntentOpenPay
      */
     private void wvClientSetting(BridgeWebView mIntentOpenPay) {
-        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay,mLoadingPage));
+        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay, mLoadingPage));
         MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
         mIntentOpenPay.setWebChromeClient(mWebChromeClient);
     }
@@ -497,7 +527,7 @@ public class IntentOpenActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res= R.drawable.glide_gif;
+        int res = R.drawable.glide_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).
@@ -524,7 +554,6 @@ public class IntentOpenActivity extends AppCompatActivity {
     public void onMessageEvent(String event) {
         if (event.equals("支付成功")) {
             // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
-            paySuccessroError = "支付成功";
             mIntentOpenPayWeb.post(new Runnable() {
                 @SuppressLint("NewApi")
                 @Override
@@ -539,7 +568,6 @@ public class IntentOpenActivity extends AppCompatActivity {
             });
         } else if (event.equals("支付失败")) {
             // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
-            paySuccessroError = "支付失败";
             mIntentOpenPayWeb.post(new Runnable() {
                 @SuppressLint("NewApi")
                 @Override
@@ -561,38 +589,40 @@ public class IntentOpenActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK
-                && event.getAction() == KeyEvent.ACTION_DOWN) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
             if ((System.currentTimeMillis() - exitTime) > 2000) {
                 //弹出提示，可以有多种方式
                 exitTime = System.currentTimeMillis();
-                new AlertDialog.Builder(this)
-                        .setTitle(R.string.app_tip)
-                        .setMessage(R.string.close_page)
-                        .setCancelable(false)
-                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                String backNotification  =  "{success: "+ paySuccessroError +",tradeNo:" +payBean.getOutTradeNo()+"}";
-                                Intent intent = new Intent();
-                                intent.setAction("action.refreshPay");
-                                intent.putExtra("paySuccessroError",backNotification);
-                                sendBroadcast(intent);
-                                finish();
-                            }
-                        })
-                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
-                            }
-                        })
-                        .show();
+                showAlterDialog();
             }
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
+
+    private void showAlterDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.app_tip)
+                .setMessage(R.string.close_page)
+                .setCancelable(false)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent();
+                        intent.setAction("action.refreshPay");
+                        sendBroadcast(intent);
+                        finish();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .show();
+    }
+
 
     /**
      * 清除页面数据

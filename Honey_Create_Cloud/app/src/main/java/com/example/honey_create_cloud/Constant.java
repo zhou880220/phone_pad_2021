@@ -15,6 +15,7 @@ public class Constant {
     // APP_ID 替换为你的应用从官方网站申请到的合法appId
     public static final String APP_ID = "wx5b3f59728cb6aa71"; //微信支付ID
     public static final String text_url = "http://njtestyyzx.zhizaoyun.com/home"; //用户首页  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
+    public static final String apply_url = "http://njtestyyzx.zhizaoyun.com/apply"; //用户中心  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
     public static final String Apply_Details = "http://139.9.172.71:18080/api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
     public static final String upload_multifile = "http://139.9.172.71:18080/api-f/upload/multifile"; //上传图片
     public static final String headPic = "http://139.9.172.71:18080/api-u/headPic"; //获取头像是否修改成功
