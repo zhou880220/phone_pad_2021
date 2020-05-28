@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
 //                            .add("url", newName)
 //                            .build();
                     String post = "{" +
-                            "userId:'" + userid + '\'' +
+                            "userId:'" + userid1 + '\'' +
                             ", url:'" + newName + '\'' +
                             '}';
                     MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
@@ -350,8 +350,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             webView(Constant.text_url);
         }
-
-
     }
 
     /**
@@ -894,6 +892,7 @@ public class MainActivity extends AppCompatActivity {
         }else if (event.equals("打开应用")) {
             webView(Constant.apply_url);
         }else if(event.equals("打开首页")){
+            Log.e(TAG, "onMessageEvent:asdasdf ");
             webView(Constant.text_url);
         }
     }

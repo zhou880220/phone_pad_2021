@@ -7,9 +7,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
+import android.provider.MediaStore;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -32,22 +38,28 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.honey_create_cloud.BuildConfig;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.BrowserBean;
+import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.bean.RecentlyApps;
+import com.example.honey_create_cloud.bean.TakePhoneBean;
 import com.example.honey_create_cloud.recorder.AudioManager;
 import com.example.honey_create_cloud.recorder.AudioRecorderButton;
 import com.example.honey_create_cloud.recorder.DialogManager;
+import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
@@ -61,7 +73,6 @@ import com.google.gson.Gson;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 
 import org.apache.commons.codec.binary.Base64;
-import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -70,6 +81,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -78,12 +91,17 @@ import butterknife.InjectView;
 import butterknife.OnClick;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.example.honey_create_cloud.ui.ApplySecondActivity.returnActivityB;
 import static com.example.honey_create_cloud.ui.ApplyThirdActivity.returnActivityC;
+import static com.example.honey_create_cloud.ui.MainActivity.getRealPathFromUri;
 
 public class ApplyFirstActivity extends AppCompatActivity {
 
@@ -116,6 +134,61 @@ public class ApplyFirstActivity extends AppCompatActivity {
     @InjectView(R.id.fab_more)
     ImageView mFabMore;
 
+    private Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message msg) {
+            switch (msg.what) {
+                case OPLOAD_IMAGE: {
+                    Log.e(TAG, "handleMessage: " + msg.obj);
+                    String newName = (String) msg.obj;
+                    OkHttpClient client1 = new OkHttpClient();
+                    final FormBody formBody = new FormBody.Builder()
+                            .add("fileNames", userid)
+                            .add("bucketName", "njdeveloptest")
+                            .add("folderName", "menu")
+                            .build();
+                    Request request = new Request.Builder()
+                            .addHeader("Authorization", accessToken)
+                            .url(Constant.TAKE_PHOTO)
+                            .post(formBody)
+                            .build();
+                    client1.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+
+                        }
+
+                        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            String string = response.body().string();
+                            Gson gson = new Gson();
+                            Log.e(TAG, "onResponse: " + string);
+                            TakePhoneBean takePhoneBean = gson.fromJson(string, TakePhoneBean.class);
+                            List<TakePhoneBean.DataBean> data = takePhoneBean.getData();
+                            String fileName = data.get(0).getFileName();
+                            String fileUrl1 = data.get(0).getFileUrl();
+                            String imageurl = "{fileName:" + fileName + ",fileUrl:" + fileUrl1 + "}";
+                            mNewWeb.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + imageurl + "\")", new ValueCallback<String>() {
+                                        @Override
+                                        public void onReceiveValue(String value) {
+
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    break;
+                }
+            }
+            return false;
+        }
+    });
+
     private static final String TAG = "ApplyFirstActivity_TAG";
     private MyContactAdapter adapter;
     private boolean isShow;
@@ -127,6 +200,18 @@ public class ApplyFirstActivity extends AppCompatActivity {
     public static boolean returnActivityA;
     private String appId;
     private int REQUEST_CODE_SCAN = 1;
+
+    //请求相机
+    private static final int REQUEST_CAPTURE = 100;
+    //请求相册
+    private static final int REQUEST_PICK = 101;
+    //修改头像回调
+    private static final int OPLOAD_IMAGE = 2;
+
+    //调用照相机返回图片文件
+    private File tempFile;
+
+    private String accessToken;
 
     /**
      * 采样频率
@@ -267,6 +352,32 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         });
+
+        /**
+         * 三方应用拍照
+         */
+        mNewWeb.registerHandler("setApplyCamera", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                if (!data.isEmpty()) {
+                    Log.e(TAG, "123: " + data);
+                    gotoCamera();
+                }
+            }
+        });
+        /**
+         * 三方应用相册
+         */
+        mNewWeb.registerHandler("setApplyPhotoAlbum", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                if (!data.isEmpty()) {
+                    Log.e(TAG, "123: " + data);
+                    gotoPhoto();
+                }
+            }
+        });
+
     }
 
     class MJavaScriptInterface implements View.OnClickListener {
@@ -436,6 +547,41 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 跳转到相册
+     */
+    private void gotoPhoto() {
+        //跳转到调用系统图库
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(Intent.createChooser(intent, "请选择图片"), REQUEST_PICK);
+    }
+
+    /**
+     * 跳转到照相机
+     */
+    private void gotoCamera() {
+        //	获取图片沙盒文件夹
+        File dPictures = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        //图片名称
+        String mFileName = "IMG_" + System.currentTimeMillis() + ".jpg";
+        //图片路径
+        String mFilePath = dPictures.getAbsolutePath() + "/" + mFileName;
+        //创建拍照存储的图片文件
+//        tempFile = new File(FileUtil.checkDirPath(Environment.getExternalStorageDirectory().getPath() + "/image/"), System.currentTimeMillis() + ".jpg");
+        tempFile = new File(mFilePath);
+        //跳转到调用系统相机
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            //设置7.0中共享文件，分享路径定义在xml/file_paths.xml
+            intent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            Uri contentUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", tempFile);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, contentUri);
+        } else {
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(tempFile));
+        }
+        startActivityForResult(intent, REQUEST_CAPTURE);
+    }
+
     public static void copy(File source, File dest, int bufferSize) {
         InputStream in = null;
         OutputStream out = null;
@@ -566,6 +712,94 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         }
+
+        switch (requestCode) {
+            case REQUEST_CAPTURE:
+                if (resultCode == RESULT_OK) {//调用系统相机返回
+                    Uri uri = Uri.fromFile(tempFile);
+                    Log.e(TAG, "onActivityResult: " + uri);
+                    takePhoneUrl(uri);
+//                    gotoClipActivity(Uri.fromFile(tempFile));
+                }
+                break;
+            case REQUEST_PICK://调用系统相册返回
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    String realPathFromUri = getRealPathFromUri(this, uri);
+                    if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
+//                        gotoClipActivity(uri);
+                        Log.e(TAG, "onActivityResult: " + uri);
+                        takePhoneUrl(uri);
+                    } else {
+                        Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                break;
+        }
+    }
+
+    private void takePhoneUrl(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
+        long fileSize = FileUtil.getFileSize(cropImagePath);
+        Bitmap bitMap = BitmapFactory.decodeFile(cropImagePath);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        String date = simpleDateFormat.format(new Date());
+        FileUtil.saveBitmapToSDCard(bitMap, "123");
+        //此处后面可以将bitMap转为二进制上传后台网络
+
+        accessToken = "Bearer" + " " + token;
+        OkHttpClient client = new OkHttpClient();//创建okhttpClient
+        //创建body类型用于传值
+        MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+        File file = new File(cropImagePath);
+
+        final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
+        builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
+        builder.addFormDataPart("fileNames", "");
+        builder.addFormDataPart("bucketName", "njdeveloptest");
+        builder.addFormDataPart("folderName", "headPic");
+        MultipartBody requestBody = builder.build();
+        final Request request = new Request.Builder()
+                .url(Constant.upload_multifile)
+                .addHeader("Authorization", accessToken)
+                .post(requestBody)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String s = response.body().string();
+                Log.e(TAG, "onResponse: " + s);
+                Gson gson = new Gson();
+                PictureUpload pictureUpload = gson.fromJson(s, PictureUpload.class);
+                if (pictureUpload.getCode() == 200) {
+                    List<PictureUpload.DataBean> data = pictureUpload.getData();
+                    Message message = new Message();
+                    message.what = OPLOAD_IMAGE;
+                    message.obj = data.get(0).getNewName();
+                    handler.sendMessage(message);
+                } else {
+
+                }
+            }
+        });
+    }
+
+    /**
+     * 打开截图界面
+     */
+    public void gotoClipActivity(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        ClipImageActivity.goToClipActivity(this, uri);
     }
 
     //获取手机唯一标识
@@ -656,7 +890,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 returnActivityA = false;
                 returnActivityB = false;
                 returnActivityC = false;
-                EventBus.getDefault().post("打开首页");
+                SharedPreferences sp1 = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit1 = sp1.edit();
+                edit1.putString("apply_url", Constant.text_url);
+                edit1.commit();
                 finish();
                 break;
             case R.id.tv_myPublish:
@@ -666,7 +903,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 returnActivityA = false;
                 returnActivityB = false;
                 returnActivityC = false;
-                EventBus.getDefault().post("打开应用");
+                SharedPreferences sp = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit = sp.edit();
+                edit.putString("apply_url", Constant.apply_url);
+                edit.commit();
                 finish();
                 break;
             case R.id.tv_relation:
@@ -807,7 +1047,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         });
-        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
+        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 
