@@ -195,12 +195,21 @@ public class IntentOpenActivity extends AppCompatActivity {
         setContentView(R.layout.activity_intent_open);
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
-        webView(Constant.test_shoppingCart);
+
         Intent intent = getIntent();
         purchaseOfEntry = intent.getStringExtra("PurchaseOfEntry");
         appId = intent.getStringExtra("appId");
         token = intent.getStringExtra("token");
-        Log.e("wangpan", "onCreate: " + token + purchaseOfEntry);
+        String userId = intent.getStringExtra("userId");
+        String orderNo = intent.getStringExtra("orderNo");
+        String outTradeNo = intent.getStringExtra("outTradeNo");
+        if (!TextUtils.isEmpty(userId)&& !TextUtils.isEmpty(orderNo) && !TextUtils.isEmpty(outTradeNo)) {
+            String loca_url = Constant.locahost_url + "/" + userId + "/" + orderNo + "/" + outTradeNo;
+            Log.e(TAG, "onCreate: " + loca_url);
+            webView(loca_url);
+        } else {
+            webView(Constant.test_shoppingCart);
+        }
         mLodingTime();
     }
 
@@ -226,7 +235,11 @@ public class IntentOpenActivity extends AppCompatActivity {
         mIntentOpenPayWeb.registerHandler("getItemData", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                function.onCallBack(purchaseOfEntry);
+                if (!purchaseOfEntry.isEmpty()) {
+                    function.onCallBack(purchaseOfEntry);
+                } else {
+
+                }
             }
         });
         /**
@@ -241,7 +254,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                     function.onCallBack(userInfo);
                     Log.e(TAG, "handler: " + userInfo);
                 } else {
-                    Toast.makeText(IntentOpenActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+
                 }
             }
         });
@@ -318,7 +331,7 @@ public class IntentOpenActivity extends AppCompatActivity {
          * 弹框提示用户是否关闭
          */
         @JavascriptInterface
-        public void CashierDeskBack(){
+        public void CashierDeskBack() {
             showAlterDialog();
         }
 
@@ -489,6 +502,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             public void onResponse(Call call, Response response) throws IOException {
                 if (response.code() == 200) {
                     String string = response.body().string();
+                    Log.e(TAG, "onResponse: "+string );
                     Gson gson = new Gson();
                     wxPayBean = gson.fromJson(string, WxPayBean.class);
                     PayReq request = new PayReq();
@@ -517,8 +531,8 @@ public class IntentOpenActivity extends AppCompatActivity {
      * @param mIntentOpenPay
      */
     private void wvClientSetting(BridgeWebView mIntentOpenPay) {
-        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay, mLoadingPage));
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
+        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay));
+        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
         mIntentOpenPay.setWebChromeClient(mWebChromeClient);
     }
 

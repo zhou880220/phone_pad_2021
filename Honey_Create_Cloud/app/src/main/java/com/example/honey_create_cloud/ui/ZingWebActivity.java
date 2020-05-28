@@ -121,8 +121,8 @@ public class ZingWebActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        ead_web.setWebViewClient(new MyWebViewClient(ead_web,mLoadingPage));
-        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
+        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
+        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

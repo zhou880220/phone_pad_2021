@@ -19,6 +19,7 @@ public class MWebChromeClient extends WebChromeClient {
     private OnCloseListener onCloseListener;
     private View mWebError;
     private String mFileName;
+    private View mLoadingPage;
 
     public String getmFileName() {
         return mFileName;
@@ -34,6 +35,13 @@ public class MWebChromeClient extends WebChromeClient {
 
     public MWebChromeClient(Context context) {
         this.context = context;
+    }
+
+    public MWebChromeClient(Context context, ProgressBar progressBar, View mWebError,View mLoadingPage) {
+        this.context = context;
+        this.progressBar = progressBar;
+        this.mWebError = mWebError;
+        this.mLoadingPage = mLoadingPage;
     }
 
     public MWebChromeClient(Context context, ProgressBar progressBar, View mWebError) {
@@ -64,7 +72,12 @@ public class MWebChromeClient extends WebChromeClient {
     public void onProgressChanged(WebView view, int newProgress) {
         if (newProgress == 100) {
             //进度条消失
-            progressBar.setVisibility(View.GONE);
+            if (mLoadingPage != null){
+                mLoadingPage.setVisibility(View.GONE);
+                progressBar.setVisibility(View.GONE);
+            }else{
+                progressBar.setVisibility(View.GONE);
+            }
         } else {
             //进度跳显示
             progressBar.setVisibility(View.VISIBLE);
@@ -95,11 +108,6 @@ public class MWebChromeClient extends WebChromeClient {
 
     @Override
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-        File f = new File(mFileName);
-        if(f.exists()){
-            Uri u = Uri.fromFile(f);
-            filePathCallback.onReceiveValue(new Uri[]{u});
-        }
         return super.onShowFileChooser(webView, filePathCallback, fileChooserParams);
     }
 }

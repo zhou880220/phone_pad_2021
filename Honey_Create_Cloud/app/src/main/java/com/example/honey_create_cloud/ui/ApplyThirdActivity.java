@@ -543,7 +543,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals("action.refreshPay")) {
-                Toast.makeText(context, "123", Toast.LENGTH_SHORT).show();
                 mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
                     @Override
                     public void onReceiveValue(String value) {
@@ -572,6 +571,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 returnActivityB = false;
                 returnActivityC = false;
                 Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
+                intent.putExtra("apply_url",Constant.text_url);
                 startActivity(intent);
                 break;
             case R.id.tv_myPublish:
@@ -581,8 +581,12 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 returnActivityA = false;
                 returnActivityB = false;
                 returnActivityC = false;
-                EventBus.getDefault().post("打开应用");
+                SharedPreferences sp = this.getSharedPreferences("apply_urlSafe",MODE_PRIVATE);
+                SharedPreferences.Editor edit = sp.edit();
+                edit.putString("apply_url",Constant.apply_url);
+                edit.commit();
                 Intent intent1 = new Intent(ApplyThirdActivity.this, MainActivity.class);
+                intent1.putExtra("apply_url",Constant.apply_url);
                 startActivity(intent1);
                 break;
             case R.id.tv_relation:
@@ -708,7 +712,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web,mLoadingPage);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
         ead_web.setWebViewClient(myWebViewClient);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
@@ -725,7 +729,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 }
             }
         });
-        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
+        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

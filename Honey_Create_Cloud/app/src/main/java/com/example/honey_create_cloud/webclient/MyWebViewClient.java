@@ -18,7 +18,6 @@ public class MyWebViewClient extends BridgeWebViewClient {
     private Context context;
     private View web_error;
     private String TAG = "TAG";
-    private View mLoadingPage;
 
 
 
@@ -28,9 +27,8 @@ public class MyWebViewClient extends BridgeWebViewClient {
         this.onCityChangeListener = listener;
     }
 
-    public MyWebViewClient(BridgeWebView webView,View mLoadingPage) {
+    public MyWebViewClient(BridgeWebView webView) {
         super(webView);
-        this.mLoadingPage = mLoadingPage;
     }
 
     @Override
@@ -60,7 +58,6 @@ public class MyWebViewClient extends BridgeWebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
-        mLoadingPage.setVisibility(View.GONE);
     }
 
 

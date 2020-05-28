@@ -117,12 +117,8 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar mNewWebProgressbar;
     @InjectView(R.id.new_Web)
     BridgeWebView mNewWeb;
-    @InjectView(R.id.loading_page)
-    View mLoadingPage;
     @InjectView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.head_image3)
-    ImageView headImage3;
 
 
     private Handler myHandler = new Handler(new Handler.Callback() {
@@ -354,6 +350,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             webView(Constant.text_url);
         }
+
+
     }
 
     /**
@@ -374,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
-        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb, mLoadingPage));
+        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb));
         mNewWeb.setWebChromeClient(myChromeWebClient);
         mNewWeb.loadUrl(url);
         //回退监听
@@ -685,6 +683,16 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
+        @JavascriptInterface
+        public void CashierDeskGo(String userId, String orderNo, String outTradeNo){
+            Log.e(TAG, "CashierDeskGo: "+userId+"--"+orderNo+"--"+outTradeNo+"--"+usertoken1 );
+            Intent intent = new Intent(MainActivity.this,IntentOpenActivity.class);
+            intent.putExtra("userId",userId);
+            intent.putExtra("orderNo",orderNo);
+            intent.putExtra("outTradeNo",outTradeNo);
+            intent.putExtra("token",usertoken1);
+            startActivity(intent);
+        }
 
     }
 
@@ -883,9 +891,10 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
             });
-        }
-        if (event.equals("打开应用")) {
+        }else if (event.equals("打开应用")) {
             webView(Constant.apply_url);
+        }else if(event.equals("打开首页")){
+            webView(Constant.text_url);
         }
     }
 
@@ -986,16 +995,16 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 初始页加载
      */
-    private void mLodingTime() {
-        final AnimationView hideAnimation = new AnimationView();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideAnimation.getHideAnimation(mLoadingPage, 500);
-                mLoadingPage.setVisibility(View.GONE);
-            }
-        }, 3000);
-    }
+//    private void mLodingTime() {
+//        final AnimationView hideAnimation = new AnimationView();
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                hideAnimation.getHideAnimation(mLoadingPage, 500);
+//                mLoadingPage.setVisibility(View.GONE);
+//            }
+//        }, 3000);
+//    }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
@@ -1016,7 +1025,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
 //            notificationChange(userid1,"-1");
         }
-
         super.onResume();
     }
 
@@ -1078,6 +1086,7 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
+        mNewWeb.reload();
         Log.e(TAG, "onRestart");
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
@@ -1095,6 +1104,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }).start();
         }
+
+        SharedPreferences sp1 = getSharedPreferences("apply_urlSafe",MODE_PRIVATE);
+        String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
+        if (!TextUtils.isEmpty(apply_url)){
+            Log.e(TAG, "123: "+apply_url );
+            webView(apply_url);
+        }
+        SharedPreferences.Editor edit = sp1.edit();
+        edit.clear();
+        edit.commit();
         super.onRestart();
     }
 
@@ -1232,10 +1251,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        if (requestCode == NOT_NOTICE) {
-            myRequetPermission();//由于不知道是否选择了允许所以需要再次判断
+        if(requestCode == 10 && resultCode == 2){//通过请求码和返回码区分不同的返回
+            String apply_url = intent.getStringExtra("apply_url");//data:后一个页面putExtra()中设置的键名
+            Log.e(TAG, "onActivityResult: "+apply_url);
+            webView(apply_url);
         }
         switch (requestCode) {
+            case NOT_NOTICE:
+                myRequetPermission();//由于不知道是否选择了允许所以需要再次判断
+                break;
             case REQUEST_CAPTURE: //调用系统相机返回
                 if (resultCode == RESULT_OK) {
                     gotoClipActivity(Uri.fromFile(tempFile));
@@ -1266,8 +1290,7 @@ public class MainActivity extends AppCompatActivity {
                     String date = simpleDateFormat.format(new Date());
                     FileUtil.saveBitmapToSDCard(bitMap, "123");
                     //此处后面可以将bitMap转为二进制上传后台网络
-                    //......
-                    headImage3.setImageBitmap(bitMap);
+
                     accessToken = "Bearer" + " " + token1;
                     OkHttpClient client = new OkHttpClient();//创建okhttpClient
                     //创建body类型用于传值

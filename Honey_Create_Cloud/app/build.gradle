@@ -36,8 +36,8 @@ android {
     }
 }
 
-static def releaseTime(){
-    return new Date().format("yyyyMMddHHmm",TimeZone.getTimeZone("GMT+08"))
+static def releaseTime() {
+    return new Date().format("yyyyMMddHHmm", TimeZone.getTimeZone("GMT+08"))
 }
 
 MobSDK {

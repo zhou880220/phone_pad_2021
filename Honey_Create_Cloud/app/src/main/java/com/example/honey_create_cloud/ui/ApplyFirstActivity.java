@@ -656,6 +656,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 returnActivityA = false;
                 returnActivityB = false;
                 returnActivityC = false;
+                EventBus.getDefault().post("打开首页");
                 finish();
                 break;
             case R.id.tv_myPublish:
@@ -789,7 +790,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web, mLoadingPage);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
         ead_web.setWebViewClient(myWebViewClient);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
@@ -806,7 +807,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         });
-        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
+        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 
@@ -838,13 +839,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        String s = "{tradeNo':123}";
-        String s1 = "{\"tradeNo\":\"123\"}";
+    protected void onRestart() {
+        super.onRestart();
         String s2 = "{tradeNo:123}";
-        String s3 = "{'tradeNo':'123'}";
-        String s4 = "{tradeNo:'123'}";
         mNewWeb.post(new Runnable() {
             @Override
             public void run() {
