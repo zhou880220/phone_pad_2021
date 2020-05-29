@@ -37,6 +37,7 @@ import com.example.honey_create_cloud.bean.AppOrderInfo;
 import com.example.honey_create_cloud.bean.PayBean;
 import com.example.honey_create_cloud.bean.PayType;
 import com.example.honey_create_cloud.bean.WxPayBean;
+import com.example.honey_create_cloud.util.MyDialog;
 import com.example.honey_create_cloud.util.PayResult;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
@@ -78,12 +79,7 @@ public class IntentOpenActivity extends AppCompatActivity {
     @InjectView(R.id.glide_gif)
     View mLoadingPage;
 
-    private String purchaseOfEntry;
-    private String appId;
-    private static final int SDK_PAY_FLAG = 1;
-    private static final int SDK_AUTH_FLAG = 2;
-    private static final int AONMALY = 0;
-    private String TAG = "TAG";
+
 
     @SuppressLint("HandlerLeak")
     private Handler mHandler = new Handler() {
@@ -172,7 +168,15 @@ public class IntentOpenActivity extends AppCompatActivity {
     };
     private String token;
     private PayBean payBean;
-
+    private String newUrl;
+    private String purchaseOfEntry;
+    private String appId;
+    private static final int SDK_PAY_FLAG = 1;
+    private static final int SDK_AUTH_FLAG = 2;
+    private static final int AONMALY = 0;
+    private String TAG = "TAG";
+    //    // 用来计算返回键的点击间隔时间
+    private long exitTime = 0;
 
     @SuppressLint("NewApi")
     @Override
@@ -228,6 +232,25 @@ public class IntentOpenActivity extends AppCompatActivity {
         //js交互接口定义
         mIntentOpenPayWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
         wvClientSetting(mIntentOpenPayWeb);
+        mIntentOpenPayWeb.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN){
+                    if (mIntentOpenPayWeb != null && mIntentOpenPayWeb.canGoBack()){
+                        if (newUrl.contains("cashierDesk/")){
+                            if ((System.currentTimeMillis() - exitTime) > 2000){
+                                exitTime = System.currentTimeMillis();
+                                showAlterDialog();
+                            }
+                        }else{
+                            mIntentOpenPayWeb.goBack();
+                        }
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
 
         /**
          * 传递用户订单信息
@@ -236,6 +259,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!purchaseOfEntry.isEmpty()) {
+                    Log.e(TAG, "handler: "+purchaseOfEntry );
                     function.onCallBack(purchaseOfEntry);
                 } else {
 
@@ -531,7 +555,15 @@ public class IntentOpenActivity extends AppCompatActivity {
      * @param mIntentOpenPay
      */
     private void wvClientSetting(BridgeWebView mIntentOpenPay) {
-        mIntentOpenPay.setWebViewClient(new MyWebViewClient(mIntentOpenPay));
+        MyWebViewClient myWebViewClient = new MyWebViewClient(mIntentOpenPay);
+        mIntentOpenPay.setWebViewClient(myWebViewClient);
+        myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
+            @Override
+            public void onCityClick(String name) {
+                newUrl = name;
+                Log.e(TAG, "onCityClick: "+newUrl);
+            }
+        });
         MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
         mIntentOpenPay.setWebChromeClient(mWebChromeClient);
     }
@@ -541,7 +573,7 @@ public class IntentOpenActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res = R.drawable.glide_gif;
+        int res = R.drawable.loding_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).
@@ -598,43 +630,47 @@ public class IntentOpenActivity extends AppCompatActivity {
         Toast.makeText(this, event, Toast.LENGTH_SHORT).show();
     }
 
-    // 用来计算返回键的点击间隔时间
-    private long exitTime = 0;
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
-            if ((System.currentTimeMillis() - exitTime) > 2000) {
-                //弹出提示，可以有多种方式
-                exitTime = System.currentTimeMillis();
-                showAlterDialog();
-            }
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
+//
+//    @Override
+//    public boolean onKeyDown(int keyCode, KeyEvent event) {
+//        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
+//            if (newUrl.contains("cashierDesk/")){
+//                showAlterDialog();
+//                Log.e(TAG, "onKeyDown: " );
+//                if ((System.currentTimeMillis() - exitTime) > 2000) {
+//                    //弹出提示，可以有多种方式
+//                    exitTime = System.currentTimeMillis();
+//
+//                }
+//            }
+//            return true;
+//        }
+//        return super.onKeyDown(keyCode, event);
+//    }
+
+
+//    @Override
+//    public void onBackPressed() {
+//        super.onBackPressed();
+//        if (newUrl.contains("cashierDesk/")){
+//            Log.e(TAG, "onBackPressed: 气死我了" );
+//        }
+//    }
 
     private void showAlterDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.app_tip)
-                .setMessage(R.string.close_page)
-                .setCancelable(false)
-                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        MyDialog dialog = new MyDialog(IntentOpenActivity.this, R.style.mdialog,
+                new MyDialog.OncloseListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent();
-                        intent.setAction("action.refreshPay");
-                        sendBroadcast(intent);
-                        finish();
+                    public void onClick(boolean confirm) {
+                        if (confirm) {
+                            finish();
+                        } else {
+                            Log.e(TAG, "onClick: "+confirm );
+                        }
                     }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                })
-                .show();
+                });
+        dialog.show();
     }
 
 

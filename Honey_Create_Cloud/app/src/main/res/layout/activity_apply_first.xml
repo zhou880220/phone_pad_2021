@@ -17,84 +17,6 @@
         android:layout_height="3dp"
         android:progressDrawable="@drawable/progressbar" />
 
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/grid_popup"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:alpha="0.95"
-        android:background="@drawable/gird_radius"
-        android:numColumns="3"
-        android:padding="10dp"
-        android:visibility="gone" />
-
-    <LinearLayout
-        android:id="@+id/ll_popup"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_alignRight="@id/fab_more"
-        android:layout_alignBottom="@+id/fab_more"
-        android:layout_marginRight="34dp"
-        android:layout_marginBottom="2dp"
-        android:alpha="0.95"
-        android:background="@drawable/gird_radius"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingRight="21dp"
-        android:visibility="gone">
-
-        <ImageView
-            android:id="@+id/tv_publish"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_margin="10dp"
-            android:layout_weight="1"
-            android:background="@mipmap/floatinghome"
-            android:gravity="center"
-            android:onClick="onClick"
-            android:paddingLeft="15dp"
-            android:paddingRight="15sp" />
-
-        <View
-            android:layout_width="2px"
-            android:layout_height="8dp"
-            android:background="@android:color/white" />
-
-        <ImageView
-            android:id="@+id/tv_myPublish"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_margin="10dp"
-            android:layout_weight="1"
-            android:background="@mipmap/floatingapply"
-            android:gravity="center"
-            android:onClick="onClick"
-            android:paddingLeft="15dp"
-            android:paddingRight="15dp" />
-
-        <View
-            android:layout_width="2px"
-            android:layout_height="8dp"
-            android:background="@android:color/white" />
-
-        <ImageView
-            android:id="@+id/tv_relation"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_margin="10dp"
-            android:layout_weight="1"
-            android:background="@mipmap/floatingapp"
-            android:gravity="center"
-            android:onClick="onClick"
-            android:paddingLeft="15dp"
-            android:paddingRight="15dp" />
-    </LinearLayout>
-
     <LinearLayout
         android:id="@+id/ll_course_none"
         android:layout_width="wrap_content"
@@ -118,6 +40,77 @@
             android:text="暂时没有内容哦" />
     </LinearLayout>
 
+
+    <RelativeLayout
+        android:id="@+id/dimiss_popup"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:onClick="onClick"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/ll_popup"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="34dp"
+            android:layout_marginBottom="53dp"
+            android:alpha="0.95"
+            android:background="@drawable/gird_radius"
+            android:gravity="center_vertical"
+            android:onClick="onClick"
+            android:orientation="horizontal"
+            android:paddingRight="21dp">
+
+            <ImageView
+                android:id="@+id/tv_publish"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="10dp"
+                android:layout_weight="1"
+                android:background="@mipmap/floatinghome"
+                android:gravity="center"
+                android:onClick="onClick"
+                android:paddingLeft="15dp"
+                android:paddingRight="15sp" />
+
+            <View
+                android:layout_width="2px"
+                android:layout_height="8dp"
+                android:background="@android:color/white" />
+
+            <ImageView
+                android:id="@+id/tv_myPublish"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="10dp"
+                android:layout_weight="1"
+                android:background="@mipmap/floatingapply"
+                android:gravity="center"
+                android:onClick="onClick"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp" />
+
+            <View
+                android:layout_width="2px"
+                android:layout_height="8dp"
+                android:background="@android:color/white" />
+
+            <ImageView
+                android:id="@+id/tv_relation"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="10dp"
+                android:layout_weight="1"
+                android:background="@mipmap/floatingapp"
+                android:gravity="center"
+                android:onClick="onClick"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp" />
+        </LinearLayout>
+    </RelativeLayout>
+
     <ImageView
         android:id="@+id/fab_more"
         android:layout_width="55dp"
@@ -136,12 +129,13 @@
         android:id="@+id/glide_gif"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white">
+        android:background="#FBFBFB">
+
         <ImageView
             android:id="@+id/image_view"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_centerInParent="true"/>
+            android:layout_centerInParent="true" />
     </RelativeLayout>
 
     <include
@@ -149,5 +143,30 @@
         layout="@layout/layout_load_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"/>
+        android:visibility="gone" />
+
+    <RelativeLayout
+        android:id="@+id/show_dismiss"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:onClick="onClick"
+        android:visibility="gone">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/grid_popup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:alpha="0.95"
+            android:background="@drawable/gird_radius"
+            android:numColumns="3"
+            android:padding="10dp" />
+    </RelativeLayout>
 </RelativeLayout>

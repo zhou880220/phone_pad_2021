@@ -35,6 +35,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -133,6 +134,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
     LinearLayout mLlCourseNone;
     @InjectView(R.id.fab_more)
     ImageView mFabMore;
+    @InjectView(R.id.show_dismiss)
+    RelativeLayout mShowDismiss;
+    @InjectView(R.id.dimiss_popup)
+    RelativeLayout mDimissPopup;
 
     private Handler handler = new Handler(new Handler.Callback() {
         @Override
@@ -143,7 +148,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     String newName = (String) msg.obj;
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
-                            .add("fileNames", userid)
+                            .add("fileNames", newName)
                             .add("bucketName", "njdeveloptest")
                             .add("folderName", "menu")
                             .build();
@@ -166,9 +171,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
                             Log.e(TAG, "onResponse: " + string);
                             TakePhoneBean takePhoneBean = gson.fromJson(string, TakePhoneBean.class);
                             List<TakePhoneBean.DataBean> data = takePhoneBean.getData();
-                            String fileName = data.get(0).getFileName();
                             String fileUrl1 = data.get(0).getFileUrl();
-                            String imageurl = "{fileName:" + fileName + ",fileUrl:" + fileUrl1 + "}";
+                            String imageurl = newName + "&&" + fileUrl1;
+                            Log.e(TAG, "onResponse: " + "---" + imageurl);
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -264,7 +269,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
-        webView(url);  //http://172.16.23.210:3006/src/view/example/shareSDKData.html
+        webView(url);
         mLodingTime();
         intentOkhttp();
 
@@ -392,6 +397,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //联系客服  打开通讯录
         @JavascriptInterface
         public void OpenPayIntent(String intentOpenPay) {
+            Log.e(TAG, "OpenPayIntent: " + intentOpenPay);
             Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
@@ -760,7 +766,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
         builder.addFormDataPart("bucketName", "njdeveloptest");
-        builder.addFormDataPart("folderName", "headPic");
+        builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
                 .url(Constant.upload_multifile)
@@ -913,22 +919,32 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);
-                mGridPopup.setVisibility(View.VISIBLE);
+                mShowDismiss.setVisibility(View.VISIBLE);
                 pagerView();
                 adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
                     @Override
                     public void onClosePopupClick(String name) {
                         if (name.equals("关闭")) {
-                            mGridPopup.setVisibility(View.GONE);
+                            mShowDismiss.setVisibility(View.GONE);
+                            switchPopup();
                         }
                     }
                 });
-
                 break;
             case R.id.fab_more:
+                mDimissPopup.setVisibility(View.VISIBLE);
+                switchPopup();
+                break;
+            case R.id.dimiss_popup:
+                mDimissPopup.setVisibility(View.GONE);
+                switchPopup();
+                break;
+            case R.id.show_dismiss:
+                Log.e(TAG, "onClick: 消失");
+                mShowDismiss.setVisibility(View.GONE);
+                switchPopup();
                 break;
         }
-        switchPopup();
     }
 
     /**
@@ -1016,7 +1032,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res = R.drawable.glide_gif;
+        int res = R.drawable.loding_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).

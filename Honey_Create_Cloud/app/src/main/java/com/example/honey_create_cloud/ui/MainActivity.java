@@ -548,6 +548,10 @@ public class MainActivity extends AppCompatActivity {
         //联系客服  打开通讯录
         @JavascriptInterface
         public void OpenPayIntent(String intentOpenPay) {
+            Log.e(TAG, "OpenPayIntent: "+intentOpenPay );
+//            int i = Integer.parseInt(intentOpenPay);
+//            String s = String.valueOf(intentOpenPay);
+//            Log.e(TAG, "OpenPayIntent: "+s);
             Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);

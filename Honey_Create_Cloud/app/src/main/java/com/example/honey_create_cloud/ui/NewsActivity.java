@@ -132,7 +132,7 @@ public class NewsActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res= R.drawable.glide_gif;
+        int res= R.drawable.loding_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).

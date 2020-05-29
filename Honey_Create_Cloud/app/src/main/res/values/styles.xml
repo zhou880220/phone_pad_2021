@@ -58,4 +58,14 @@
         <item name="android:backgroundDimEnabled" >false</item >
         <item name="android:windowBackground" >@drawable/round_background</item >
     </style >
+
+    <!--对话框样式-->
+    <style name="mdialog" parent="Theme.AppCompat.Dialog">
+        <!--背景透明-->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!--没有标题-->
+        <item name="android:windowNoTitle">true</item>
+        <!--背景昏暗-->
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
 </resources>

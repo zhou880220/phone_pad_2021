@@ -35,6 +35,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -127,6 +128,10 @@ public class ApplySecondActivity extends AppCompatActivity {
     LinearLayout mLlCourseNone;
     @InjectView(R.id.fab_more)
     ImageView mFabMore;
+    @InjectView(R.id.show_dismiss)
+    RelativeLayout mShowDismiss;
+    @InjectView(R.id.dimiss_popup)
+    RelativeLayout mDimissPopup;
 
     private Handler handler = new Handler(new Handler.Callback() {
         @Override
@@ -819,23 +824,33 @@ public class ApplySecondActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);
-                mGridPopup.setVisibility(View.VISIBLE);
+                mShowDismiss.setVisibility(View.VISIBLE);
                 pagerView();
                 adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
                     @Override
                     public void onClosePopupClick(String name) {
                         if (name.equals("关闭")) {
-                            mGridPopup.setVisibility(View.GONE);
+                            mShowDismiss.setVisibility(View.GONE);
+                            switchPopup();
                         }
                     }
                 });
-
                 break;
             case R.id.fab_more:
-
+                Log.e(TAG, "onClick: adfadf");
+                mDimissPopup.setVisibility(View.VISIBLE);
+                switchPopup();
+                break;
+            case R.id.dimiss_popup:
+                mDimissPopup.setVisibility(View.GONE);
+                switchPopup();
+                break;
+            case R.id.show_dismiss:
+                Log.e(TAG, "onClick: 消失");
+                mShowDismiss.setVisibility(View.GONE);
+                switchPopup();
                 break;
         }
-        switchPopup();
     }
 
     /**
@@ -925,7 +940,7 @@ public class ApplySecondActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res = R.drawable.glide_gif;
+        int res = R.drawable.loding_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).

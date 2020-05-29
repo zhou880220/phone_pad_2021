@@ -7,6 +7,15 @@
     <color name="colorError">#FFFFFF</color>
     <color name="colorFloating">#515151</color>
     <color name="navpage">#FFE1E8EB</color>
+
+
     <color name="status_layout_manager_tip_text_color">#BFBFBF</color>
     <color name="wechat_button_color">#7A8D7A</color>
+    <color name="text_color_true">#FFFFFF</color>
+    <color name="text_backcolor_true">#2F83FF</color>
+
+    <color name="text_color_false">#000000</color>
+    <color name="text_backcolor_false">#FFFFFF</color>
+
+
 </resources>
