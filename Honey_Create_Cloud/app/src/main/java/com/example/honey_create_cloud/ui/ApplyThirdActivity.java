@@ -165,9 +165,9 @@ public class ApplyThirdActivity extends AppCompatActivity {
                             Log.e(TAG, "onResponse: " + string);
                             TakePhoneBean takePhoneBean = gson.fromJson(string, TakePhoneBean.class);
                             List<TakePhoneBean.DataBean> data = takePhoneBean.getData();
-                            String fileName = data.get(0).getFileName();
                             String fileUrl1 = data.get(0).getFileUrl();
-                            String imageurl = "{fileName:" + fileName + ",fileUrl:" + fileUrl1 + "}";
+                            String imageurl = newName + "&&" + fileUrl1;
+                            Log.e(TAG, "onResponse: " + "---" + imageurl);
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -676,7 +676,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
         builder.addFormDataPart("bucketName", "njdeveloptest");
-        builder.addFormDataPart("folderName", "headPic");
+        builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
                 .url(Constant.upload_multifile)
@@ -995,12 +995,18 @@ public class ApplyThirdActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
+    protected void onRestart() {
+        super.onRestart();
+        String s2 = "{tradeNo:123}";
+        mNewWeb.post(new Runnable() {
             @Override
-            public void onReceiveValue(String value) {
-
+            public void run() {
+                mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment(\"" + s2 + "\")", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                        Log.e(TAG, "onReceiveValue" + s2);
+                    }
+                });
             }
         });
     }

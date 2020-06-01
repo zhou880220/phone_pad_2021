@@ -3,7 +3,6 @@ package com.example.honey_create_cloud.ui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -25,7 +24,6 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.alipay.sdk.app.PayTask;
@@ -78,7 +76,6 @@ public class IntentOpenActivity extends AppCompatActivity {
     View mWebError;
     @InjectView(R.id.glide_gif)
     View mLoadingPage;
-
 
 
     @SuppressLint("HandlerLeak")
@@ -177,6 +174,7 @@ public class IntentOpenActivity extends AppCompatActivity {
     private String TAG = "TAG";
     //    // 用来计算返回键的点击间隔时间
     private long exitTime = 0;
+    private String userId;
 
     @SuppressLint("NewApi")
     @Override
@@ -204,10 +202,10 @@ public class IntentOpenActivity extends AppCompatActivity {
         purchaseOfEntry = intent.getStringExtra("PurchaseOfEntry");
         appId = intent.getStringExtra("appId");
         token = intent.getStringExtra("token");
-        String userId = intent.getStringExtra("userId");
+        userId = intent.getStringExtra("userId");
         String orderNo = intent.getStringExtra("orderNo");
         String outTradeNo = intent.getStringExtra("outTradeNo");
-        if (!TextUtils.isEmpty(userId)&& !TextUtils.isEmpty(orderNo) && !TextUtils.isEmpty(outTradeNo)) {
+        if (!TextUtils.isEmpty(userId) && !TextUtils.isEmpty(orderNo) && !TextUtils.isEmpty(outTradeNo)) {
             String loca_url = Constant.locahost_url + "/" + userId + "/" + orderNo + "/" + outTradeNo;
             Log.e(TAG, "onCreate: " + loca_url);
             webView(loca_url);
@@ -235,14 +233,23 @@ public class IntentOpenActivity extends AppCompatActivity {
         mIntentOpenPayWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN){
-                    if (mIntentOpenPayWeb != null && mIntentOpenPayWeb.canGoBack()){
-                        if (newUrl.contains("cashierDesk/")){
-                            if ((System.currentTimeMillis() - exitTime) > 2000){
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (mIntentOpenPayWeb != null && mIntentOpenPayWeb.canGoBack()) {
+                        if (newUrl.contains("orderDetail/")) {
+                            mIntentOpenPayWeb.goBack();
+                        } else if (newUrl.contains("cashierDesk/")) {
+                            if ((System.currentTimeMillis() - exitTime) > 2000) {
                                 exitTime = System.currentTimeMillis();
                                 showAlterDialog();
                             }
-                        }else{
+                        } else if (newUrl.contains("paymentSuccess/")) {
+                            finish();
+                        } else if (!userId.isEmpty()) {
+                            if ((System.currentTimeMillis() - exitTime) > 2000) {
+                                exitTime = System.currentTimeMillis();
+                                showAlterDialog();
+                            }
+                        } else {
                             mIntentOpenPayWeb.goBack();
                         }
                         return true;
@@ -259,7 +266,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!purchaseOfEntry.isEmpty()) {
-                    Log.e(TAG, "handler: "+purchaseOfEntry );
+                    Log.e(TAG, "handler: " + purchaseOfEntry);
                     function.onCallBack(purchaseOfEntry);
                 } else {
 
@@ -526,7 +533,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             public void onResponse(Call call, Response response) throws IOException {
                 if (response.code() == 200) {
                     String string = response.body().string();
-                    Log.e(TAG, "onResponse: "+string );
+                    Log.e(TAG, "onResponse: " + string);
                     Gson gson = new Gson();
                     wxPayBean = gson.fromJson(string, WxPayBean.class);
                     PayReq request = new PayReq();
@@ -561,7 +568,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {
                 newUrl = name;
-                Log.e(TAG, "onCityClick: "+newUrl);
+                Log.e(TAG, "onCityClick: " + newUrl);
             }
         });
         MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
@@ -631,20 +638,17 @@ public class IntentOpenActivity extends AppCompatActivity {
     }
 
 
-//
 //    @Override
 //    public boolean onKeyDown(int keyCode, KeyEvent event) {
 //        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
-//            if (newUrl.contains("cashierDesk/")){
-//                showAlterDialog();
-//                Log.e(TAG, "onKeyDown: " );
+//            if (userId != null) {
 //                if ((System.currentTimeMillis() - exitTime) > 2000) {
-//                    //弹出提示，可以有多种方式
 //                    exitTime = System.currentTimeMillis();
-//
+//                    showAlterDialog();
 //                }
+//            } else {
+//                mIntentOpenPayWeb.goBack();
 //            }
-//            return true;
 //        }
 //        return super.onKeyDown(keyCode, event);
 //    }
@@ -653,8 +657,12 @@ public class IntentOpenActivity extends AppCompatActivity {
 //    @Override
 //    public void onBackPressed() {
 //        super.onBackPressed();
-//        if (newUrl.contains("cashierDesk/")){
-//            Log.e(TAG, "onBackPressed: 气死我了" );
+//        Log.e(TAG, "onBackPressed: 关闭");
+//        if (!userId.isEmpty()) {
+//            if ((System.currentTimeMillis() - exitTime) > 2000) {
+//                exitTime = System.currentTimeMillis();
+//                showAlterDialog();
+//            }
 //        }
 //    }
 
@@ -666,7 +674,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                         if (confirm) {
                             finish();
                         } else {
-                            Log.e(TAG, "onClick: "+confirm );
+                            Log.e(TAG, "onClick: " + confirm);
                         }
                     }
                 });

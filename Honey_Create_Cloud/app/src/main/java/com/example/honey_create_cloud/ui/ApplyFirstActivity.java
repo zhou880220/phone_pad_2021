@@ -57,9 +57,7 @@ import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.bean.RecentlyApps;
 import com.example.honey_create_cloud.bean.TakePhoneBean;
-import com.example.honey_create_cloud.recorder.AudioManager;
 import com.example.honey_create_cloud.recorder.AudioRecorderButton;
-import com.example.honey_create_cloud.recorder.DialogManager;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
@@ -83,7 +81,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -217,30 +214,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private File tempFile;
 
     private String accessToken;
-
-    /**
-     * 采样频率
-     */
-    private static final int SAMPLE_RATE = 11025;
-
-
-    //手指滑动 距离
-    private static final int DISTANCE_Y_CANCEL = 50;
-    //状态
-    private static final int STATE_NORMAL = 1;
-    private static final int STATE_RECORDING = 2;
-    private static final int STATE_WANT_TO_CANCEL = 3;
-    //当前状态
-    private int mCurState = STATE_NORMAL;
-    //已经开始录音
-    public static boolean isRecording = false;
-
-    private DialogManager mDialogManager;
-    public static AudioManager mAudioManager;
-
-    private float mTime;
-    //是否触发onlongclick
-    public static boolean mReady;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -749,10 +722,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
             return;
         }
         String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
-        long fileSize = FileUtil.getFileSize(cropImagePath);
         Bitmap bitMap = BitmapFactory.decodeFile(cropImagePath);
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        String date = simpleDateFormat.format(new Date());
         FileUtil.saveBitmapToSDCard(bitMap, "123");
         //此处后面可以将bitMap转为二进制上传后台网络
 
@@ -1086,12 +1057,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         returnActivityA = false;
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
     }
 
     @Override

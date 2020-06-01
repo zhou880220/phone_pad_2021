@@ -78,7 +78,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -142,7 +141,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                     String newName = (String) msg.obj;
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
-                            .add("fileNames", userid)
+                            .add("fileNames", newName)
                             .add("bucketName", "njdeveloptest")
                             .add("folderName", "menu")
                             .build();
@@ -165,9 +164,8 @@ public class ApplySecondActivity extends AppCompatActivity {
                             Log.e(TAG, "onResponse: " + string);
                             TakePhoneBean takePhoneBean = gson.fromJson(string, TakePhoneBean.class);
                             List<TakePhoneBean.DataBean> data = takePhoneBean.getData();
-                            String fileName = data.get(0).getFileName();
                             String fileUrl1 = data.get(0).getFileUrl();
-                            String imageurl = "{fileName:" + fileName + ",fileUrl:" + fileUrl1 + "}";
+                            String imageurl = newName + "&&" + fileUrl1;
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -661,10 +659,8 @@ public class ApplySecondActivity extends AppCompatActivity {
             return;
         }
         String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
-        long fileSize = FileUtil.getFileSize(cropImagePath);
         Bitmap bitMap = BitmapFactory.decodeFile(cropImagePath);
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        String date = simpleDateFormat.format(new Date());
         FileUtil.saveBitmapToSDCard(bitMap, "123");
         //此处后面可以将bitMap转为二进制上传后台网络
 
@@ -678,7 +674,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
         builder.addFormDataPart("bucketName", "njdeveloptest");
-        builder.addFormDataPart("folderName", "headPic");
+        builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
                 .url(Constant.upload_multifile)
@@ -998,12 +994,18 @@ public class ApplySecondActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment()", new ValueCallback<String>() {
+    protected void onRestart() {
+        super.onRestart();
+        String s2 = "{tradeNo:123}";
+        mNewWeb.post(new Runnable() {
             @Override
-            public void onReceiveValue(String value) {
-
+            public void run() {
+                mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment(\"" + s2 + "\")", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                        Log.e(TAG, "onReceiveValue" + s2);
+                    }
+                });
             }
         });
     }
