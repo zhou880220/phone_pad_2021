@@ -231,8 +231,8 @@ public class ApplyThirdActivity extends AppCompatActivity {
             getWindow().setAttributes(lp);
         } else if (rects == false) {
             //无刘海屏
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            setAndroidNativeLightStatusBar(ApplyThirdActivity.this, true);//黑色字体
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//            setAndroidNativeLightStatusBar(ApplyThirdActivity.this, true);//黑色字体
         }
         setContentView(R.layout.activity_apply_third);
         returnActivityC = true;

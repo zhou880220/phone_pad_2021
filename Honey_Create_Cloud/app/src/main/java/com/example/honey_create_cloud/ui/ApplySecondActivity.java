@@ -229,9 +229,9 @@ public class ApplySecondActivity extends AppCompatActivity {
             lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
             getWindow().setAttributes(lp);
         } else if (rects == false) {
-            //无刘海屏
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            setAndroidNativeLightStatusBar(ApplySecondActivity.this, true);//黑色字体
+//            //无刘海屏
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//            setAndroidNativeLightStatusBar(ApplySecondActivity.this, true);//黑色字体
         }
         setContentView(R.layout.activity_apply_second);
         returnActivityB = true;

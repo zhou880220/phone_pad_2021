@@ -126,59 +126,6 @@ public class MainActivity extends AppCompatActivity {
         public boolean handleMessage(Message msg) {
 
             switch (msg.what) {
-                case SDK_PAY_FLAG: {
-                    @SuppressWarnings("unchecked")
-                    PayResult payResult = new PayResult((Map<String, String>) msg.obj);
-                    /**
-                     * 对于支付结果，请商户依赖服务端的异步通知结果。同步通知结果，仅作为支付结束的通知。
-                     */
-                    String resultInfo = payResult.getResult();// 同步返回需要验证的信息
-                    String resultStatus = payResult.getResultStatus();
-                    // 判断resultStatus 为9000则代表支付成功
-                    if (TextUtils.equals(resultStatus, "9000")) {
-                        // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
-                        mNewWeb.post(new Runnable() {
-                            @SuppressLint("NewApi")
-                            @Override
-                            public void run() {
-                                mNewWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "1" + "\")", new ValueCallback<String>() {
-                                    @Override
-                                    public void onReceiveValue(String value) {
-                                        Log.e("wangpan", "---");
-                                    }
-                                });
-                            }
-                        });
-                        Toast.makeText(MainActivity.this, "支付成功", Toast.LENGTH_SHORT).show();
-                        Log.e("wangpan", payResult + "");
-                    } else if (TextUtils.equals(resultStatus, "4000")) {
-                        // 该笔订单真实的支付结果，需要依赖服务端的异步通知。
-                        //此功能用于在用户支付后回调通知页面支付成功/失败
-                        mNewWeb.post(new Runnable() {
-                            @SuppressLint("NewApi")
-                            @Override
-                            public void run() {
-                                mNewWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "2" + "\")", new ValueCallback<String>() {
-                                    @Override
-                                    public void onReceiveValue(String value) {
-                                        Log.e("wangpan", "---");
-                                    }
-                                });
-                            }
-                        });
-                        Toast.makeText(MainActivity.this, "支付失败", Toast.LENGTH_SHORT).show();
-                        Log.e("wangpan", payResult + "");
-                    } else if (TextUtils.equals(resultStatus, "8000")) {
-                        Toast.makeText(MainActivity.this, "正在处理中...", Toast.LENGTH_SHORT).show();
-                    } else if (TextUtils.equals(resultStatus, "6001")) {
-                        Toast.makeText(MainActivity.this, "支付未完成,用户取消", Toast.LENGTH_SHORT).show();
-                    } else if (TextUtils.equals(resultStatus, "5000")) {
-                        Toast.makeText(MainActivity.this, "重复请求", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "支付异常", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                }
                 case OPLOAD_IMAGE:
                     Log.e(TAG, "handleMessage: " + msg.obj);
                     newName = (String) msg.obj;
@@ -325,8 +272,14 @@ public class MainActivity extends AppCompatActivity {
             getWindow().setAttributes(lp);
         } else if (rects == false) {
             //无刘海屏
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            setAndroidNativeLightStatusBar(MainActivity.this, true);//黑色字体
+//            WindowManager.LayoutParams lp = getWindow().getAttributes();
+//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+//            getWindow().setAttributes(lp);
+
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//            View decor = this.getWindow().getDecorView();
+//            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+//            setAndroidNativeLightStatusBar(MainActivity.this, true);//白色字体
         }
         setContentView(R.layout.activity_main);
         createNotificationChannel();
@@ -652,21 +605,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        //支付（支付宝/微信）
-        @JavascriptInterface
-        public void openPay(String data) {
-            if (!data.isEmpty()) {
-                Gson gson = new Gson();
-                PayBean payBean = gson.fromJson(data, PayBean.class);
-                Log.e(TAG, "openPay: " + data);
-                if (payBean.getPayType().equals("alipay")) { // 支付宝支付
-                    alipaytypeOkhttp(payBean);
-                } else if (payBean.getPayType().equals("weixin")) { //微信支付
-                    wxpaytypeOkhttp(payBean);
-                }
-            }
-        }
-
         /**
          * 返回关闭支付页面
          */
@@ -696,157 +634,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         }
 
-    }
-
-    private void alipaytypeOkhttp(final PayBean payBean) {
-        String formBody = "{" +
-                "userId:'" + payBean.getUserId() + '\'' +
-                ", outTradeNo:'" + payBean.getOutTradeNo() + '\'' +
-                ", PayType:'" + payBean.getPayType() + '\'' +
-                '}';
-        MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
-        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, formBody);
-
-        OkHttpClient okHttpClient = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url(Constant.payType)
-                .post(requestBody)
-                .addHeader("Authorization", "Bearer " + usertoken1)
-                .build();
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String string = response.body().string();
-                Log.e(TAG, "onResponse: " + string);
-                Gson gson = new Gson();
-                PayType payType = gson.fromJson(string, PayType.class);
-                if (payType.getCode() == 200) {
-                    alipayOkhttp(payBean);
-                }
-            }
-        });
-    }
-
-    private void wxpaytypeOkhttp(final PayBean payBean) {
-        String formBody = "{" +
-                "userId:'" + payBean.getUserId() + '\'' +
-                ", outTradeNo:'" + payBean.getOutTradeNo() + '\'' +
-                ", PayType:'" + payBean.getPayType() + '\'' +
-                '}';
-        MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
-        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, formBody);
-
-        OkHttpClient okHttpClient = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url(Constant.payType)
-                .post(requestBody)
-                .addHeader("Authorization", "Bearer " + usertoken1)
-                .build();
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String string = response.body().string();
-                Log.e(TAG, "onResponse: " + string);
-                Gson gson = new Gson();
-                PayType payType = gson.fromJson(string, PayType.class);
-                if (payType.getCode() == 200) {
-                    wxPayOkhttp(payBean);
-                }
-            }
-        });
-    }
-
-    private void alipayOkhttp(PayBean payBean) {
-        OkHttpClient client = new OkHttpClient();
-        final Request request = new Request.Builder()
-                .url(Constant.appOrderInfo + payBean.getOutTradeNo())
-                .addHeader("Authorization", "Bearer " + usertoken1)
-                .get()
-                .build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.code() == 200) {
-                    String string = response.body().string();
-                    Log.e(TAG, "onResponse: " + string);
-                    Gson gson = new Gson();
-                    AppOrderInfo appOrderInfo = gson.fromJson(string, AppOrderInfo.class);
-                    //orderInfo为通过接口获取的订单信息中的url
-                    final String orderInfo = appOrderInfo.getData();
-                    final Runnable payRunnable = new Runnable() {
-
-                        @Override
-                        public void run() {
-                            PayTask alipay = new PayTask(MainActivity.this);
-                            Map<String, String> result = alipay.payV2(orderInfo, true);
-
-                            Message msg = new Message();
-                            msg.what = SDK_PAY_FLAG;
-                            msg.obj = result;
-                            myHandler.sendMessage(msg);
-                        }
-                    };
-                    // 必须异步调用
-                    Thread payThread = new Thread(payRunnable);
-                    payThread.start();
-                } else {
-
-                }
-            }
-        });
-    }
-
-    private void wxPayOkhttp(PayBean payBean) {
-        final IWXAPI msgApi = WXAPIFactory.createWXAPI(this, null);
-        // 将该app注册到微信
-        msgApi.registerApp(Constant.APP_ID);
-
-        OkHttpClient client = new OkHttpClient();
-        final Request request = new Request.Builder()
-                .url(Constant.wxPay_appOrderInfo + payBean.getOutTradeNo())
-                .addHeader("Authorization", "Bearer " + usertoken1)
-                .get()
-                .build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.code() == 200) {
-                    String string = response.body().string();
-                    Gson gson = new Gson();
-                    WxPayBean wxPayBean = gson.fromJson(string, WxPayBean.class);
-                    PayReq request = new PayReq();
-                    request.appId = wxPayBean.getData().getAppid();
-                    request.partnerId = wxPayBean.getData().getPartnerid();
-                    request.prepayId = wxPayBean.getData().getPrepayid();
-                    request.packageValue = wxPayBean.getData().getWxPackage();
-                    request.nonceStr = wxPayBean.getData().getNoncestr();
-                    request.timeStamp = wxPayBean.getData().getTimestamp();
-                    request.sign = wxPayBean.getData().getSign();
-                    msgApi.sendReq(request);
-                    Log.e(TAG, "onResponse: " + string);
-                } else {
-
-                }
-            }
-        });
     }
 
     private void createNotificationChannel() {
