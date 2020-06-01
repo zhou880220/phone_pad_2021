@@ -25,5 +25,7 @@ public class Constant {
     public static final String wxPay_appOrderInfo = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-pay/wxPay/appOrderInfo/"; //获取微信订单详情
     public static final String payType = "http://139.9.172.71:18080/api-apps/client/order/user/payType";  //获取用户支付类型，订单号，用户id
     public static final String test_shoppingCart = "http://njtestyyzx.zhizaoyun.com/shoppingCart"; //支付页面订单列表
-    public static final String NOTICE_OPEN_SWITCH = "http://139.9.172.71:18080/api-apps/client/notice/status/"; //开启或关闭用户通知接口
+    public static final String NOTICE_OPEN_SWITCH = "http://139.9.172.71:18080/api-apps/apps-anon/client/notice/status"; //开启或关闭用户通知接口
+    public static final String MyOrderList = "http://njtestyyzx.zhizaoyun.com/myOrder";//订单列表
+
 }

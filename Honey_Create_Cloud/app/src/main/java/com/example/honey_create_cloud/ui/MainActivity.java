@@ -33,7 +33,6 @@ import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -45,24 +44,17 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
-import com.alipay.sdk.app.PayTask;
 import com.example.honey_create_cloud.BuildConfig;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.MyHandlerCallBack;
 import com.example.honey_create_cloud.R;
-import com.example.honey_create_cloud.bean.AppOrderInfo;
 import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.HeadPic;
 import com.example.honey_create_cloud.bean.NotificationBean;
-import com.example.honey_create_cloud.bean.PayBean;
-import com.example.honey_create_cloud.bean.PayType;
 import com.example.honey_create_cloud.bean.PictureUpload;
-import com.example.honey_create_cloud.bean.WxPayBean;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
-import com.example.honey_create_cloud.util.PayResult;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
-import com.example.honey_create_cloud.view.AnimationView;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -76,9 +68,6 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import com.tencent.mm.opensdk.modelpay.PayReq;
-import com.tencent.mm.opensdk.openapi.IWXAPI;
-import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -89,7 +78,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
@@ -254,6 +242,8 @@ public class MainActivity extends AppCompatActivity {
     private MWebChromeClient myChromeWebClient;
     private int badgeCount = 0;
     private boolean ChaceSize = true;
+    private boolean pageReload = true;
+    private String myOrder;
 
 
     @SuppressLint("NewApi")
@@ -323,7 +313,24 @@ public class MainActivity extends AppCompatActivity {
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
-        mNewWeb.setWebViewClient(new MyWebViewClient(mNewWeb));
+        MyWebViewClient myWebViewClient = new MyWebViewClient(mNewWeb);
+        myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
+            @Override
+            public void onCityClick(String name) {
+                myOrder = name;
+                if (name.equals(Constant.MyOrderList)) {
+                    if (pageReload == true) {
+                        mNewWeb.reload();
+                        pageReload = false;
+                    } else {
+
+                    }
+                } else {
+                    pageReload = true;
+                }
+            }
+        });
+        mNewWeb.setWebViewClient(myWebViewClient);
         mNewWeb.setWebChromeClient(myChromeWebClient);
         mNewWeb.loadUrl(url);
         //回退监听
@@ -358,11 +365,11 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getCache", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if(ChaceSize == true){
+                if (ChaceSize == true) {
                     if (!totalCacheSize.isEmpty()) {
                         function.onCallBack(totalCacheSize);
                     }
-                }else{
+                } else {
                     function.onCallBack("0.00MB");
                 }
             }
@@ -490,6 +497,7 @@ public class MainActivity extends AppCompatActivity {
         public void setUserInfo(String userInfo) {
             Log.e("wangpan", userInfo);
             if (!userInfo.isEmpty()) {
+
                 SharedPreferences sb = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sb.edit();
                 edit.putString("userInfo", userInfo);
@@ -501,7 +509,7 @@ public class MainActivity extends AppCompatActivity {
         //联系客服  打开通讯录
         @JavascriptInterface
         public void OpenPayIntent(String intentOpenPay) {
-            Log.e(TAG, "OpenPayIntent: "+intentOpenPay );
+            Log.e(TAG, "OpenPayIntent: " + intentOpenPay);
 //            int i = Integer.parseInt(intentOpenPay);
 //            String s = String.valueOf(intentOpenPay);
 //            Log.e(TAG, "OpenPayIntent: "+s);
@@ -561,6 +569,8 @@ public class MainActivity extends AppCompatActivity {
             if (!usertoken.isEmpty()) {
                 usertoken1 = usertoken;
                 userid1 = userid;
+                Log.e(TAG, "getToken: " + usertoken1);
+                notificationChange(userid, "0");
                 SharedPreferences sb = context.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sb.edit();
                 edit.putString("NotifyUserId", userid);
@@ -586,6 +596,7 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void ClearUserInfo() {
+            notificationChange(userid1, "-1");
             SharedPreferences sb = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
             SharedPreferences.Editor edit = sb.edit();
             edit.clear();
@@ -624,13 +635,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public void CashierDeskGo(String userId, String orderNo, String outTradeNo){
-            Log.e(TAG, "CashierDeskGo: "+userId+"--"+orderNo+"--"+outTradeNo+"--"+usertoken1 );
-            Intent intent = new Intent(MainActivity.this,IntentOpenActivity.class);
-            intent.putExtra("userId",userId);
-            intent.putExtra("orderNo",orderNo);
-            intent.putExtra("outTradeNo",outTradeNo);
-            intent.putExtra("token",usertoken1);
+        public void CashierDeskGo(String userId, String orderNo, String outTradeNo) {
+            Log.e(TAG, "CashierDeskGo: " + userId + "--" + orderNo + "--" + outTradeNo + "--" + usertoken1);
+            Intent intent = new Intent(MainActivity.this, IntentOpenActivity.class);
+            intent.putExtra("userId", userId);
+            intent.putExtra("orderNo", orderNo);
+            intent.putExtra("outTradeNo", outTradeNo);
+            intent.putExtra("token", usertoken1);
             startActivity(intent);
         }
 
@@ -680,9 +691,9 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
             });
-        }else if (event.equals("打开应用")) {
+        } else if (event.equals("打开应用")) {
             webView(Constant.apply_url);
-        }else if(event.equals("打开首页")){
+        } else if (event.equals("打开首页")) {
             Log.e(TAG, "onMessageEvent:asdasdf ");
             webView(Constant.text_url);
         }
@@ -795,7 +806,6 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }, 3000);
 //    }
-
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onResume() {
@@ -818,12 +828,24 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    private void notificationChange(String userid1, String s) {
+    private void notificationChange(String userId, String openStatus) {
+        Log.e(TAG, "notificationChange: 123");
+//        final FormBody formBody = new FormBody.Builder()
+//                .add("userId", userId)
+//                .add("openStatus", openStatus)
+//                .build();
+
         OkHttpClient client = new OkHttpClient();
+        String post = "{" +
+                "userId:'" + userId + '\'' +
+                ", openStatus:'" + openStatus + '\'' +
+                '}';
+
+        MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, post);
         final Request request = new Request.Builder()
-                .url(Constant.NOTICE_OPEN_SWITCH + userid1 + "/" + s)
-                .addHeader("Authorization", "Bearer " + usertoken1)
-                .put(null)
+                .url(Constant.NOTICE_OPEN_SWITCH)
+                .put(requestBody)
                 .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -832,13 +854,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (response.code() == 200) {
-                    String string = response.body().string();
-                    Log.e(TAG, "notificationChange: " + string);
-
-                } else {
-
-                }
+                String string = response.body().string();
+                Log.e(TAG, "onResponse: 2345" + string);
             }
         });
     }
@@ -876,8 +893,9 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
-        mNewWeb.reload();
-        Log.e(TAG, "onRestart");
+        if (myOrder.equals(Constant.MyOrderList)) {
+            mNewWeb.reload();
+        }
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
@@ -895,10 +913,10 @@ public class MainActivity extends AppCompatActivity {
             }).start();
         }
 
-        SharedPreferences sp1 = getSharedPreferences("apply_urlSafe",MODE_PRIVATE);
+        SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
         String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
-        if (!TextUtils.isEmpty(apply_url)){
-            Log.e(TAG, "123: "+apply_url );
+        if (!TextUtils.isEmpty(apply_url)) {
+            Log.e(TAG, "123: " + apply_url);
             webView(apply_url);
         }
         SharedPreferences.Editor edit = sp1.edit();
@@ -1041,9 +1059,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        if(requestCode == 10 && resultCode == 2){//通过请求码和返回码区分不同的返回
+        if (requestCode == 10 && resultCode == 2) {//通过请求码和返回码区分不同的返回
             String apply_url = intent.getStringExtra("apply_url");//data:后一个页面putExtra()中设置的键名
-            Log.e(TAG, "onActivityResult: "+apply_url);
+            Log.e(TAG, "onActivityResult: " + apply_url);
             webView(apply_url);
         }
         switch (requestCode) {

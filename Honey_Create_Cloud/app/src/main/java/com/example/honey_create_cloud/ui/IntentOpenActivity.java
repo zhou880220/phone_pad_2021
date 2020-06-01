@@ -638,20 +638,20 @@ public class IntentOpenActivity extends AppCompatActivity {
     }
 
 
-//    @Override
-//    public boolean onKeyDown(int keyCode, KeyEvent event) {
-//        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
-//            if (userId != null) {
-//                if ((System.currentTimeMillis() - exitTime) > 2000) {
-//                    exitTime = System.currentTimeMillis();
-//                    showAlterDialog();
-//                }
-//            } else {
-//                mIntentOpenPayWeb.goBack();
-//            }
-//        }
-//        return super.onKeyDown(keyCode, event);
-//    }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
+            if (userId != null) {
+                if ((System.currentTimeMillis() - exitTime) > 2000) {
+                    exitTime = System.currentTimeMillis();
+                    showAlterDialog();
+                }
+            } else {
+                mIntentOpenPayWeb.goBack();
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 
 
 //    @Override
