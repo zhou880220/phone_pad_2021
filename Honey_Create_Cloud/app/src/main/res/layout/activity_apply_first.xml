@@ -54,9 +54,9 @@
             android:layout_height="50dp"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginRight="34dp"
-            android:layout_marginBottom="53dp"
-            android:alpha="0.95"
+            android:layout_marginRight="17dp"
+            android:layout_marginBottom="160dp"
+            android:alpha="0.8"
             android:background="@drawable/gird_radius"
             android:gravity="center_vertical"
             android:onClick="onClick"
@@ -114,16 +114,15 @@
     <ImageView
         android:id="@+id/fab_more"
         android:layout_width="55dp"
-        android:layout_height="55dp"
+        android:layout_height="70dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginRight="6dp"
-        android:layout_marginBottom="50dp"
+        android:layout_marginBottom="150dp"
+        android:layout_marginRight="-18dp"
         android:alpha="0.95"
-        android:background="@drawable/add_radius"
         android:onClick="onClick"
         android:padding="16dp"
-        android:src="@mipmap/floating" />
+        android:src="@drawable/floating" />
 
     <RelativeLayout
         android:id="@+id/glide_gif"

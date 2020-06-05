@@ -223,6 +223,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             mIntentOpenPayWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mIntentOpenPayWeb.getSettings();
+        webSettings.setUserAgentString("application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }

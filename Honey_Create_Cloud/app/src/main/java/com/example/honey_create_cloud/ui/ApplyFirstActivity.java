@@ -264,6 +264,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
+        webSettings.setUserAgentString("application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
@@ -691,27 +692,56 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         }
+//        Uri uri = Uri.fromFile(tempFile);
+//        Log.e(TAG, "onActivityResult: 4"+uri);
 
         switch (requestCode) {
             case REQUEST_CAPTURE:
                 if (resultCode == RESULT_OK) {//调用系统相机返回
-                    Uri uri = Uri.fromFile(tempFile);
-                    Log.e(TAG, "onActivityResult: " + uri);
-                    takePhoneUrl(uri);
-//                    gotoClipActivity(Uri.fromFile(tempFile));
+                        Uri uri = Uri.fromFile(tempFile);
+                        Log.e(TAG, "onActivityResult: " + uri);
+                        takePhoneUrl(uri);
+                }else if(resultCode == RESULT_CANCELED){
+                    Log.e(TAG, "onActivityResult: 取消1");
+                    mNewWeb.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                    Log.e(TAG, "onReceiveValue: 取消" );
+                                }
+                            });
+                        }
+                    });
                 }
                 break;
             case REQUEST_PICK://调用系统相册返回
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
-                    String realPathFromUri = getRealPathFromUri(this, uri);
-                    if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
+                    Log.e(TAG, "onActivityResult:1 "+uri);
+                        String realPathFromUri = getRealPathFromUri(this, uri);
+                        if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
 //                        gotoClipActivity(uri);
-                        Log.e(TAG, "onActivityResult: " + uri);
-                        takePhoneUrl(uri);
-                    } else {
-                        Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
-                    }
+                            Log.e(TAG, "onActivityResult:2 " + uri);
+                            takePhoneUrl(uri);
+                        } else {
+                            Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
+                        }
+
+                }else if(resultCode == RESULT_CANCELED){
+                    Log.e(TAG, "onActivityResult: 取消2");
+                    mNewWeb.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                    Log.e(TAG, "onReceiveValue: 取消" );
+                                }
+                            });
+                        }
+                    });
                 }
                 break;
         }

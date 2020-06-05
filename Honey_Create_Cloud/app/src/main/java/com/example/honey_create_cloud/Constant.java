@@ -27,5 +27,6 @@ public class Constant {
     public static final String test_shoppingCart = "http://njtestyyzx.zhizaoyun.com/shoppingCart"; //支付页面订单列表
     public static final String NOTICE_OPEN_SWITCH = "http://139.9.172.71:18080/api-apps/apps-anon/client/notice/status"; //开启或关闭用户通知接口
     public static final String MyOrderList = "http://njtestyyzx.zhizaoyun.com/myOrder";//订单列表
-
+    public static final String TOKEN_IS_OK = "http://139.9.172.71:18080/api-u/users/current?access_token=";//token是否有效
+    public static final String DELETE_QUEUE = "http://139.9.172.71:18080/api-apps/apps-anon/queue/delete?userId=";//用户登录删除队列
 }

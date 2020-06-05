@@ -82,6 +82,7 @@ public class ZingWebActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
+        webSettings.setUserAgentString("application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }

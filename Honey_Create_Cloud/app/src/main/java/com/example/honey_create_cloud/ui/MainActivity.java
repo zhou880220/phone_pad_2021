@@ -52,6 +52,7 @@ import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.HeadPic;
 import com.example.honey_create_cloud.bean.NotificationBean;
 import com.example.honey_create_cloud.bean.PictureUpload;
+import com.example.honey_create_cloud.bean.TokenIsOkBean;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
@@ -66,6 +67,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
@@ -83,6 +85,7 @@ import java.util.concurrent.TimeoutException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import me.leolin.shortcutbadger.ShortcutBadgeException;
 import me.leolin.shortcutbadger.ShortcutBadger;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -166,30 +169,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case NOTIFICATION_MESSAGE: {
                     String notificationMsg = (String) msg.obj;
-                    Gson gson = new Gson();
-                    Intent msgIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getPackageName());//获取启动Activity
-                    PendingIntent pendingIntent = PendingIntent.getActivity(getApplication(), 0, msgIntent, 0);
-                    NotificationBean notificationBean = gson.fromJson(notificationMsg, NotificationBean.class);
-                    Log.e(TAG, "handleMessage:123123123123123 " + "--------" + notificationBean.getUserId());
-                    if (!TextUtils.isEmpty(userid1) && !TextUtils.isEmpty(notificationBean.getUserId()) && userid1.equals(notificationBean.getUserId())) {
-                        Log.e(TAG, "handleDelivery: " + notificationMsg + "--------");
-                        ShortcutBadger.applyCount(MainActivity.this, badgeCount); //for 1.1.4+
-                        Notification notification = new NotificationCompat.Builder(MainActivity.this, channel_id)
-                                .setContentTitle(notificationBean.getTitle())
-                                .setContentText(notificationBean.getContent())
-                                .setWhen(System.currentTimeMillis())
-                                .setSmallIcon(R.mipmap.ic_launcher_back)
-                                .setDefaults(DEFAULT_ALL)
-                                .setContentIntent(pendingIntent)
-                                .setAutoCancel(true)
-                                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_back))
-                                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                                .build();
-                        notificationManager.notify(badgeCount++, notification);
-                        Log.e(TAG, "badgeCount: " + "" + badgeCount);
-                    } else {
-                        //不做处理
-                    }
+
                 }
                 break;
                 default:
@@ -205,6 +185,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PICK = 101;
 
     private static final String TAG = "MainActivity_TAG";
+
+    volatile int num = 0;
 
     //调用照相机返回图片文件
     private File tempFile;
@@ -240,10 +222,13 @@ public class MainActivity extends AppCompatActivity {
     private String usertoken1;
     private String userid1;
     private MWebChromeClient myChromeWebClient;
-    private int badgeCount = 0;
+    private int badgeCount = 0;  //角标叠加
+    private int NOTIFICATION_NUMBER = 0;  //通知条数堆叠
     private boolean ChaceSize = true;
     private boolean pageReload = true;
     private String myOrder;
+    private Channel channel;
+    private String receiveMsg;
 
 
     @SuppressLint("NewApi")
@@ -307,6 +292,7 @@ public class MainActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
+        webSettings.setUserAgentString("application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
@@ -570,22 +556,18 @@ public class MainActivity extends AppCompatActivity {
                 usertoken1 = usertoken;
                 userid1 = userid;
                 Log.e(TAG, "getToken: " + usertoken1);
-                notificationChange(userid, "0");
+                notificationChange(userid1, "0");
                 SharedPreferences sb = context.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sb.edit();
-                edit.putString("NotifyUserId", userid);
+                edit.putString("NotifyUserId", usertoken1);
                 edit.commit();
 
                 //获取userId用于通知
                 String notifyUserId = sb.getString("NotifyUserId", "");
                 Log.e(TAG, "getToken: " + notifyUserId);
+                deleteUserQueue(); //删除队列
                 if (!TextUtils.isEmpty(notifyUserId)) {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            basicConsume(myHandler);
-                        }
-                    }).start();
+                    new Thread(() -> basicConsume(myHandler)).start();
                 }
             }
         }
@@ -647,6 +629,25 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void deleteUserQueue() {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(Constant.DELETE_QUEUE + userid1)
+                .get()
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+
+            }
+        });
+    }
+
     private void createNotificationChannel() {
         //Android8.0(API26)以上需要调用下列方法，但低版本由于支持库旧，不支持调用
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -703,7 +704,6 @@ public class MainActivity extends AppCompatActivity {
      * 收消息（从发布者那边订阅消息）
      */
     private void basicConsume(final Handler handler) {
-        String userId = "3B9B1E217F86D5E493FCE81A5B800770";
         Log.e(TAG, "run:1 ");
         try {
             //连接
@@ -711,10 +711,9 @@ public class MainActivity extends AppCompatActivity {
             if (connection != null) {
                 Log.e(TAG, "run:2 ");
                 //通道
-                final Channel channel = connection.createChannel();
-                AMQP.Queue.DeclareOk declareOk = channel.queueDeclare("app.notice.queue", true, false, false, null);
-                channel.queueBind(declareOk.getQueue(), "app.notice.exchange", "notice.key");
-                DefaultConsumer defaultConsumer = new DefaultConsumer(channel) {
+                channel = connection.createChannel();
+                AMQP.Queue.DeclareOk declareOk = channel.queueDeclare("app.notice.queue." + userid1, true, false, false, null);
+                Consumer consumer = new DefaultConsumer(channel) {
 
                     // 获取到达的消息
                     @Override
@@ -724,19 +723,91 @@ public class MainActivity extends AppCompatActivity {
                                                byte[] body)
                             throws IOException {
                         super.handleDelivery(consumerTag, envelope, properties, body);
-                        String receiveMsg = new String(body, "UTF-8");
-                        Log.e(TAG, "handleDelivery: " + receiveMsg);
-                        Message message = new Message();
-                        message.what = NOTIFICATION_MESSAGE;
-                        message.obj = receiveMsg;
-                        handler.sendMessage(message);
+                        receiveMsg = new String(body, "UTF-8");
+                        NotificationConsune();
                     }
                 };
-                channel.basicConsume("app.notice.queue", true, defaultConsumer);
-                Log.e(TAG, "run: 3");
+                channel.basicConsume("app.notice.queue." + userid1, true, consumer);
+
+                Log.e(TAG, "run:3 ");
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void NotificationConsune() {
+        OkHttpClient client1 = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(Constant.TOKEN_IS_OK + usertoken1)
+                .get()
+                .build();
+
+        client1.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String string = response.body().string();
+                Gson gson = new Gson();
+                TokenIsOkBean tokenIsOkBean = gson.fromJson(string, TokenIsOkBean.class);
+                if (tokenIsOkBean.getCode() == 200) {
+                    if (receiveMsg != null) {
+                        sendNotification();
+                    } else {
+                    }
+                }
+            }
+        });
+    }
+
+    private void sendNotification() {
+        Gson gson1 = new Gson();
+        Intent msgIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getPackageName());//获取启动Activity
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplication(), 0, msgIntent, 0);
+        NotificationBean notificationBean = gson1.fromJson(receiveMsg, NotificationBean.class);
+        SharedPreferences sb1 = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+        String notifyToken = sb1.getString("NotifyUserId", "");
+        if (!TextUtils.isEmpty(notifyToken) && !TextUtils.isEmpty(notificationBean.getUserId()) && userid1.equals(notificationBean.getUserId())) {
+//            try {
+            Log.e(TAG, "notifyToken: " + receiveMsg + "--------");
+            ShortcutBadger.applyCount(MainActivity.this, badgeCount++); //for 1.1.4+
+            Notification notification = new NotificationCompat.Builder(MainActivity.this, channel_id)
+                    .setContentTitle(notificationBean.getTitle())
+                    .setContentText(notificationBean.getContent())
+                    .setWhen(System.currentTimeMillis())
+                    .setSmallIcon(R.mipmap.ic_launcher_back)
+                    .setDefaults(DEFAULT_ALL)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true).setNumber(badgeCount)
+                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_back))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .build();
+            Log.e(TAG, "notifyToken: " + badgeCount);
+            notificationManager.notify(NOTIFICATION_NUMBER, notification);
+//                channel.basicAck(envelope.getDeliveryTag(),true);
+//            if (badgeCount != 0) {
+                mNewWeb.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mNewWeb.evaluateJavascript("window.sdk.noticeTimes(\"" + badgeCount + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+
+                            }
+                        });
+                    }
+                });
+//            }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+        } else {
+            //不做处理
         }
     }
 
@@ -745,10 +816,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private Connection getConnection() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("119.3.28.24");
-        factory.setPort(5672);
-        factory.setUsername("honeycomb");
-        factory.setPassword("honeycomb");
+        factory.setHost("119.3.28.24");//主机地址：192.168.1.105
+        factory.setPort(5672);// 端口号:5672
+        factory.setUsername("honeycomb");// 用户名
+        factory.setPassword("honeycomb");// 密码
         factory.setVirtualHost("/");
         try {
             return factory.newConnection();
@@ -816,24 +887,12 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "onResume");
             }
         });
-        boolean notificationEnabled = isNotificationEnabled(this);
 
-        Log.e(TAG, "badgeCount: " + "" + badgeCount);
-        Log.e(TAG, "onResume: " + notificationEnabled);
-        if (notificationEnabled == true) {
-//            notificationChange(userid1,"1");
-        } else {
-//            notificationChange(userid1,"-1");
-        }
         super.onResume();
     }
 
     private void notificationChange(String userId, String openStatus) {
         Log.e(TAG, "notificationChange: 123");
-//        final FormBody formBody = new FormBody.Builder()
-//                .add("userId", userId)
-//                .add("openStatus", openStatus)
-//                .build();
 
         OkHttpClient client = new OkHttpClient();
         String post = "{" +
@@ -893,6 +952,14 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
+        ShortcutBadger.applyCount(this,0);
+        boolean notificationEnabled = isNotificationEnabled(this);
+        if (notificationEnabled == true) {
+            notificationChange(userid1, "0");
+        } else {
+            notificationChange(userid1, "-1");
+        }
+
         if (myOrder.equals(Constant.MyOrderList)) {
             mNewWeb.reload();
         }
@@ -904,13 +971,9 @@ public class MainActivity extends AppCompatActivity {
         });
         SharedPreferences sb = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
         String notifyUserId = sb.getString("NotifyUserId", "");
+
         if (!TextUtils.isEmpty(notifyUserId)) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    basicConsume(myHandler);
-                }
-            }).start();
+            new Thread(() -> basicConsume(myHandler)).start();
         }
 
         SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
@@ -928,7 +991,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        ShortcutBadger.applyCount(MainActivity.this, badgeCount); //for 1.1.4+
+//        ShortcutBadger.applyCount(MainActivity.this, badgeCount); //for 1.1.4+
     }
 
     /**

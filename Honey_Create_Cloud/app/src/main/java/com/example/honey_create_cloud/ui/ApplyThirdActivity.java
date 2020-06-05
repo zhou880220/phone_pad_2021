@@ -263,6 +263,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
+        webSettings.setUserAgentString("application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
@@ -636,6 +637,18 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     Log.e(TAG, "onActivityResult: " + uri);
                     takePhoneUrl(uri);
 //                    gotoClipActivity(Uri.fromFile(tempFile));
+                }else if(resultCode == RESULT_CANCELED){
+                    mNewWeb.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                    Log.e(TAG, "onReceiveValue: 取消" );
+                                }
+                            });
+                        }
+                    });
                 }
                 break;
             case REQUEST_PICK://调用系统相册返回
@@ -649,6 +662,18 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
                     }
+                }else if(resultCode == RESULT_CANCELED){
+                    mNewWeb.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                    Log.e(TAG, "onReceiveValue: 取消" );
+                                }
+                            });
+                        }
+                    });
                 }
                 break;
         }
