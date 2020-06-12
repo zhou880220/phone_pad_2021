@@ -326,9 +326,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        mNewWeb.goBack();
-                        return true;
+                    if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                        if (mNewWeb != null && mNewWeb.canGoBack()) {
+                            SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                            String userInfo = sb.getString("userInfo", "");
+                            if (TextUtils.isEmpty(userInfo) || myOrder.contains("/home")) {
+                                Log.e(TAG, "onKey: 退出" );
+                                finish();
+                            } else {
+                                mNewWeb.goBack();
+                            }
+                            return true;
+                        }
                     }
                 }
                 return false;
