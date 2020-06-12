@@ -70,6 +70,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.tinkerpatch.sdk.TinkerPatch;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -85,7 +86,6 @@ import java.util.concurrent.TimeoutException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import me.leolin.shortcutbadger.ShortcutBadgeException;
 import me.leolin.shortcutbadger.ShortcutBadger;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -279,6 +279,7 @@ public class MainActivity extends AppCompatActivity {
             webView(Constant.text_url);
         }
     }
+
 
     /**
      * 初始化webview js交互
@@ -792,17 +793,17 @@ public class MainActivity extends AppCompatActivity {
             notificationManager.notify(NOTIFICATION_NUMBER, notification);
 //                channel.basicAck(envelope.getDeliveryTag(),true);
 //            if (badgeCount != 0) {
-                mNewWeb.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mNewWeb.evaluateJavascript("window.sdk.noticeTimes(\"" + badgeCount + "\")", new ValueCallback<String>() {
-                            @Override
-                            public void onReceiveValue(String value) {
+            mNewWeb.post(new Runnable() {
+                @Override
+                public void run() {
+                    mNewWeb.evaluateJavascript("window.sdk.noticeTimes(\"" + badgeCount + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
 
-                            }
-                        });
-                    }
-                });
+                        }
+                    });
+                }
+            });
 //            }
 //            } catch (IOException e) {
 //                e.printStackTrace();
@@ -953,7 +954,7 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
-        ShortcutBadger.applyCount(this,0);
+        ShortcutBadger.applyCount(this, 0);
         boolean notificationEnabled = isNotificationEnabled(this);
         if (notificationEnabled == true) {
             notificationChange(userid1, "0");

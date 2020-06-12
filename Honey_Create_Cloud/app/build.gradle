@@ -1,14 +1,15 @@
 apply plugin: 'com.android.application'
 apply plugin: "com.mob.sdk"
+apply from: 'tinkerpatch.gradle'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.example.honey_create_cloud"
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
-        versionName "1.1"
+        versionName "1.2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
 
@@ -17,10 +18,25 @@ android {
             abiFilters "armeabi-v7a"
         }
     }
+
+    signingConfigs {
+        release {
+            try {
+                storeFile file("newzhzaoyun.jks")//这个是你自己的签名文件，放在你项目的根目录下
+                storePassword "123456"
+                keyAlias "key0"
+                keyPassword "123456"
+            } catch (ex) {
+                throw new InvalidUserDataException(ex.toString())
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
@@ -128,5 +144,9 @@ dependencies {
     implementation 'com.rabbitmq:amqp-client:5.7.0'
     //角标
     implementation "me.leolin:ShortcutBadger:1.1.22@aar"
+    //Tinker
+    // 若使用annotation需要单独引用,对于tinker的其他库都无需再引用
+    annotationProcessor("com.tinkerpatch.tinker:tinker-android-anno:1.9.14.7")
+    implementation("com.tinkerpatch.sdk:tinkerpatch-android-sdk:1.2.14.7")
 
 }

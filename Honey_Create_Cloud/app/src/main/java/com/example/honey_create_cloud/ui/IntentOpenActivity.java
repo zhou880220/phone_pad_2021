@@ -267,7 +267,6 @@ public class IntentOpenActivity extends AppCompatActivity {
         mIntentOpenPayWeb.registerHandler("getItemData", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "purchaseOfEntry: "+purchaseOfEntry );
                 if (!purchaseOfEntry.isEmpty()) {
                     Log.e(TAG, "handler: " + purchaseOfEntry);
                     function.onCallBack(purchaseOfEntry);
