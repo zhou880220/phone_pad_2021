@@ -262,7 +262,8 @@ public class ApplySecondActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        webSettings.setUserAgentString("application-center");
+        String userAgentString = webSettings.getUserAgentString();
+        webSettings.setUserAgentString(userAgentString + "; application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }

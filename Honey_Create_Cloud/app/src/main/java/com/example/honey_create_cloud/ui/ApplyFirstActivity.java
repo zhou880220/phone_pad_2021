@@ -264,7 +264,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
-        webSettings.setUserAgentString("application-center");
+        String userAgentString = webSettings.getUserAgentString();
+        webSettings.setUserAgentString(userAgentString + "; application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
@@ -380,6 +381,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //跳转支付页面
         @JavascriptInterface
         public void purchaseOfEntry(String purchaseOfEntry) {
+
             if (!purchaseOfEntry.isEmpty()) {
                 Intent intent = new Intent(ApplyFirstActivity.this, IntentOpenActivity.class);
                 intent.putExtra("PurchaseOfEntry", purchaseOfEntry);

@@ -223,7 +223,8 @@ public class IntentOpenActivity extends AppCompatActivity {
             mIntentOpenPayWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mIntentOpenPayWeb.getSettings();
-        webSettings.setUserAgentString("application-center");
+        String userAgentString = webSettings.getUserAgentString();
+        webSettings.setUserAgentString(userAgentString + "; application-center");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
@@ -266,6 +267,7 @@ public class IntentOpenActivity extends AppCompatActivity {
         mIntentOpenPayWeb.registerHandler("getItemData", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "purchaseOfEntry: "+purchaseOfEntry );
                 if (!purchaseOfEntry.isEmpty()) {
                     Log.e(TAG, "handler: " + purchaseOfEntry);
                     function.onCallBack(purchaseOfEntry);
