@@ -3,10 +3,12 @@ package com.example.honey_create_cloud.ui;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -15,7 +17,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -204,16 +208,19 @@ public class ApplySecondActivity extends AppCompatActivity {
     private static final int REQUEST_PICK = 101;
     //修改头像回调
     private static final int OPLOAD_IMAGE = 2;
-
     //调用照相机返回图片文件
     private File tempFile;
-
     private String accessToken;
-
     //状态
     private static final int STATE_NORMAL = 1;
     //当前状态
     private int mCurState = STATE_NORMAL;
+    //所有的联系人信息
+    private Cursor personCur;
+    //所有联系人电话号码
+    private Cursor numberCur;
+    //拼接联系人名称及电话号
+    private StringBuffer stringBuffer;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -353,6 +360,19 @@ public class ApplySecondActivity extends AppCompatActivity {
                     Log.e(TAG, "123: " + data);
                     gotoPhoto();
                 }
+            }
+        });
+
+        /**
+         * 获取通讯录
+         */
+        mNewWeb.registerHandler("getMailList", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                stringBuffer = new StringBuffer();
+                String allContancts = getAllContancts(stringBuffer);
+                String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
+                function.onCallBack(substring+"]");
             }
         });
     }
@@ -519,6 +539,69 @@ public class ApplySecondActivity extends AppCompatActivity {
                     break;
             }
         }
+    }
+
+    /**
+     * 获取通讯录中的联系人及号码
+     */
+    private String getAllContancts(StringBuffer sb) {
+        sb.append("[");
+        // 获取手机通讯录信息
+        ContentResolver resolver = this.getContentResolver();
+        // 获取联系人信息
+        personCur = resolver.query(ContactsContract.Contacts.CONTENT_URI, null,
+                null, null, null);
+        if (personCur == null) {
+            try {//此处适配了6.0权限
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            } catch (Exception e) {
+                Intent intentSet = new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+                startActivity(intentSet);
+            }
+            return null;
+        }
+        // 循环遍历，获取每个联系人的姓名和电话号码
+        while (personCur.moveToNext()) {
+            // 联系人姓名
+            String cname = "";
+            String clientname = "clientname";
+            // 联系人电话
+            String cnum = "";
+            String clientnum = "clientnum";
+            // 联系人id号码
+            String ID;
+            ID = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts._ID));
+            // 联系人姓名
+            cname = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+            // id的整型数据
+            int id = Integer.parseInt(ID);
+            if (id > 0) {
+                // 获取指定id号码的电话号码
+                Cursor c = resolver.query(
+                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + ID, null, null);
+                // 遍历游标
+                while (c.moveToNext()) {
+                    cnum = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    if (!TextUtils.isEmpty(cname)) {
+//                        list.add(new PhoneCallBean(cname, cnum));//查询通讯录中所有联系人
+                        sb.append("{").append("\""+clientname+"\"").append(":").append("\"" + cname + "\"").append(",")
+                                .append("\""+clientnum+"\"").append(":").append("\"" + cnum + "\"").append("}").append(",");
+                    }
+                }
+                if (c != null && !c.isClosed())
+                    c.close();
+            }
+        }
+        try {
+            if (personCur != null && !personCur.isClosed()) {
+                personCur.close();
+            }
+        } catch (Exception e) {
+        }
+        return sb.toString();
     }
 
     /**
