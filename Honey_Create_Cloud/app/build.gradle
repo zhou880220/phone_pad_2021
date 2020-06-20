@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: "com.mob.sdk"
 apply from: 'tinkerpatch.gradle'
 android {
     compileSdkVersion 29
@@ -54,43 +53,6 @@ android {
 
 static def releaseTime() {
     return new Date().format("yyyyMMddHHmm", TimeZone.getTimeZone("GMT+08"))
-}
-
-MobSDK {
-    appKey "2f1eb529f51fd"
-    appSecret "a2e8d170cdc297dccff2e38acac644d5"
-    ShareSDK {
-        //平台配置信息
-        devInfo {
-            Wechat {
-                appId "wx5b3f59728cb6aa71"
-                appSecret "aec3817169a863ebac2b37e2552f923a"
-                shareByAppClient false
-                bypassApproval true
-            }
-            QQ {
-                appId "100371282"
-                appKey "aed9b0303e3ed1e27bae87c33761161d"
-                shareByAppClient false
-            }
-            QZone {
-                appId "100371282"
-                appKey "aed9b0303e3ed1e27bae87c33761161d"
-                shareByAppClient false
-                bypassApproval true
-            }
-            WechatMoments {
-                appId "wx5b3f59728cb6aa71"
-                appSecret "aec3817169a863ebac2b37e2552f923a"
-                shareByAppClient false
-                bypassApproval true
-            }
-            SinaWeibo {
-                appKey "2555816423"
-                appSecret "3de62fc19d81540659e9da9d003c87d5"
-            }
-        }
-    }
 }
 
 repositories {
@@ -148,5 +110,6 @@ dependencies {
     // 若使用annotation需要单独引用,对于tinker的其他库都无需再引用
     annotationProcessor("com.tinkerpatch.tinker:tinker-android-anno:1.9.14.7")
     implementation("com.tinkerpatch.sdk:tinkerpatch-android-sdk:1.2.14.7")
-
+    //下载框架
+    implementation 'com.liulishuo.filedownloader:library:1.7.4'
 }

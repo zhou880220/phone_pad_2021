@@ -7,7 +7,6 @@ import java.util.List;
  */
 public class RecentlyApps {
 
-
     /**
      * code : 200
      * count : 0

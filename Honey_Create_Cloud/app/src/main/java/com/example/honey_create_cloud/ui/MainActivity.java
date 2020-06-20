@@ -70,7 +70,6 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import com.tinkerpatch.sdk.TinkerPatch;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -331,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
                             SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                             String userInfo = sb.getString("userInfo", "");
                             if (TextUtils.isEmpty(userInfo) || myOrder.contains("/home")) {
-                                Log.e(TAG, "onKey: 退出" );
+                                Log.e(TAG, "onKey: 退出");
                                 finish();
                             } else {
                                 mNewWeb.goBack();
@@ -1182,7 +1181,7 @@ public class MainActivity extends AppCompatActivity {
                     final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
                     builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
                     builder.addFormDataPart("fileNames", "");
-                    builder.addFormDataPart("bucketName", "njdeveloptest");
+                    builder.addFormDataPart("bucketName", "honeycom-service");
                     builder.addFormDataPart("folderName", "headPic");
                     MultipartBody requestBody = builder.build();
                     final Request request = new Request.Builder()

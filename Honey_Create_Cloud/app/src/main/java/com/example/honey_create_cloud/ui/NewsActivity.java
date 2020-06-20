@@ -154,32 +154,6 @@ public class NewsActivity extends AppCompatActivity {
             this.context = context;
         }
 
-        //分享功能
-        @JavascriptInterface
-        public void shareSDKData(String shareData) {
-            //集成分享类
-            shareSDK_web = new ShareSDK_Web(NewsActivity.this, shareData);
-            View centerView = LayoutInflater.from(NewsActivity.this).inflate(R.layout.popupwindow, null);
-            popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
-                    400);
-            popupWindow.setTouchable(true);
-            popupWindow.setOutsideTouchable(true);
-            popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
-
-            View mWeChat = centerView.findViewById(R.id.wechat);
-            View mWeChatMoments = centerView.findViewById(R.id.wechatmoments);
-            View mSinaWeiBo = centerView.findViewById(R.id.sinaweibo);
-            View mQq = centerView.findViewById(R.id.qq);
-            View mQZone = centerView.findViewById(R.id.qzone);
-            TextView mDismiss = centerView.findViewById(R.id.popup_dismiss);
-
-            mWeChat.setOnClickListener(this);
-            mWeChatMoments.setOnClickListener(this);
-            mSinaWeiBo.setOnClickListener(this);
-            mQq.setOnClickListener(this);
-            mQZone.setOnClickListener(this);
-            mDismiss.setOnClickListener(this);
-        }
 
         //关闭页面
         @JavascriptInterface
@@ -191,28 +165,55 @@ public class NewsActivity extends AppCompatActivity {
             }
         }
 
+        //分享功能
+        @JavascriptInterface
+        public void shareSDKData(String shareData) {
+            //集成分享类
+//            shareSDK_web = new ShareSDK_Web(NewsActivity.this, shareData);
+            View centerView = LayoutInflater.from(NewsActivity.this).inflate(R.layout.popupwindow, null);
+            popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                    400);
+            popupWindow.setTouchable(true);
+            popupWindow.setOutsideTouchable(true);
+            popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+
+            View mCopyUrl = centerView.findViewById(R.id.copyurl);
+            View mQrcode = centerView.findViewById(R.id.Qrcode);
+            View mWeChat = centerView.findViewById(R.id.wechat);
+            View mWeChatMoments = centerView.findViewById(R.id.wechatmoments);
+            View mQq = centerView.findViewById(R.id.qq);
+            TextView mDismiss = centerView.findViewById(R.id.popup_dismiss);
+
+            mCopyUrl.setOnClickListener(this);
+            mQrcode.setOnClickListener(this);
+            mWeChat.setOnClickListener(this);
+            mWeChatMoments.setOnClickListener(this);
+            mQq.setOnClickListener(this);
+            mDismiss.setOnClickListener(this);
+        }
+
         @Override
         public void onClick(View v) {
             int id = v.getId();
             switch (id) {
+                case R.id.copyurl:
+//                    shareSDK_web.CopyUrl();
+                    popupWindow.dismiss();
+                    break;
+                case R.id.Qrcode:
+//                    shareSDK_web.QRcode();
+                    popupWindow.dismiss();
+                    break;
                 case R.id.wechat:
                     shareSDK_web.WechatshowShare();
                     popupWindow.dismiss();
                     break;
                 case R.id.wechatmoments:
-                    shareSDK_web.WechatMomentsshowShare();
-                    popupWindow.dismiss();
-                    break;
-                case R.id.sinaweibo:
-                    shareSDK_web.SinaweiboshowShare();
+//                    shareSDK_web.WechatMomentsshowShare();
                     popupWindow.dismiss();
                     break;
                 case R.id.qq:
-                    shareSDK_web.QQshowShare();
-                    popupWindow.dismiss();
-                    break;
-                case R.id.qzone:
-                    shareSDK_web.QZoneshowShare();
+//                    shareSDK_web.QQshowShare();
                     popupWindow.dismiss();
                     break;
                 case R.id.popup_dismiss:
