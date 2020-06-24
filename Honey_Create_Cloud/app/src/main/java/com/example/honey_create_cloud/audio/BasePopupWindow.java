@@ -12,9 +12,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.PopupWindow;
 
-/**
- * Created  on 2017/9/19.
- */
+
 
 public class BasePopupWindow extends PopupWindow {
     private Context mContext;
@@ -186,6 +184,4 @@ public class BasePopupWindow extends PopupWindow {
         layoutParams.alpha = alpha;
         window.setAttributes(layoutParams);
     }
-
-
 }

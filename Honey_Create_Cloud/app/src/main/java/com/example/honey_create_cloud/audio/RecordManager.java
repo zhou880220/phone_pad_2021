@@ -84,8 +84,6 @@ public class RecordManager {
 
     }
 
-
-
     /**获取文件的路径*/
     public String getFilePath(int fileAlias) {
         if (fileAlias == RAW) {
@@ -186,8 +184,6 @@ public class RecordManager {
             }
         }
         return ret;
-
-
     }
 
     /**写入到raw文件*/
@@ -201,8 +197,6 @@ public class RecordManager {
                     output = new DataOutputStream(new BufferedOutputStream(
                             new FileOutputStream(file)));
                     while (isRecording) {//开始录制
-
-
                         int readSize = mRecorder.read(mBuffer, 0,
                                 mBuffer.length);//是实际读取的数据长度
                         for (int i = 0; i < readSize; i++) {
@@ -216,24 +210,16 @@ public class RecordManager {
                         // 平方和除以数据总长度，得到音量大小。
                         double mean = v / (double) readSize;
                         double volume = 10 * Math.log10(mean);
-
-
                         synchronized (mLock) {
                             try {
-
                                 if(null != audioStatusUpdateListener) {
                                     audioStatusUpdateListener.onUpdate(volume);
                                 }
-
                                 mLock.wait(100);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                         }
-
-
-
-
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

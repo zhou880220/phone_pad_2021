@@ -636,7 +636,6 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("token", usertoken1);
             startActivity(intent);
         }
-
     }
 
     private void deleteUserQueue() {
@@ -653,7 +652,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-
+                Log.e(TAG, "onResponse: " + response.body().string());
             }
         });
     }
@@ -734,6 +733,7 @@ public class MainActivity extends AppCompatActivity {
                             throws IOException {
                         super.handleDelivery(consumerTag, envelope, properties, body);
                         receiveMsg = new String(body, "UTF-8");
+                        Log.e(TAG, "handleDelivery: "+receiveMsg);
                         NotificationConsune();
                     }
                 };
@@ -779,10 +779,12 @@ public class MainActivity extends AppCompatActivity {
         Gson gson1 = new Gson();
         Intent msgIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getPackageName());//获取启动Activity
         PendingIntent pendingIntent = PendingIntent.getActivity(getApplication(), 0, msgIntent, 0);
+        Log.e(TAG, "sendNotification: " + receiveMsg);
         NotificationBean notificationBean = gson1.fromJson(receiveMsg, NotificationBean.class);
         SharedPreferences sb1 = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
         String notifyToken = sb1.getString("NotifyUserId", "");
-        if (!TextUtils.isEmpty(notifyToken) && !TextUtils.isEmpty(notificationBean.getUserId()) && userid1.equals(notificationBean.getUserId())) {
+        if (!TextUtils.isEmpty(notifyToken) && !TextUtils.isEmpty(notificationBean.getUserId())
+                && userid1.equals(notificationBean.getUserId()) && !notificationBean.getTitle().equals("推送消息数量")) {
 //            try {
             Log.e(TAG, "notifyToken: " + receiveMsg + "--------");
             ShortcutBadger.applyCount(MainActivity.this, badgeCount++); //for 1.1.4+
@@ -826,10 +828,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private Connection getConnection() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("119.3.28.24");//主机地址：192.168.1.105
-        factory.setPort(5672);// 端口号:5672
-        factory.setUsername("honeycomb");// 用户名
-        factory.setPassword("honeycomb");// 密码
+        factory.setHost("122.112.141.135");//主机地址：192.168.1.105
+        factory.setPort(25672);// 端口号:25672
+        factory.setUsername("honeycom");// 用户名
+        factory.setPassword("wu168@QqFn2019");// 密码
         factory.setVirtualHost("/");
         try {
             return factory.newConnection();
@@ -909,9 +911,13 @@ public class MainActivity extends AppCompatActivity {
                 "userId:'" + userId + '\'' +
                 ", openStatus:'" + openStatus + '\'' +
                 '}';
+        String post1 = "{\n" +
+                "    \"userId\":\"" + userId + "\",\n" +
+                "    \"openStatus\":" + openStatus + "\n" +
+                "}";
 
         MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
-        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, post);
+        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, post1);
         final Request request = new Request.Builder()
                 .url(Constant.NOTICE_OPEN_SWITCH)
                 .put(requestBody)
@@ -1181,7 +1187,7 @@ public class MainActivity extends AppCompatActivity {
                     final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
                     builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
                     builder.addFormDataPart("fileNames", "");
-                    builder.addFormDataPart("bucketName", "honeycom-service");
+                    builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
                     builder.addFormDataPart("folderName", "headPic");
                     MultipartBody requestBody = builder.build();
                     final Request request = new Request.Builder()

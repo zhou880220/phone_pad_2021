@@ -5,15 +5,19 @@ package com.example.honey_create_cloud.bean;
  */
 public class NotificationBean {
 
+
     /**
-     * title : 图纸通：最新消息2578
-     * content : 图纸通优惠20% 限时购买2575
-     * userId : 3B9B1E217F86D5E493FCE81A5B800770
+     * title :
+     * content :
+     * userId :
+     * unReadMessageCount : 1
      */
+
 
     private String title;
     private String content;
     private String userId;
+    private int unReadMessageCount;
 
     public String getTitle() {
         return title;
@@ -37,5 +41,13 @@ public class NotificationBean {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public int getUnReadMessageCount() {
+        return unReadMessageCount;
+    }
+
+    public void setUnReadMessageCount(int unReadMessageCount) {
+        this.unReadMessageCount = unReadMessageCount;
     }
 }

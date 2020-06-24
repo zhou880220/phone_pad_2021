@@ -2,16 +2,19 @@ package com.example.honey_create_cloud.ui;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -52,6 +55,7 @@ import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.BuildConfig;
@@ -89,6 +93,8 @@ import com.yzq.zxinglibrary.encode.CodeCreator;
 
 import org.apache.commons.codec.binary.Base64;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -97,10 +103,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import butterknife.ButterKnife;
@@ -118,6 +131,7 @@ import okhttp3.Response;
 
 import static com.example.honey_create_cloud.ui.ApplySecondActivity.returnActivityB;
 import static com.example.honey_create_cloud.ui.ApplyThirdActivity.returnActivityC;
+import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 import static com.example.honey_create_cloud.ui.MainActivity.getRealPathFromUri;
 
 public class ApplyFirstActivity extends AppCompatActivity {
@@ -165,7 +179,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
                             .add("fileNames", newName)
-                            .add("bucketName", "honeycom-service")
+                            .add("bucketName", Constant.prod_bucket_Name)
                             .add("folderName", "menu")
                             .build();
                     Request request = new Request.Builder()
@@ -241,6 +255,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private StringBuffer stringBuffer;
     private String goBackUrl;
     private IWXAPI wxApi;
+    private ShareSdkBean shareSdkBean;
+    private Bitmap bitmap1;
+    private HashMap<String, String> hashMap = new HashMap<String, String>();
+
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -269,7 +287,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
-        webView("http://172.16.23.210:3006/src/view/api.html");
+        webView(url);//"http://172.16.23.210:3006/src/view/api.html"
         mLodingTime();
         intentOkhttp();
 
@@ -304,7 +322,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        if (goBackUrl.contains("eboard_mobile/")) {
+                        if (goBackUrl.contains("systemIndex")) {
                             returnActivityA = false;
                             finish();
                         } else {
@@ -324,7 +342,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getSystemVersion", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                function.onCallBack(SystemUtil.getSystemVersion());
+                Log.e(TAG, "{version:" + "Android" + SystemUtil.getSystemVersion() + ",model:" + SystemUtil.getSystemModel() + "}");
+                function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + SystemUtil.getSystemVersion() + "\"" + ",\"" + "model" + "\"" + ":\"" + SystemUtil.getSystemModel() + "\"" + "}");
             }
         });
         /**
@@ -421,7 +440,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     @Override
                     public void onFinish(float seconds, String filePath) {
                         String s = tobase64(filePath);
-                        function.onCallBack("[{" + "\"" + "Success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}]");
+                        function.onCallBack("{" + "\"" + "success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
+                        if (popupWindow.isShowing()) {
+                            popupWindow.dismiss();
+                        }
                     }
                 });
             }
@@ -446,6 +468,29 @@ public class ApplyFirstActivity extends AppCompatActivity {
 //                function.onCallBack(fileBuffer.toString());
             }
         });
+
+        /**
+         * @param key 用于用户读取临时数据
+         */
+        mNewWeb.registerHandler("getCookie", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "handler: " + data);
+                if (data!= null) {
+                    Map map = JSONObject.parseObject(data, Map.class);
+                    Set<String> set = map.keySet();
+                    Iterator<String> iterator = set.iterator();
+                    while (iterator.hasNext()) {
+                        String key = iterator.next();
+                        String value = (String) map.get(key);
+                        Log.e(TAG, "handler: " + value);
+                        String getCookieValue = (String) hashMap.get(value);
+                        Log.e(TAG, "handler: "+getCookieValue );
+                        function.onCallBack(getCookieValue);
+                    }
+                }
+            }
+        });
     }
 
     class MJavaScriptInterface implements View.OnClickListener {
@@ -454,7 +499,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         private PopupWindow popupWindow;
         private PopupWindow popupWindow1;
         private ProgressDialog progressDialog;
-        private ShareSdkBean shareSdkBean;
 
 
         public MJavaScriptInterface(Context context) {
@@ -532,14 +576,15 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //下载文件保存到PartLib/download/
         @JavascriptInterface
         public void downLoadFile(String downPath) {
-            progressDialog = new ProgressDialog(ApplyFirstActivity.this);
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progressDialog.setTitle("正在下载");
-            progressDialog.setMessage("请稍后...");
-            progressDialog.setProgress(0);
-            progressDialog.setMax(100);
-            progressDialog.show();
-            progressDialog.setCancelable(false);
+//            progressDialog = new ProgressDialog(ApplyFirstActivity.this);
+//            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//            progressDialog.setTitle("正在下载");
+//            progressDialog.setMessage("请稍后...");
+//            progressDialog.setProgress(0);
+//            progressDialog.setMax(100);
+//            progressDialog.show();
+//            progressDialog.setCancelable(false);
+            Log.e(TAG, "downLoadFile: " + downPath);
             String FileLoad = "PartLib/download/";
             FileDownloader.setup(ApplyFirstActivity.this);
             FileDownloader.getImpl().create(downPath)
@@ -556,16 +601,24 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         @Override
                         protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
 //                            progressBar.setProgress((soFarBytes * 100 / totalBytes));
-                            progressDialog.setProgress((soFarBytes * 100 / totalBytes));
+//                            progressDialog.setProgress((soFarBytes * 100 / totalBytes));
                         }
 
                         //下载完成
                         @Override
                         protected void completed(BaseDownloadTask task) {
-                            if (progressDialog != null && progressDialog.isShowing()) {
-                                Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show();
-                                progressDialog.dismiss();
-                            }
+                            Log.e(TAG, "completed: " + task.getPath());
+                            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show();
+                            new AlertDialog.Builder(ApplyFirstActivity.this)
+                                    .setTitle("保存路径：")
+                                    .setMessage(task.getPath())
+                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+
+                                        }
+                                    })
+                                    .show();
                         }
 
                         //暂停
@@ -577,7 +630,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         //下载出错
                         @Override
                         protected void error(BaseDownloadTask task, Throwable e) {
-
+                            Toast.makeText(context, "下载异常", Toast.LENGTH_SHORT).show();
                         }
 
                         //已存在相同下载
@@ -588,6 +641,30 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     }).start();
         }
 
+        /**
+         * @param cookiemessage 用于存储用户临时数据
+         */
+        @JavascriptInterface
+        public void setCookie(String cookiemessage) {
+            String cookieKey = "key";
+            String cookieValue = "value";
+            Log.e(TAG, "setCookie: " + cookiemessage);
+            ArrayList<Object> list = new ArrayList<>();
+            List objects = JSONObject.parseObject(cookiemessage, List.class);
+            if (objects != null && objects.size() > 0) {
+                for (Object o : objects) {
+                    if (o != null) {
+                        Map map = JSONObject.parseObject(o.toString(), Map.class);
+                        String key = (String) map.get(cookieKey);
+                        String value = (String) map.get(cookieValue);
+                        hashMap.put(key, value);
+                        Log.e(TAG, "setCookie: "+key+value);
+                    }
+                }
+            }
+        }
+
+
         //分享功能
         @JavascriptInterface
         public void shareSDKData(String shareData) {
@@ -596,8 +673,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
             Log.e("wangpan", shareData);
             Gson gson = new Gson();
             shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
+            getImage(shareSdkBean.getIcon());
             //集成分享类
-//            shareSDK_web = new ShareSDK_Web(ApplyFirstActivity.this, shareData);
+            shareSDK_web = new ShareSDK_Web(ApplyFirstActivity.this, shareData);
             View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.popupwindow, null);
             popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
                     400);
@@ -676,39 +754,134 @@ public class ApplyFirstActivity extends AppCompatActivity {
     }
 
     /**
+     * 读取文件里面的字符串
+     *
+     * @param fileName
+     * @return
+     */
+    private String readFile(String fileName) {
+        String result = null;
+        try {
+            InputStream inputStream = openFileInput(fileName);
+
+            byte[] bytes = new byte[inputStream.available()];
+            inputStream.read(bytes);
+            result = new String(bytes);
+
+            inputStream.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public void getImage(String path) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                URL imageUrl = null;
+                try {
+                    imageUrl = new URL(path);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+                    InputStream is = conn.getInputStream();
+                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+                    bitmap1 = createBitmapThumbnail(bitmap, false);
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                int newWidth = 80;
+                int newHeight = 80;
+                float scaleWidth = ((float) newWidth) / width;
+                float scaleHeight = ((float) newHeight) / height;
+                Matrix matrix = new Matrix();
+                matrix.postScale(scaleWidth, scaleHeight);
+                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+                if (needRecycler) bitmap.recycle();
+                return newBitMap;
+            }
+        }).start();
+    }
+
+    /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
      */
     private void wechatShare(int flag) {
         WXWebpageObject webpage = new WXWebpageObject();
-        webpage.webpageUrl = "http://www.baidu.com";
+        webpage.webpageUrl = shareSdkBean.getUrl();
         WXMediaMessage msg = new WXMediaMessage(webpage);
-        msg.title = "这里填写标题";
-        msg.description = "这里填写内容";
+        msg.title = shareSdkBean.getTitle();
+        msg.description = shareSdkBean.getTxt();
         //这里替换一张自己工程里的图片资源
-        Bitmap thumb = BitmapFactory.decodeResource(getResources(), R.drawable.wechat);
-//        try{
-//            Bitmap thumb = BitmapFactory.decodeStream(new URL(imgUrl).openStream());
-////注意下面的这句压缩，120，150是长宽。
-////一定要压缩，不然会分享失败
-//            Bitmap thumbBmp = Bitmap.createScaledBitmap(thumb,120,150,true);
-////Bitmap回收
-//            thumb.recycle();
-//            msg.thumbData= Util.bmpToByteArray(thumbBmp,true);
-////            msg.setThumbImage(thumb);
-//        }catch(IOException e) {
-//            e.printStackTrace();
-//        }
-
-
-        msg.setThumbImage(thumb);
-
+//        Bitmap thumb = BitmapFactory.decodeResource(getResources(), R.drawable.wechat);
+        Bitmap thumb = null;
+        try {
+            thumb = BitmapFactory.decodeStream(new URL(shareSdkBean.getIcon()).openStream());
+            Log.e(TAG, "wechatShare: " + shareSdkBean.getIcon());
+//注意下面的这句压缩，120，150是长宽。
+//一定要压缩，不然会分享失败
+            Bitmap thumbBmp = compressImage(thumb);
+//Bitmap回收
+            bitmap1.recycle();
+            msg.thumbData = bmpToByteArray(thumbBmp, true);
+//      msg.setThumbImage(thumb);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        msg.setThumbImage(bitmap1);
         SendMessageToWX.Req req = new SendMessageToWX.Req();
-        req.transaction = String.valueOf(System.currentTimeMillis());
+        req.transaction = buildTransaction("webpage");
+//        req.transaction = String.valueOf(System.currentTimeMillis());
         req.message = msg;
         req.scene = flag == 0 ? SendMessageToWX.Req.WXSceneSession : SendMessageToWX.Req.WXSceneTimeline;
         wxApi.sendReq(req);
     }
 
+    private Bitmap compressImage(Bitmap image) {
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
+        int options = 100;
+        while (baos.toByteArray().length / 1024 > 32) {  //循环判断如果压缩后图片是否大于32kb,大于继续压缩
+            baos.reset();//重置baos即清空baos
+            image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
+            options -= 1;//每次都减少1
+        }
+        ByteArrayInputStream isBm = new ByteArrayInputStream(baos.toByteArray());//把压缩后的数据baos存放到ByteArrayInputStream中
+        Bitmap bitmap = BitmapFactory.decodeStream(isBm, null, null);//把ByteArrayInputStream数据生成图片
+        return bitmap;
+    }
+
+    public static byte[] bmpToByteArray(final Bitmap bmp, final boolean needRecycle) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, output);
+        if (needRecycle) {
+            bmp.recycle();
+        }
+        byte[] result = output.toByteArray();
+        try {
+            output.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private String buildTransaction(final String type) {
+        return (type == null) ? String.valueOf(System.currentTimeMillis()) : type + System.currentTimeMillis();
+    }
 
     /**
      * 保存图片到相册
@@ -987,24 +1160,26 @@ public class ApplyFirstActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case REQUEST_CODE_SCAN: //二维码扫描
+            {
                 if (resultCode == RESULT_OK) {
                     if (data != null) {
                         String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
-                        if (stringExtra.startsWith("http:") || stringExtra.startsWith("https:")) {
-                            Intent intent = new Intent(ApplyFirstActivity.this, ZingWebActivity.class);
-                            intent.putExtra("url", stringExtra);
-                            startActivity(intent);
-                        } else {
-                            Toast.makeText(this, "解析失败，换个图片试试", Toast.LENGTH_SHORT).show();
-                        }
+                        mNewWeb.evaluateJavascript("window.sdk.getCodeUrl(\"" + stringExtra + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+
+                            }
+                        });
                     }
                 }
-                break;
+            }
+            break;
             case REQUEST_CAPTURE://调用系统相机返回
+            {
                 if (resultCode == RESULT_OK) {
-                    Uri uri = Uri.fromFile(tempFile);
-                    Log.e(TAG, "onActivityResult: " + uri);
-                    takePhoneUrl(uri);
+                    if (resultCode == RESULT_OK) {
+                        gotoClipActivity(Uri.fromFile(tempFile));
+                    }
                 } else if (resultCode == RESULT_CANCELED) {
                     Log.e(TAG, "onActivityResult: 取消1");
                     mNewWeb.post(new Runnable() {
@@ -1019,17 +1194,24 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         }
                     });
                 }
-                break;
+            }
+            break;
             case REQUEST_PICK://调用系统相册返回
+            {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
-                    Log.e(TAG, "onActivityResult:1 " + uri);
                     String realPathFromUri = getRealPathFromUri(this, uri);
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
-//                        gotoClipActivity(uri);
                         Log.e(TAG, "onActivityResult:2 " + uri);
-                        takePhoneUrl(uri);
+                        gotoClipActivity(uri);
+//                        takePhoneUrl(uri);
                     } else {
+                        mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+                                Log.e(TAG, "onReceiveValue: 取消");
+                            }
+                        });
                         Toast.makeText(this, "选择的格式不对,请重新选择", Toast.LENGTH_SHORT).show();
                     }
 
@@ -1047,8 +1229,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         }
                     });
                 }
-                break;
-            case REQUEST_CODE:
+            }
+            break;
+            case REQUEST_CODE: //获取文件返回
+            {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     Log.e(TAG, "uri: " + uri);
@@ -1071,19 +1255,32 @@ public class ApplyFirstActivity extends AppCompatActivity {
 //                Log.e(TAG, "onActivityResult:3 "+fileBuffer.toString());
 
                 }
-                break;
+            }
+            break;
+            case REQ_CLIP_AVATAR: //图片裁剪
+            {
+                if (resultCode == RESULT_OK) {
+                    final Uri uri = data.getData();
+                    if (uri == null) {
+                        return;
+                    }
+                    String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
+                    Log.e(TAG, "onActivityResult: " + cropImagePath);
+                    takePhoneUrl(cropImagePath);
+                } else {
+                    mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            Log.e(TAG, "onReceiveValue: 取消");
+                        }
+                    });
+                }
+            }
+            break;
         }
     }
 
-    private void takePhoneUrl(Uri uri) {
-        if (uri == null) {
-            return;
-        }
-        String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
-        Bitmap bitMap = BitmapFactory.decodeFile(cropImagePath);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        FileUtil.saveBitmapToSDCard(bitMap, "123");
-        //此处后面可以将bitMap转为二进制上传后台网络
+    private void takePhoneUrl(String cropImagePath) {
 
         accessToken = "Bearer" + " " + token;
         OkHttpClient client = new OkHttpClient();//创建okhttpClient
@@ -1094,7 +1291,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
-        builder.addFormDataPart("bucketName", "honeycom-service");
+        builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
         builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
