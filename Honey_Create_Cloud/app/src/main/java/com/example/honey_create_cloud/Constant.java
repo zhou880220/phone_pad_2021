@@ -18,19 +18,19 @@ public class Constant {
     //接口调用
     // APP_ID 替换为你的应用从官方网站申请到的合法appId
     public static final String APP_ID = "wx5b3f59728cb6aa71"; //微信支付ID
-    public static final String locahost_url = "http://ulogin.zhizaoyun.com/gateway/cashierDesk"; //路径前缀
-    public static final String text_url = "http://mobileclient.zhizaoyun.com/home"; //用户首页  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
-    public static final String apply_url = "http://mobileclient.zhizaoyun.com/apply"; //用户中心  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
-    public static final String Apply_Details = "http://ulogin.zhizaoyun.com/gateway/api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
-    public static final String upload_multifile = "http://ulogin.zhizaoyun.com/gateway/api-f/upload/multifile"; //上传图片
-    public static final String headPic = "http://ulogin.zhizaoyun.com/gateway/api-u/headPic"; //获取头像是否修改成功
-    public static final String TAKE_PHOTO = "http://ulogin.zhizaoyun.com/gateway/api-f/download/getFileUrl";//获取头像URL
-    public static final String appOrderInfo = "http://ulogin.zhizaoyun.com/gateway/api-pay/aliPay/appOrderInfo/"; //获取支付宝订单详情
-    public static final String wxPay_appOrderInfo = "http://ulogin.zhizaoyun.com/gateway/api-pay/wxPay/appOrderInfo/"; //获取微信订单详情
-    public static final String payType = "http://ulogin.zhizaoyun.com/gateway/api-apps/client/order/user/payType";  //获取用户支付类型，订单号，用户id
-    public static final String test_shoppingCart = "http://ulogin.zhizaoyun.com/gateway/shoppingCart"; //支付页面订单列表
-    public static final String NOTICE_OPEN_SWITCH = "http://ulogin.zhizaoyun.com/gateway/api-apps/apps-anon/client/notice/status"; //开启或关闭用户通知接口
-    public static final String MyOrderList = "http://ulogin.zhizaoyun.com/gateway/myOrder";//订单列表
-    public static final String TOKEN_IS_OK = "http://ulogin.zhizaoyun.com/gateway/api-u/users/current?access_token=";//token是否有效
-    public static final String DELETE_QUEUE = "http://ulogin.zhizaoyun.com/gateway/api-apps/apps-anon/queue/delete?userId=";//用户登录删除队列
+    public static final String locahost_url = "http://njtestyyzx.zhizaoyun.com/cashierDesk"; //路径前缀
+    public static final String text_url = "http://njtestyyzx.zhizaoyun.com/home"; //用户首页  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
+    public static final String apply_url = "http://njtestyyzx.zhizaoyun.com/apply"; //用户中心  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
+    public static final String Apply_Details = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
+    public static final String upload_multifile = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-f/upload/multifile"; //上传图片
+    public static final String headPic = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-u/headPic"; //获取头像是否修改成功
+    public static final String TAKE_PHOTO = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-f/download/getFileUrl";//获取头像URL
+    public static final String appOrderInfo = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-pay/aliPay/appOrderInfo/"; //获取支付宝订单详情
+    public static final String wxPay_appOrderInfo = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-pay/wxPay/appOrderInfo/"; //获取微信订单详情
+    public static final String payType = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-apps/client/order/user/payType";  //获取用户支付类型，订单号，用户id
+    public static final String test_shoppingCart = "http://njtestyyzx.zhizaoyun.com/shoppingCart"; //支付页面订单列表
+    public static final String NOTICE_OPEN_SWITCH = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-n/notification-anon/client/notice/status"; //开启或关闭用户通知接口
+    public static final String MyOrderList = "http://njtestyyzx.zhizaoyun.com/myOrder";//订单列表
+    public static final String TOKEN_IS_OK = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-u/users/current?access_token=";//token是否有效
+    public static final String DELETE_QUEUE = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-n/notification-anon/queue/delete?userId=";//用户登录删除队列
 }
