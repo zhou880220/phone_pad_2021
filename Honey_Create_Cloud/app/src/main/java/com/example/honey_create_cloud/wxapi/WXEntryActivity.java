@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.example.honey_create_cloud.Constant;
 import com.tencent.mm.opensdk.modelbase.BaseReq;
 import com.tencent.mm.opensdk.modelbase.BaseResp;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
@@ -20,7 +21,7 @@ public class WXEntryActivity extends Activity implements IWXAPIEventHandler {
     private IWXAPI api;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        api = WXAPIFactory.createWXAPI(this, "这里替换第一步申请的APP_ID", false);
+        api = WXAPIFactory.createWXAPI(this, Constant.APP_ID, false);
         api.handleIntent(getIntent(), this);
         super.onCreate(savedInstanceState);
 
@@ -36,15 +37,18 @@ public class WXEntryActivity extends Activity implements IWXAPIEventHandler {
         switch (baseResp.errCode) {
             case BaseResp.ErrCode.ERR_OK:
                 //分享成功
-                Toast.makeText(this, "分享成功", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "分享成功", Toast.LENGTH_SHORT).show();
+                finish();
                 break;
             case BaseResp.ErrCode.ERR_USER_CANCEL:
                 //分享取消
-                Toast.makeText(this, "分享取消", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "分享取消", Toast.LENGTH_SHORT).show();
+                finish();
                 break;
             case BaseResp.ErrCode.ERR_AUTH_DENIED:
                 //分享拒绝
-                Toast.makeText(this, "分享拒绝", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "分享拒绝", Toast.LENGTH_SHORT).show();
+                finish();
                 break;
         }
     }

@@ -96,9 +96,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static android.app.Notification.DEFAULT_ALL;
-import static com.example.honey_create_cloud.ui.ApplyFirstActivity.returnActivityA;
-import static com.example.honey_create_cloud.ui.ApplySecondActivity.returnActivityB;
-import static com.example.honey_create_cloud.ui.ApplyThirdActivity.returnActivityC;
 import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 
 public class MainActivity extends AppCompatActivity {
@@ -201,8 +198,8 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CALL_PHONE,
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.READ_PHONE_STATE};
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.ACCESS_FINE_LOCATION};
     private static final int VIDEO_PERMISSIONS_CODE = 1;
 
     private MyHandlerCallBack.OnSendDataListener mOnSendDataListener;
@@ -278,7 +275,6 @@ public class MainActivity extends AppCompatActivity {
             webView(Constant.text_url);
         }
     }
-
 
     /**
      * 初始化webview js交互
@@ -733,7 +729,7 @@ public class MainActivity extends AppCompatActivity {
                             throws IOException {
                         super.handleDelivery(consumerTag, envelope, properties, body);
                         receiveMsg = new String(body, "UTF-8");
-                        Log.e(TAG, "handleDelivery: "+receiveMsg);
+                        Log.e(TAG, "handleDelivery: " + receiveMsg);
                         NotificationConsune();
                     }
                 };
@@ -828,10 +824,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private Connection getConnection() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("119.3.28.24");//主机地址：192.168.1.105
-        factory.setPort(5672);// 端口号:5672
-        factory.setUsername("honeycomb");// 用户名
-        factory.setPassword("honeycomb");// 密码
+        factory.setHost("122.112.141.135");//主机地址：192.168.1.105
+        factory.setPort(25672);// 端口号:25672
+        factory.setUsername("honeycom");// 用户名
+        factory.setPassword("wu168@QqFn2019");// 密码
         factory.setVirtualHost("/");
         try {
             return factory.newConnection();
@@ -939,22 +935,15 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onStart() {
-        if (returnActivityA == true) {
-            returnActivityA = false;
-            Intent intent = new Intent();
-            intent.setClass(this, ApplyFirstActivity.class);
-            startActivity(intent);
-        } else if (returnActivityB == true) {
-            returnActivityB = false;
-            Intent intent = new Intent();
-            intent.setClass(this, ApplySecondActivity.class);
-            startActivity(intent);
-        } else if (returnActivityC == true) {
-            returnActivityC = false;
-            Intent intent = new Intent();
-            intent.setClass(this, ApplyThirdActivity.class);
-            startActivity(intent);
+        SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+        String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
+        Log.e(TAG, "onRestart: " + apply_url);
+        if (!TextUtils.isEmpty(apply_url)) {
+            webView(apply_url);
         }
+        SharedPreferences.Editor edit = sp1.edit();
+        edit.clear();
+        edit.commit();
 
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
@@ -968,6 +957,7 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
+        Log.e(TAG, "onRestart: ");
         ShortcutBadger.applyCount(this, 0);
         boolean notificationEnabled = isNotificationEnabled(this);
         if (notificationEnabled == true) {
@@ -975,14 +965,10 @@ public class MainActivity extends AppCompatActivity {
         } else {
             notificationChange(userid1, "-1");
         }
-
-        if (myOrder.equals(Constant.MyOrderList)) {
-            mNewWeb.reload();
-        }
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
-                Log.e(TAG, "onRestart");
+
             }
         });
         SharedPreferences sb = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
@@ -991,16 +977,6 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(notifyUserId)) {
             new Thread(() -> basicConsume(myHandler)).start();
         }
-
-        SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-        String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
-        if (!TextUtils.isEmpty(apply_url)) {
-            Log.e(TAG, "123: " + apply_url);
-            webView(apply_url);
-        }
-        SharedPreferences.Editor edit = sp1.edit();
-        edit.clear();
-        edit.commit();
         super.onRestart();
     }
 

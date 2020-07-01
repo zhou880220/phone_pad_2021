@@ -1,10 +1,12 @@
 package com.example.honey_create_cloud.ui;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,7 +26,6 @@ import android.os.Message;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -37,8 +38,13 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.webkit.JavascriptInterface;
+import android.webkit.JsPromptResult;
+import android.webkit.JsResult;
 import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -69,7 +75,6 @@ import com.example.honey_create_cloud.bean.ShareSdkBean;
 import com.example.honey_create_cloud.bean.TakePhoneBean;
 import com.example.honey_create_cloud.recorder.AudioRecorderButton;
 import com.example.honey_create_cloud.util.FileUtil;
-import com.example.honey_create_cloud.util.FileUtils;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
@@ -91,6 +96,11 @@ import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 import com.yzq.zxinglibrary.encode.CodeCreator;
 
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.ByteArrayInputStream;
@@ -101,7 +111,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -114,7 +123,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -129,13 +137,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static com.example.honey_create_cloud.ui.ApplySecondActivity.returnActivityB;
-import static com.example.honey_create_cloud.ui.ApplyThirdActivity.returnActivityC;
 import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 import static com.example.honey_create_cloud.ui.MainActivity.getRealPathFromUri;
 
 public class ApplyFirstActivity extends AppCompatActivity {
-
     @InjectView(R.id.NewWebProgressbar)
     ProgressBar mNewWebProgressbar;
     @InjectView(R.id.new_Web1)
@@ -146,8 +151,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
     View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
-    @InjectView(R.id.grid_popup)
-    RecyclerView mGridPopup;
     @InjectView(R.id.tv_publish)
     ImageView mTvPublish;
     @InjectView(R.id.tv_myPublish)
@@ -164,8 +167,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
     LinearLayout mLlCourseNone;
     @InjectView(R.id.fab_more)
     ImageView mFabMore;
-    @InjectView(R.id.show_dismiss)
-    RelativeLayout mShowDismiss;
     @InjectView(R.id.dimiss_popup)
     RelativeLayout mDimissPopup;
 
@@ -258,6 +259,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private ShareSdkBean shareSdkBean;
     private Bitmap bitmap1;
     private HashMap<String, String> hashMap = new HashMap<String, String>();
+    private RecentlyApps recentlyApps;
+    private RecyclerView mGridPopup;
 
 
     @RequiresApi(api = Build.VERSION_CODES.P)
@@ -280,14 +283,14 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_apply_first);
-        returnActivityA = true;
+//        returnActivityA = true;
         ButterKnife.inject(this);
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
-        webView(url);//"http://172.16.23.210:3006/src/view/api.html"
+        webView("http://172.16.23.210:3006/src/view/api.html");//"http://172.16.23.210:3006/src/view/api.html"
         mLodingTime();
         intentOkhttp();
 
@@ -323,7 +326,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
                         if (goBackUrl.contains("systemIndex")) {
-                            returnActivityA = false;
+//                            returnActivityA = false;
                             finish();
                         } else {
                             mNewWeb.goBack();
@@ -454,18 +457,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("upLoadFile", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                // 打开系统的文件选择器
-                Toast.makeText(ApplyFirstActivity.this, "正在开发", Toast.LENGTH_SHORT).show();
-//                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-//                intent.addCategory(Intent.CATEGORY_OPENABLE);
-//                intent.setType("*/*");
-//                startActivityForResult(intent, REQUEST_CODE);
-
-//                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-//                intent.setType("*/*");
-//                intent.addCategory(Intent.CATEGORY_OPENABLE);
-//                startActivityForResult(intent, REQUEST_CODE);
-//                function.onCallBack(fileBuffer.toString());
             }
         });
 
@@ -476,16 +467,14 @@ public class ApplyFirstActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 Log.e(TAG, "handler: " + data);
-                if (data!= null) {
+                if (data != null) {
                     Map map = JSONObject.parseObject(data, Map.class);
                     Set<String> set = map.keySet();
                     Iterator<String> iterator = set.iterator();
                     while (iterator.hasNext()) {
                         String key = iterator.next();
                         String value = (String) map.get(key);
-                        Log.e(TAG, "handler: " + value);
                         String getCookieValue = (String) hashMap.get(value);
-                        Log.e(TAG, "handler: "+getCookieValue );
                         function.onCallBack(getCookieValue);
                     }
                 }
@@ -508,7 +497,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //联系客服  打开通讯录
         @JavascriptInterface
         public void OpenPayIntent(String intentOpenPay) {
-            Log.e(TAG, "OpenPayIntent: " + intentOpenPay);
             Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
@@ -517,13 +505,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //跳转支付页面
         @JavascriptInterface
         public void purchaseOfEntry(String purchaseOfEntry) {
-
             if (!purchaseOfEntry.isEmpty()) {
                 Intent intent = new Intent(ApplyFirstActivity.this, IntentOpenActivity.class);
                 intent.putExtra("PurchaseOfEntry", purchaseOfEntry);
                 intent.putExtra("appId", appId);
                 intent.putExtra("token", token);
-                returnActivityA = true;
+//              returnActivityA = true;
                 startActivity(intent);
             }
         }
@@ -537,7 +524,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //用户取消权限
         @JavascriptInterface
         public void cancelAuthorization() {
-            returnActivityA = false;
+//            returnActivityA = false;
             finish();
         }
 
@@ -573,72 +560,31 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         }
 
+        //登录异常回到首页
+        @JavascriptInterface
+        public void backHome() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.text_url);
+            edit1.commit();
+            finish();
+        }
+
         //下载文件保存到PartLib/download/
         @JavascriptInterface
         public void downLoadFile(String downPath) {
-//            progressDialog = new ProgressDialog(ApplyFirstActivity.this);
-//            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-//            progressDialog.setTitle("正在下载");
-//            progressDialog.setMessage("请稍后...");
-//            progressDialog.setProgress(0);
-//            progressDialog.setMax(100);
-//            progressDialog.show();
-//            progressDialog.setCancelable(false);
-            Log.e(TAG, "downLoadFile: " + downPath);
-            String FileLoad = "PartLib/download/";
-            FileDownloader.setup(ApplyFirstActivity.this);
-            FileDownloader.getImpl().create(downPath)
-                    .setPath(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + FileLoad + getNameFromUrl(downPath))
-                    .setForceReDownload(true)
-                    .setListener(new FileDownloadListener() {
-                        //等待
-                        @Override
-                        protected void pending(BaseDownloadTask task, int soFarBytes, int totalBytes) {
-
-                        }
-
-                        //下载进度回调
-                        @Override
-                        protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
-//                            progressBar.setProgress((soFarBytes * 100 / totalBytes));
-//                            progressDialog.setProgress((soFarBytes * 100 / totalBytes));
-                        }
-
-                        //下载完成
-                        @Override
-                        protected void completed(BaseDownloadTask task) {
-                            Log.e(TAG, "completed: " + task.getPath());
-                            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show();
-                            new AlertDialog.Builder(ApplyFirstActivity.this)
-                                    .setTitle("保存路径：")
-                                    .setMessage(task.getPath())
-                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-
-                                        }
-                                    })
-                                    .show();
-                        }
-
-                        //暂停
-                        @Override
-                        protected void paused(BaseDownloadTask task, int soFarBytes, int totalBytes) {
-
-                        }
-
-                        //下载出错
-                        @Override
-                        protected void error(BaseDownloadTask task, Throwable e) {
-                            Toast.makeText(context, "下载异常", Toast.LENGTH_SHORT).show();
-                        }
-
-                        //已存在相同下载
-                        @Override
-                        protected void warn(BaseDownloadTask task) {
-                            Log.e(TAG, "" + task.getPath());
-                        }
-                    }).start();
+            Toast.makeText(context, "请稍后...", Toast.LENGTH_SHORT).show();
+            List<RecentlyApps.DataBean> data = recentlyApps.getData();
+            for (int i = 0; i < data.size() - 1; i++) {
+                String ApplyId = String.valueOf(data.get(i).getAppId());
+                if (appId.equals(ApplyId)) {
+                    char[] chars = data.get(i).getAppName().toCharArray();
+                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                    Log.e(TAG, "downLoadFile: " + downPath);
+                    String FileLoad = "fengchaohulian/download/" + pinYinHeadChar + "/";
+                    downFilePath(FileLoad, downPath);
+                }
+            }
         }
 
         /**
@@ -658,7 +604,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         String key = (String) map.get(cookieKey);
                         String value = (String) map.get(cookieValue);
                         hashMap.put(key, value);
-                        Log.e(TAG, "setCookie: "+key+value);
+                        Log.e(TAG, "setCookie: " + key + value);
                     }
                 }
             }
@@ -670,7 +616,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         public void shareSDKData(String shareData) {
             wxApi = WXAPIFactory.createWXAPI(ApplyFirstActivity.this, Constant.APP_ID);
             wxApi.registerApp(Constant.APP_ID);
-            Log.e("wangpan", shareData);
             Gson gson = new Gson();
             shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
             getImage(shareSdkBean.getIcon());
@@ -753,27 +698,81 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * 读取文件里面的字符串
-     *
-     * @param fileName
-     * @return
-     */
-    private String readFile(String fileName) {
-        String result = null;
-        try {
-            InputStream inputStream = openFileInput(fileName);
+    private void downFilePath(String fileLoad, String downPath) {
+        Log.e(TAG, "downLoadFile: " + downPath);
+        FileDownloader.setup(ApplyFirstActivity.this);
+        FileDownloader.getImpl().create(downPath)
+                .setPath(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + fileLoad + getNameFromUrl(downPath))
+                .setForceReDownload(true)
+                .setListener(new FileDownloadListener() {
+                    //等待
+                    @Override
+                    protected void pending(BaseDownloadTask task, int soFarBytes, int totalBytes) {
 
-            byte[] bytes = new byte[inputStream.available()];
-            inputStream.read(bytes);
-            result = new String(bytes);
+                    }
 
-            inputStream.close();
+                    //下载进度回调
+                    @Override
+                    protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+//                            progressBar.setProgress((soFarBytes * 100 / totalBytes));
+//                            progressDialog.setProgress((soFarBytes * 100 / totalBytes));
+                    }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+                    //下载完成
+                    @Override
+                    protected void completed(BaseDownloadTask task) {
+                        Log.e(TAG, "completed: " + task.getPath());
+                        Toast.makeText(ApplyFirstActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
+                        new AlertDialog.Builder(ApplyFirstActivity.this)
+                                .setTitle("保存路径：")
+                                .setMessage(task.getPath())
+                                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+
+                                    }
+                                })
+                                .show();
+                    }
+
+                    //暂停
+                    @Override
+                    protected void paused(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+
+                    }
+
+                    //下载出错
+                    @Override
+                    protected void error(BaseDownloadTask task, Throwable e) {
+                        Toast.makeText(ApplyFirstActivity.this, "下载异常", Toast.LENGTH_SHORT).show();
+                    }
+
+                    //已存在相同下载
+                    @Override
+                    protected void warn(BaseDownloadTask task) {
+                        Log.e(TAG, "" + task.getPath());
+                    }
+                }).start();
+
+    }
+
+    public static String getPinYinHeadChar(char[] chars) {
+        StringBuffer sb = new StringBuffer();
+        HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
+        defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
+        defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] > 128) {
+                try {
+                    sb.append(PinyinHelper.toHanyuPinyinStringArray(chars[i], defaultFormat)[0]);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                sb.append(chars[i]);
+            }
         }
-        return result;
+        return sb.toString();
     }
 
     public void getImage(String path) {
@@ -1040,31 +1039,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_CAPTURE);
     }
 
-    @SuppressLint("LongLogTag")
-    public static void copy(File source, File dest, int bufferSize) {
-        InputStream in = null;
-        OutputStream out = null;
-        try {
-            in = new FileInputStream(source);
-            out = new FileOutputStream(dest);
-
-            byte[] buffer = new byte[bufferSize];
-            int len;
-
-            while ((len = in.read(buffer)) > 0) {
-                out.write(buffer, 0, len);
-            }
-        } catch (Exception e) {
-            Log.w(TAG + ":copy", "error occur while copy", e);
-        } finally {
-            try {
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public String tobase64(String url) {
         try {
             File file = new File(url);
@@ -1078,6 +1052,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 inStream.read(buffer);
                 inStream.close();
                 byte[] bytes = Base64.encodeBase64(buffer);
+//                byte[] bytes = new byte[]{};
                 String str = new String(bytes);
                 if (str != null) {
                     str = str.replaceAll(System.getProperty("line.separator"), "");
@@ -1086,7 +1061,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
                 return str;
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1114,7 +1088,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     String string = response.body().string();
                     Log.e(TAG, "onResponse: " + string);
                     Gson gson = new Gson();
-                    RecentlyApps recentlyApps = gson.fromJson(string, RecentlyApps.class);
+                    recentlyApps = gson.fromJson(string, RecentlyApps.class);
                     data = recentlyApps.getData();
                 } else {
 
@@ -1123,41 +1097,32 @@ public class ApplyFirstActivity extends AppCompatActivity {
         });
     }
 
-    //读取信息
-    private String read(String mFileName) {
-        File f = new File(mFileName);
-        InputStream in = null;
-        try {
-            in = new FileInputStream(f);
-            StringBuilder sb = new StringBuilder();
-            int len = 0;
-            byte[] buff = new byte[1024];
-
-            while ((len = in.read(buff)) > 0) {
-                sb.append(new String(buff, 0, len));
-            }
-            Log.e(TAG, "read: " + sb);
-            return sb.toString();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILE_CHOOSER_RESULT_CODE) {
+            if (null == uploadMessage && null == uploadMessageAboveL) return;
+            Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
+            // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
+            if (uploadMessageAboveL != null) {
+                onActivityResultAboveL(requestCode, resultCode, data);
+            } else if (uploadMessage != null) {
+                uploadMessage.onReceiveValue(result);
+                uploadMessage = null;
+            }
+        } else {
+            //这里uploadMessage跟uploadMessageAboveL在不同系统版本下分别持有了
+            //WebView对象，在用户取消文件选择器的情况下，需给onReceiveValue传null返回值
+            //否则WebView在未收到返回值的情况下，无法进行任何操作，文件选择器会失效
+            if (uploadMessage != null) {
+                uploadMessage.onReceiveValue(null);
+                uploadMessage = null;
+            } else if (uploadMessageAboveL != null) {
+                uploadMessageAboveL.onReceiveValue(null);
+                uploadMessageAboveL = null;
+            }
+        }
+
         switch (requestCode) {
             case REQUEST_CODE_SCAN: //二维码扫描
             {
@@ -1177,11 +1142,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
             case REQUEST_CAPTURE://调用系统相机返回
             {
                 if (resultCode == RESULT_OK) {
-                    if (resultCode == RESULT_OK) {
-                        gotoClipActivity(Uri.fromFile(tempFile));
-                    }
+                    gotoClipActivity(Uri.fromFile(tempFile));
                 } else if (resultCode == RESULT_CANCELED) {
-                    Log.e(TAG, "onActivityResult: 取消1");
                     mNewWeb.post(new Runnable() {
                         @Override
                         public void run() {
@@ -1202,9 +1164,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     Uri uri = data.getData();
                     String realPathFromUri = getRealPathFromUri(this, uri);
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
-                        Log.e(TAG, "onActivityResult:2 " + uri);
                         gotoClipActivity(uri);
-//                        takePhoneUrl(uri);
                     } else {
                         mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
                             @Override
@@ -1216,7 +1176,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     }
 
                 } else if (resultCode == RESULT_CANCELED) {
-                    Log.e(TAG, "onActivityResult: 取消2");
                     mNewWeb.post(new Runnable() {
                         @Override
                         public void run() {
@@ -1232,31 +1191,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
             break;
             case REQUEST_CODE: //获取文件返回
-            {
-                if (resultCode == RESULT_OK) {
-                    Uri uri = data.getData();
-                    Log.e(TAG, "uri: " + uri);
-                    FileUtils fileUtils = new FileUtils(this);
-                    String filePathByUri = fileUtils.getFilePathByUri(uri);
-                    Log.e(TAG, "onActivityResult:4" + filePathByUri);
-//                    Uri uri = data.getData();
-//                    Log.e(TAG, "uri: " + uri);
-//                    FileUtils fileUtils = new FileUtils(this);
-//                    String filePathByUri = fileUtils.getFilePathByUri(uri);
-//                String fileBase64 = tobase64(filePathByUri);
-//                String fileUrlName = getNameFromUrl(filePathByUri);
-//                fileBuffer = new StringBuffer();
-//                fileBuffer.append("[{")
-//                        .append("\"" + "fileUrlName" + "\"").append(":").append("\"" + fileUrlName + "\"").append(",")
-//                        .append("\"" + "fileBase64" + "\"").append(":").append("\"" + fileBase64 + "\"")
-//                        .append("}]");
-//                Log.e(TAG, "onActivityResult:1 "+fileUrlName);
-//                Log.e(TAG, "onActivityResult:2 "+fileBase64);
-//                Log.e(TAG, "onActivityResult:3 "+fileBuffer.toString());
-
-                }
-            }
-            break;
+                break;
             case REQ_CLIP_AVATAR: //图片裁剪
             {
                 if (resultCode == RESULT_OK) {
@@ -1277,9 +1212,51 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
             break;
+            case FILE_CHOOSER_RESULT_CODE: //返回H5文件选择
+            {
+                if (null == uploadMessage && null == uploadMessageAboveL) return;
+                Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
+                // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
+                if (uploadMessageAboveL != null) {
+                    onActivityResultAboveL(requestCode, resultCode, data);
+                } else if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(result);
+                    uploadMessage = null;
+                }
+            }
+            break;
+            default:
+                break;
         }
     }
 
+    // 选择内容回调到Html页面
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void onActivityResultAboveL(int requestCode, int resultCode, Intent intent) {
+        if (requestCode != FILE_CHOOSER_RESULT_CODE || uploadMessageAboveL == null)
+            return;
+        Uri[] results = null;
+        if (resultCode == Activity.RESULT_OK) {
+            if (intent != null) {
+                String dataString = intent.getDataString();
+                ClipData clipData = intent.getClipData();
+                if (clipData != null) {
+                    results = new Uri[clipData.getItemCount()];
+                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                        ClipData.Item item = clipData.getItemAt(i);
+                        results[i] = item.getUri();
+                    }
+                }
+                if (dataString != null)
+                    results = new Uri[]{Uri.parse(dataString)};
+                Log.e(TAG, "wang111: " + results);
+            }
+        }
+        uploadMessageAboveL.onReceiveValue(results);
+        uploadMessageAboveL = null;
+    }
+
+    //上传头像
     private void takePhoneUrl(String cropImagePath) {
 
         accessToken = "Bearer" + " " + token;
@@ -1287,7 +1264,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //创建body类型用于传值
         MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
         File file = new File(cropImagePath);
-
+        if (file == null) {
+            return;
+        }
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
@@ -1334,59 +1313,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         ClipImageActivity.goToClipActivity(this, uri);
     }
 
-    //获取手机唯一标识
-    private String getId() {
-        StringBuilder deviceId = new StringBuilder();
-        // 渠道标志
-        deviceId.append("a");
-        try {
-            //IMEI（imei）
-            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
-            if (!TextUtils.isEmpty(imei)) {
-                deviceId.append("imei");
-                deviceId.append(imei);
-                return deviceId.toString();
-            }
-            //序列号（sn）
-            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
-            if (!TextUtils.isEmpty(sn)) {
-                deviceId.append("sn");
-                deviceId.append(sn);
-                return deviceId.toString();
-            }
-            //如果上面都没有， 则生成一个id：随机码
-            String uuid = getUUID();
-            if (!TextUtils.isEmpty(uuid)) {
-                deviceId.append("id");
-                deviceId.append(uuid);
-                return deviceId.toString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            deviceId.append("id").append(getUUID());
-        }
-        return deviceId.toString();
-    }
-
-    /**
-     * 得到全局唯一UUID
-     */
-    private String uuid;
-
-    public String getUUID() {
-        SharedPreferences mShare = getSharedPreferences("uuid", MODE_PRIVATE);
-        if (mShare != null) {
-            uuid = mShare.getString("uuid", "");
-        }
-        if (TextUtils.isEmpty(uuid)) {
-            uuid = UUID.randomUUID().toString();
-            mShare.edit().putString("uuid", uuid).commit();
-        }
-        return uuid;
-    }
-
-    // broadcast receiver
+    // 广播通知
     private BroadcastReceiver mRefreshBroadcastReceiver = new BroadcastReceiver() {
 
         @SuppressLint("NewApi")
@@ -1419,9 +1346,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
-                returnActivityA = false;
-                returnActivityB = false;
-                returnActivityC = false;
+//                returnActivityA = false;
+//                returnActivityB = false;
+//                returnActivityC = false;
                 SharedPreferences sp1 = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit1 = sp1.edit();
                 edit1.putString("apply_url", Constant.text_url);
@@ -1432,45 +1359,78 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapplychange);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
-                returnActivityA = false;
-                returnActivityB = false;
-                returnActivityC = false;
+//                returnActivityA = false;
+//                returnActivityB = false;
+//                returnActivityC = false;
                 SharedPreferences sp = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sp.edit();
                 edit.putString("apply_url", Constant.apply_url);
                 edit.commit();
                 finish();
                 break;
-            case R.id.tv_relation:
+            case R.id.tv_relation: //
+            {
+                backgroundAlpha(this, 0.5f);//0.0-welcome1.0
+                View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.windowpopup, null);
+                PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                        620);
+                popupWindow.setTouchable(true);
+                popupWindow.setFocusable(true);
+                popupWindow.setOutsideTouchable(false);
+                popupWindow.setAnimationStyle(R.style.pop_animation);
+                popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+                mGridPopup = centerView.findViewById(R.id.grid_popup);
+                Button mDismissPopupButton = centerView.findViewById(R.id.dismiss_popup_button);
+                pagerView();
+
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);
-                mShowDismiss.setVisibility(View.VISIBLE);
-                pagerView();
+                switchPopup();
                 adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
                     @Override
                     public void onClosePopupClick(String name) {
-                        if (name.equals("关闭")) {
-                            mShowDismiss.setVisibility(View.GONE);
-                            switchPopup();
+                        if (name.equals("关闭") && popupWindow.isShowing()) {
+                            popupWindow.dismiss();
                         }
                     }
                 });
-                break;
+                popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+
+                    @Override
+                    public void onDismiss() {
+                        backgroundAlpha(ApplyFirstActivity.this, 1f);
+                    }
+                });
+                mDismissPopupButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        backgroundAlpha(ApplyFirstActivity.this, 1f);
+                        popupWindow.dismiss();
+                    }
+                });
+            }
+            break;
             case R.id.fab_more:
-                mDimissPopup.setVisibility(View.VISIBLE);
                 switchPopup();
                 break;
             case R.id.dimiss_popup:
                 mDimissPopup.setVisibility(View.GONE);
                 switchPopup();
                 break;
-            case R.id.show_dismiss:
-                Log.e(TAG, "onClick: 消失");
-                mShowDismiss.setVisibility(View.GONE);
-                switchPopup();
-                break;
         }
+    }
+
+    /**
+     * papawin设置添加屏幕的背景透明度
+     *
+     * @param bgAlpha
+     */
+    public void backgroundAlpha(Activity context, float bgAlpha) {
+        WindowManager.LayoutParams lp = context.getWindow().getAttributes();
+        lp.alpha = bgAlpha;
+        context.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        context.getWindow().setAttributes(lp);
     }
 
     /**
@@ -1484,6 +1444,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
 //            objectAnimator.start();
 
             mLlPopup.setVisibility(View.VISIBLE);
+            mDimissPopup.setVisibility(View.VISIBLE);
             ScaleAnimation scaleAnimation = new ScaleAnimation(0f, 1.0f, 1.0f, 1.0f,
                     Animation.RELATIVE_TO_SELF, 1f, Animation.RELATIVE_TO_SELF, 0.5f);
             scaleAnimation.setDuration(300);
@@ -1507,6 +1468,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             scaleAnimation.setDuration(300);
             mLlPopup.startAnimation(scaleAnimation);
             mLlPopup.setVisibility(View.GONE);
+            mDimissPopup.setVisibility(View.GONE);
 
             if (mLlCourseNone.getVisibility() == View.VISIBLE) {
                 float fY = mFabMore.getY();
@@ -1566,6 +1528,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 into(imageView);
     }
 
+    private ValueCallback<Uri> uploadMessage;
+    private ValueCallback<Uri[]> uploadMessageAboveL;
+    private final static int FILE_CHOOSER_RESULT_CODE = 10000;
+
     /**
      * webview监听
      *
@@ -1591,7 +1557,71 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
-        ead_web.setWebChromeClient(mWebChromeClient);
+//        ead_web.setWebChromeClient(mWebChromeClient);
+
+        ead_web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                if (newProgress == 100) {
+                    //进度条消失
+                    if (mLoadingPage != null) {
+                        mLoadingPage.setVisibility(View.GONE);
+                        mNewWebProgressbar.setVisibility(View.GONE);
+                    } else {
+                        mNewWebProgressbar.setVisibility(View.GONE);
+                    }
+                } else {
+                    //进度跳显示
+                    mNewWebProgressbar.setVisibility(View.VISIBLE);
+                    mNewWebProgressbar.setProgress(newProgress);
+                    Log.e("wangpan", newProgress + "");
+                }
+                super.onProgressChanged(view, newProgress);
+            }
+
+            @Override
+            public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
+                return super.onJsConfirm(view, url, message, result);
+            }
+
+            @Override
+            public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
+                return super.onJsPrompt(view, url, message, defaultValue, result);
+            }
+
+            // For Android < 3.0
+            public void openFileChooser(ValueCallback<Uri> valueCallback) {
+                uploadMessage = valueCallback;
+                openImageChooserActivity();
+            }
+
+            // For Android  >= 3.0
+            public void openFileChooser(ValueCallback valueCallback, String acceptType) {
+                uploadMessage = valueCallback;
+                openImageChooserActivity();
+            }
+
+            //For Android  >= 4.1
+            public void openFileChooser(ValueCallback<Uri> valueCallback, String acceptType, String capture) {
+                uploadMessage = valueCallback;
+                openImageChooserActivity();
+            }
+
+            // For Android >= 5.0
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
+                uploadMessageAboveL = filePathCallback;
+                openImageChooserActivity();
+                return true;
+            }
+        });
+    }
+
+    public void openImageChooserActivity() {
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("*/*");//文件上传
+        startActivityForResult(i, FILE_CHOOSER_RESULT_CODE);
     }
 
     /**
@@ -1613,13 +1643,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         mLlPopup.setVisibility(View.GONE);
-        returnActivityA = false;
+//        returnActivityA = false;
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        returnActivityA = true;
+//        returnActivityA = true;
         String s2 = "{tradeNo:123}";
         mNewWeb.post(new Runnable() {
             @Override

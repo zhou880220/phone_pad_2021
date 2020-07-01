@@ -7,11 +7,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.bean.RecentlyApps;
 import com.example.honey_create_cloud.ui.ApplyFirstActivity;
@@ -40,12 +43,15 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
         View contactView;//存储解析到的view
         ImageView imageView;
         LinearLayout recyclerWidth;
+        TextView appNameView;
+
 
         public ViewHolder(View view) {
             super(view);
             contactView = view;
             imageView = view.findViewById(R.id.imgUrl);
             recyclerWidth = view.findViewById(R.id.recycler_width);
+            appNameView = view.findViewById(R.id.appName);
         }
     }
 
@@ -101,7 +107,12 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if (mContactList.get(position).getLogoUrl() != null){
-            Glide.with(context).load(mContactList.get(position).getLogoUrl()).into(holder.imageView);
+            //            Glide.with(context).load(beanList.get(position).getSP_LOGOURL()).apply((RequestOptions.bitmapTransform
+//                    (new RoundedCorners(30)))).into((ImageView) viewHolder.studio_image);
+            Glide.with(context).load(mContactList.get(position).getLogoUrl()).apply(RequestOptions.bitmapTransform(new RoundedCorners(30))).into(holder.imageView);
+
+
+            holder.appNameView.setText(mContactList.get(position).getAppName());
         }
     }
 

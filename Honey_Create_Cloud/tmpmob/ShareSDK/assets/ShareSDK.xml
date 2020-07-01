@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DevInfor>
+<SinaWeibo AppKey="2555816423" AppSecret="3de62fc19d81540659e9da9d003c87d5" ShareByAppClient="true" />
+<TencentWeibo Enable="false" />
+<Douban Enable="false" />
+<QZone AppId="100371282" AppKey="aed9b0303e3ed1e27bae87c33761161d" ShareByAppClient="false" BypassApproval="true" />
+<Renren Enable="false" />
+<KaiXin Enable="false" />
+<Facebook Enable="false" />
+<Twitter Enable="false" />
+<Evernote Enable="false" />
+<FourSquare Enable="false" />
+<GooglePlus Enable="false" />
+<Instagram Enable="false" />
+<LinkedIn Enable="false" />
+<Tumblr Enable="false" />
+<Email Enable="false" />
+<ShortMessage Enable="false" />
+<Wechat AppId="wx5b3f59728cb6aa71" AppSecret="aec3817169a863ebac2b37e2552f923a" ShareByAppClient="true" BypassApproval="true" />
+<WechatMoments AppId="wx5b3f59728cb6aa71" AppSecret="aec3817169a863ebac2b37e2552f923a" ShareByAppClient="true" BypassApproval="true" />
+<QQ AppId="100371282" AppKey="aed9b0303e3ed1e27bae87c33761161d" ShareByAppClient="false" />
+<Instapaper Enable="false" />
+<Pocket Enable="false" />
+<YouDao Enable="false" />
+<Pinterest Enable="false" />
+<Flickr Enable="false" />
+<Dropbox Enable="false" />
+<VKontakte Enable="false" />
+<WechatFavorite Enable="false" />
+<Yixin Enable="false" />
+<YixinMoments Enable="false" />
+<Mingdao Enable="false" />
+<Line Enable="false" />
+<WhatsApp Enable="false" />
+<KakaoTalk Enable="false" />
+<KakaoStory Enable="false" />
+<FacebookMessenger Enable="false" />
+<Alipay Enable="false" />
+<AlipayMoments Enable="false" />
+<Dingding Enable="false" />
+<Youtube Enable="false" />
+<Meipai Enable="false" />
+<Telegram Enable="false" />
+<Cmcc Enable="false" />
+<Reddit Enable="false" />
+<Telecom Enable="false" />
+<Accountkit Enable="false" />
+<Douyin Enable="false" />
+<Wework Enable="false" />
+<HWAccount Enable="false" />
+<Oasis Enable="false" />
+<XMAccount Enable="false" />
+<SnapChat Enable="false" />
+<Kuaishou Enable="false" />
+<Littleredbook Enable="false" />
+<Watermelonvideo Enable="false" />
+</DevInfor>
