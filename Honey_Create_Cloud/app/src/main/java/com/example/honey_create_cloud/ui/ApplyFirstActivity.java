@@ -290,7 +290,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
-        webView("http://172.16.23.210:3006/src/view/api.html");//"http://172.16.23.210:3006/src/view/api.html"
+        webView(url);//"http://172.16.23.210:3006/src/view/api.html"
         mLodingTime();
         intentOkhttp();
 

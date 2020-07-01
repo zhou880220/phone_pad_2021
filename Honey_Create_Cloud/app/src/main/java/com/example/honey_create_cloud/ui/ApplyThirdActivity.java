@@ -288,7 +288,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
-        webView("http://172.16.23.210:3006/src/view/api.html");
+        webView(url);
         mLodingTime();
         intentOkhttp();
 
