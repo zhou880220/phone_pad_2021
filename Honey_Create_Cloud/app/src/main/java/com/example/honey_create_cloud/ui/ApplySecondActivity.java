@@ -351,7 +351,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getIdentifier", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                String imei = SystemUtil.getIMEI(ApplySecondActivity.this);
+                String imei = SystemUtil.getUniqueIdentificationCode(ApplySecondActivity.this);
                 function.onCallBack(imei);
             }
         });

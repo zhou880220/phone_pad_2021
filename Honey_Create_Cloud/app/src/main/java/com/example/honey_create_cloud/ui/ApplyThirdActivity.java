@@ -352,7 +352,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getIdentifier", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                String imei = SystemUtil.getIMEI(ApplyThirdActivity.this);
+                String imei = SystemUtil.getUniqueIdentificationCode(ApplyThirdActivity.this);
                 function.onCallBack(imei);
             }
         });

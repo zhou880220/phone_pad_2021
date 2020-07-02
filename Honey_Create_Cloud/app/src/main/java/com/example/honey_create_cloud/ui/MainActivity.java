@@ -562,7 +562,7 @@ public class MainActivity extends AppCompatActivity {
                 usertoken1 = usertoken;
                 userid1 = userid;
                 Log.e(TAG, "getToken: " + usertoken1);
-                notificationChange(userid1, "0");
+
                 SharedPreferences sb = context.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sb.edit();
                 edit.putString("NotifyUserId", usertoken1);
@@ -573,6 +573,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "getToken: " + notifyUserId);
                 deleteUserQueue(); //删除队列
                 if (!TextUtils.isEmpty(notifyUserId)) {
+                    notificationChange(userid1, "0");
                     new Thread(() -> basicConsume(myHandler)).start();
                 }
             }
@@ -584,7 +585,9 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void ClearUserInfo() {
-            notificationChange(userid1, "-1");
+            if (!TextUtils.isEmpty(userid1)) {
+                notificationChange(userid1, "-1");
+            }
             SharedPreferences sb = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
             SharedPreferences.Editor edit = sb.edit();
             edit.clear();
