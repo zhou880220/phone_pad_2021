@@ -26,6 +26,7 @@ import android.os.Message;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -123,6 +124,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -352,8 +354,13 @@ public class ApplyThirdActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getIdentifier", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                String imei = SystemUtil.getUniqueIdentificationCode(ApplyThirdActivity.this);
-                function.onCallBack(imei);
+                try {
+                    String imei = SystemUtil.getUniqueIdentificationCode(ApplyThirdActivity.this);
+                    function.onCallBack(imei);
+                }catch (Exception e){
+                    String id = getId();
+                    function.onCallBack(id);
+                }
             }
         });
         /**
@@ -935,6 +942,56 @@ public class ApplyThirdActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         return "";
+    }
+
+    //获取手机唯一标识
+    private String getId() {
+        StringBuilder deviceId = new StringBuilder();
+        // 渠道标志
+        try {
+            //IMEI（imei）
+            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
+            if (!TextUtils.isEmpty(imei)) {
+                deviceId.append("imei");
+                deviceId.append(imei);
+                return deviceId.toString();
+            }
+            //序列号（sn）
+            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
+            if (!TextUtils.isEmpty(sn)) {
+                deviceId.append("sn");
+                deviceId.append(sn);
+                return deviceId.toString();
+            }
+            //如果上面都没有， 则生成一个id：随机码
+            String uuid = getUUID();
+            if (!TextUtils.isEmpty(uuid)) {
+                deviceId.append(uuid);
+                return deviceId.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            deviceId.append(getUUID());
+        }
+        return deviceId.toString();
+    }
+
+    /**
+     * 得到全局唯一UUID
+     */
+    private String uuid;
+
+    public String getUUID() {
+        SharedPreferences mShare = getSharedPreferences("uuid", MODE_PRIVATE);
+        if (mShare != null) {
+            uuid = mShare.getString("uuid", "");
+        }
+        if (TextUtils.isEmpty(uuid)) {
+            uuid = UUID.randomUUID().toString();
+            mShare.edit().putString("uuid", uuid).commit();
+        }
+        return uuid;
     }
 
     /**

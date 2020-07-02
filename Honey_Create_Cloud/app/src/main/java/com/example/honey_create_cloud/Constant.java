@@ -20,6 +20,7 @@ public class Constant {
     public static final String APP_ID = "wx5b3f59728cb6aa71"; //微信支付ID
     public static final String locahost_url = "http://njtestyyzx.zhizaoyun.com/cashierDesk"; //路径前缀
     public static final String text_url = "http://njtestyyzx.zhizaoyun.com/home"; //用户首页  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
+    public static final String login_url = "http://njtestyyzx.zhizaoyun.com/login"; //用户首页  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
     public static final String apply_url = "http://njtestyyzx.zhizaoyun.com/apply"; //用户中心  172.16.23.67:3002    http://njtestyyzx.zhizaoyun.com/home
     public static final String Apply_Details = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
     public static final String upload_multifile = "http://njtesthoneycomb.zhizaoyun.com/gateway/api-f/upload/multifile"; //上传图片

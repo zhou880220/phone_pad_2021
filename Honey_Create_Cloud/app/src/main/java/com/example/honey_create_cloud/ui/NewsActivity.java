@@ -26,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
@@ -163,6 +164,15 @@ public class NewsActivity extends AppCompatActivity {
             } else {
 
             }
+        }
+
+        @JavascriptInterface
+        public void goLogin(){
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.login_url);
+            edit1.commit();
+            finish();
         }
 
         //分享功能

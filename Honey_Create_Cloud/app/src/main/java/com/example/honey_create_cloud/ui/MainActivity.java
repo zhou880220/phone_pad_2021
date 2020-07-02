@@ -827,10 +827,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private Connection getConnection() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("122.112.141.135");//主机地址：192.168.1.105
-        factory.setPort(25672);// 端口号:25672
-        factory.setUsername("honeycom");// 用户名
-        factory.setPassword("wu168@QqFn2019");// 密码
+        factory.setHost("119.3.28.24");//主机地址：192.168.1.105
+        factory.setPort(5672);// 端口号:5672
+        factory.setUsername("honeycomb");// 用户名
+        factory.setPassword("honeycomb");// 密码
         factory.setVirtualHost("/");
         try {
             return factory.newConnection();
