@@ -103,7 +103,7 @@ public class NewsActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
-        webView("http://172.16.23.3:3003/mobileInformation?id=98&Style=true");
+        webView(url);
         mLodingTime();
     }
 
