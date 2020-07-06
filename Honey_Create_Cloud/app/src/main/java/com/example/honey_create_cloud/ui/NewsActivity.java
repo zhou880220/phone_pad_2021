@@ -4,8 +4,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -28,6 +35,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
+import com.example.honey_create_cloud.bean.ShareSdkBean;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
@@ -36,6 +44,24 @@ import com.example.honey_create_cloud.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
+import com.google.gson.Gson;
+import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
+import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
+import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.yzq.zxinglibrary.encode.CodeCreator;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -50,7 +76,9 @@ public class NewsActivity extends AppCompatActivity {
     @InjectView(R.id.glide_gif)
     View mLoadingPage;
     private MWebChromeClient mWebChromeClient;
-
+    private IWXAPI wxApi;
+    private ShareSdkBean shareSdkBean;
+    private Bitmap bitmap1;
     private String TAG = "NewsActivity";
 
     @RequiresApi(api = Build.VERSION_CODES.P)
@@ -75,7 +103,7 @@ public class NewsActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
-        webView(url);
+        webView("http://172.16.23.3:3003/mobileInformation?id=98&Style=true");
         mLodingTime();
     }
 
@@ -124,7 +152,7 @@ public class NewsActivity extends AppCompatActivity {
                 if (!userInfo.isEmpty()) {
                     function.onCallBack(userInfo);
                 } else {
-                    Toast.makeText(NewsActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+                    function.onCallBack("false");
                 }
             }
         });
@@ -150,6 +178,7 @@ public class NewsActivity extends AppCompatActivity {
         private Context context;
         private ShareSDK_Web shareSDK_web;
         private PopupWindow popupWindow;
+        private PopupWindow popupWindow1;
 
         public MyJavaScriptInterface(Context context) {
             this.context = context;
@@ -178,8 +207,13 @@ public class NewsActivity extends AppCompatActivity {
         //分享功能
         @JavascriptInterface
         public void shareSDKData(String shareData) {
+            wxApi = WXAPIFactory.createWXAPI(NewsActivity.this, Constant.APP_ID);
+            wxApi.registerApp(Constant.APP_ID);
+            Gson gson = new Gson();
+            shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
+            getImage(shareSdkBean.getIcon());
             //集成分享类
-//            shareSDK_web = new ShareSDK_Web(NewsActivity.this, shareData);
+            shareSDK_web = new ShareSDK_Web(NewsActivity.this, shareData);
             View centerView = LayoutInflater.from(NewsActivity.this).inflate(R.layout.popupwindow, null);
             popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
                     400);
@@ -207,19 +241,41 @@ public class NewsActivity extends AppCompatActivity {
             int id = v.getId();
             switch (id) {
                 case R.id.copyurl:
-//                    shareSDK_web.CopyUrl();
+                    shareSDK_web.CopyUrl();
                     popupWindow.dismiss();
                     break;
-                case R.id.Qrcode:
-//                    shareSDK_web.QRcode();
-                    popupWindow.dismiss();
-                    break;
+                case R.id.Qrcode: {
+                    View centerView = LayoutInflater.from(NewsActivity.this).inflate(R.layout.qrcode, null);
+                    popupWindow1 = new PopupWindow(centerView, ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                    popupWindow1.setTouchable(true);
+                    popupWindow1.setOutsideTouchable(true);
+                    popupWindow1.showAtLocation(centerView, Gravity.CENTER, 0, 0);
+                    ImageView mErWeiMaImage = centerView.findViewById(R.id.main_image);
+                    try {
+                        Bitmap qrCode = CodeCreator.createQRCode(shareSdkBean.getUrl(), 200, 200, null);
+                        if (qrCode != null) {
+                            mErWeiMaImage.setImageBitmap(qrCode);
+                            mErWeiMaImage.setOnLongClickListener(new View.OnLongClickListener() {
+                                @Override
+                                public boolean onLongClick(View v) {
+                                    saveImageToGallery(NewsActivity.this, qrCode);
+                                    return false;
+                                }
+                            });
+                            popupWindow.dismiss();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
                 case R.id.wechat:
-                    shareSDK_web.WechatshowShare();
+                    wechatShare(0); //好友
                     popupWindow.dismiss();
                     break;
                 case R.id.wechatmoments:
-//                    shareSDK_web.WechatMomentsshowShare();
+                    wechatShare(1); //朋友圈
                     popupWindow.dismiss();
                     break;
                 case R.id.qq:
@@ -244,6 +300,154 @@ public class NewsActivity extends AppCompatActivity {
         ead_web.setWebViewClient(new MyWebViewClient(ead_web));
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
+    }
+
+    public void getImage(String path) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                URL imageUrl = null;
+                try {
+                    imageUrl = new URL(path);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+                    InputStream is = conn.getInputStream();
+                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+                    bitmap1 = createBitmapThumbnail(bitmap, false);
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                int newWidth = 80;
+                int newHeight = 80;
+                float scaleWidth = ((float) newWidth) / width;
+                float scaleHeight = ((float) newHeight) / height;
+                Matrix matrix = new Matrix();
+                matrix.postScale(scaleWidth, scaleHeight);
+                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+                if (needRecycler) bitmap.recycle();
+                return newBitMap;
+            }
+        }).start();
+    }
+
+    /**
+     * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
+     */
+    private void wechatShare(int flag) {
+        WXWebpageObject webpage = new WXWebpageObject();
+        webpage.webpageUrl = shareSdkBean.getUrl();
+        WXMediaMessage msg = new WXMediaMessage(webpage);
+        msg.title = shareSdkBean.getTitle();
+        msg.description = shareSdkBean.getTxt();
+        //这里替换一张自己工程里的图片资源
+//        Bitmap thumb = BitmapFactory.decodeResource(getResources(), R.drawable.wechat);
+        Bitmap thumb = null;
+        try {
+            thumb = BitmapFactory.decodeStream(new URL(shareSdkBean.getIcon()).openStream());
+            Log.e(TAG, "wechatShare: " + shareSdkBean.getIcon());
+//注意下面的这句压缩，120，150是长宽。
+//一定要压缩，不然会分享失败
+            Bitmap thumbBmp = compressImage(thumb);
+//Bitmap回收
+            bitmap1.recycle();
+            msg.thumbData = bmpToByteArray(thumbBmp, true);
+//      msg.setThumbImage(thumb);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        msg.setThumbImage(bitmap1);
+        SendMessageToWX.Req req = new SendMessageToWX.Req();
+        req.transaction = buildTransaction("webpage");
+//        req.transaction = String.valueOf(System.currentTimeMillis());
+        req.message = msg;
+        req.scene = flag == 0 ? SendMessageToWX.Req.WXSceneSession : SendMessageToWX.Req.WXSceneTimeline;
+        wxApi.sendReq(req);
+    }
+
+    private Bitmap compressImage(Bitmap image) {
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
+        int options = 100;
+        while (baos.toByteArray().length / 1024 > 32) {  //循环判断如果压缩后图片是否大于32kb,大于继续压缩
+            baos.reset();//重置baos即清空baos
+            image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
+            options -= 1;//每次都减少1
+        }
+        ByteArrayInputStream isBm = new ByteArrayInputStream(baos.toByteArray());//把压缩后的数据baos存放到ByteArrayInputStream中
+        Bitmap bitmap = BitmapFactory.decodeStream(isBm, null, null);//把ByteArrayInputStream数据生成图片
+        return bitmap;
+    }
+
+    public static byte[] bmpToByteArray(final Bitmap bmp, final boolean needRecycle) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, output);
+        if (needRecycle) {
+            bmp.recycle();
+        }
+        byte[] result = output.toByteArray();
+        try {
+            output.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private String buildTransaction(final String type) {
+        return (type == null) ? String.valueOf(System.currentTimeMillis()) : type + System.currentTimeMillis();
+    }
+
+    /**
+     * 保存图片到相册
+     *
+     * @param context
+     * @param bmp
+     */
+    public static void saveImageToGallery(Context context, Bitmap bmp) {
+        // 首先保存图片 创建文件夹
+        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhoyun");
+        if (!appDir.exists()) {
+            appDir.mkdir();
+        }
+        //图片文件名称
+        String fileName = "shy_" + System.currentTimeMillis() + ".jpg";
+        File file = new File(appDir, fileName);
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (Exception e) {
+            Log.e("111", e.getMessage());
+            e.printStackTrace();
+        }
+
+        // 其次把文件插入到系统图库
+        String path = file.getAbsolutePath();
+        try {
+            MediaStore.Images.Media.insertImage(context.getContentResolver(), path, fileName, null);
+        } catch (FileNotFoundException e) {
+            Log.e("333", e.getMessage());
+            e.printStackTrace();
+        }
+        // 最后通知图库更新
+        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        Uri uri = Uri.fromFile(file);
+        intent.setData(uri);
+        context.sendBroadcast(intent);
+        Toast.makeText(context, "保存成功", Toast.LENGTH_SHORT).show();
     }
 
     /**

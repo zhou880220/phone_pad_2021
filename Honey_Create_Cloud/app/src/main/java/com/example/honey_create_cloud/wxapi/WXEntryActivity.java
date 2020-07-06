@@ -34,7 +34,9 @@ public class WXEntryActivity extends Activity implements IWXAPIEventHandler {
 
     @Override
     public void onResp(BaseResp baseResp) {
+        finish();
         switch (baseResp.errCode) {
+
             case BaseResp.ErrCode.ERR_OK:
                 //分享成功
 //                Toast.makeText(this, "分享成功", Toast.LENGTH_SHORT).show();

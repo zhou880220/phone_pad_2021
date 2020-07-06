@@ -95,7 +95,8 @@
             <View
                 android:layout_width="2px"
                 android:layout_height="8dp"
-                android:background="@android:color/white"/>
+                android:background="@android:color/white"
+                android:visibility="gone"/>
 
             <ImageView
                 android:id="@+id/tv_relation"
@@ -107,7 +108,8 @@
                 android:gravity="center"
                 android:onClick="onClick"
                 android:paddingLeft="15dp"
-                android:paddingRight="15dp"/>
+                android:paddingRight="15dp"
+                android:visibility="gone"/>
         </LinearLayout>
     </RelativeLayout>
 

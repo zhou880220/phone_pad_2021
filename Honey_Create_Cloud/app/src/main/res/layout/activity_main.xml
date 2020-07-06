@@ -17,10 +17,22 @@
         android:layout_height="3dp"
         android:progressDrawable="@drawable/progressbar" />
 
+    <ImageView
+        android:id="@+id/closeLoginPage"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/closeloginpage"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="10dp"
+        android:visibility="gone"/>
+
     <include
         android:id="@+id/web_error"
         layout="@layout/layout_load_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
+
+
 </RelativeLayout>

@@ -24,6 +24,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -33,6 +35,7 @@ import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -55,6 +58,7 @@ import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.bean.TokenIsOkBean;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
+import com.example.honey_create_cloud.util.QMUITouchableSpan;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
@@ -106,6 +110,8 @@ public class MainActivity extends AppCompatActivity {
     BridgeWebView mNewWeb;
     @InjectView(R.id.web_error)
     View mWebError;
+    @InjectView(R.id.closeLoginPage)
+    ImageView mCloseLoginPage;
 
 
     private Handler myHandler = new Handler(new Handler.Callback() {
@@ -179,20 +185,15 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CAPTURE = 100;
     //请求相册
     private static final int REQUEST_PICK = 101;
-
     private static final String TAG = "MainActivity_TAG";
-
     volatile int num = 0;
-
     //调用照相机返回图片文件
     private File tempFile;
     //权限
     private static final int NOT_NOTICE = 2;//如果勾选了不再询问
-
     private String mVersionName = "";
     private String totalCacheSize = "";
     private String clearSize = "";
-
     private static final String[] PERMISSIONS_APPLICATION = {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.CAMERA,
@@ -201,7 +202,6 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.ACCESS_FINE_LOCATION};
     private static final int VIDEO_PERMISSIONS_CODE = 1;
-
     private MyHandlerCallBack.OnSendDataListener mOnSendDataListener;
     private String token1;
     private String userid;
@@ -214,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int SDK_PAY_FLAG = 1;  //支付回调
     private static final int OPLOAD_IMAGE = 2;  //修改头像回调
     private static final int NOTIFICATION_MESSAGE = 3;  //用户通知
-
     private String usertoken1;
     private String userid1;
     private MWebChromeClient myChromeWebClient;
@@ -256,9 +255,8 @@ public class MainActivity extends AppCompatActivity {
         createNotificationChannel();
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
-        initVersionName();
         myRequetPermission();
-
+        initVersionName();
         Intent intent = getIntent();
         Uri uri = intent.getData();
         if (uri != null) {
@@ -290,6 +288,7 @@ public class MainActivity extends AppCompatActivity {
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
         webSettings.setUserAgentString(userAgentString + "; application-center");
+        Log.e(TAG, "webView: "+userAgentString);
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
@@ -308,8 +307,11 @@ public class MainActivity extends AppCompatActivity {
                     } else {
 
                     }
+                } else if (name.equals(Constant.login_url)) {
+                    mCloseLoginPage.setVisibility(View.VISIBLE);
                 } else {
                     pageReload = true;
+                    mCloseLoginPage.setVisibility(View.GONE);
                 }
             }
         });
@@ -321,23 +323,32 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                        if (mNewWeb != null && mNewWeb.canGoBack()) {
-                            SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                            String userInfo = sb.getString("userInfo", "");
-                            if (TextUtils.isEmpty(userInfo) || myOrder.contains("/home")) {
-                                Log.e(TAG, "onKey: 退出");
-                                finish();
-                            } else {
-                                mNewWeb.goBack();
-                            }
-                            return true;
+                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+                        SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                        String userInfo = sb.getString("userInfo", "");
+                        if (myOrder.contains("/home")) {
+                            Log.e(TAG, "onKey: 退出");
+                            finish();
+                        } else {
+                            mNewWeb.goBack();
                         }
+                        return true;
                     }
                 }
                 return false;
             }
         });
+
+        mCloseLoginPage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mNewWeb.canGoBack()) {
+                    mNewWeb.goBack();
+                    mCloseLoginPage.setVisibility(View.GONE);
+                }
+            }
+        });
+
 
         //js交互接口定义
         mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
@@ -585,13 +596,20 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void ClearUserInfo() {
-            if (!TextUtils.isEmpty(userid1)) {
-                notificationChange(userid1, "-1");
-            }
             SharedPreferences sb = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
             SharedPreferences.Editor edit = sb.edit();
             edit.clear();
             edit.commit();
+
+            SharedPreferences sb1 = context.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sb1.edit();
+            edit1.clear();
+            edit1.commit();
+
+            SharedPreferences sb2 = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit2 = sb2.edit();
+            edit2.clear();
+            edit2.commit();
         }
 
         @JavascriptInterface
@@ -966,7 +984,7 @@ public class MainActivity extends AppCompatActivity {
         if (notificationEnabled == true) {
             notificationChange(userid1, "0");
         } else {
-            notificationChange(userid1, "-1");
+
         }
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override

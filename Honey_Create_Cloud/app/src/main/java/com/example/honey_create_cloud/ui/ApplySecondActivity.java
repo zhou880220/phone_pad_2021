@@ -8,6 +8,7 @@ import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -24,6 +25,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
@@ -356,7 +358,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                 try {
                     String imei = SystemUtil.getUniqueIdentificationCode(ApplySecondActivity.this);
                     function.onCallBack(imei);
-                }catch (Exception e){
+                } catch (Exception e) {
                     String id = getId();
                     function.onCallBack(id);
                 }
@@ -397,7 +399,6 @@ public class ApplySecondActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!data.isEmpty()) {
-                    Log.e(TAG, "123: " + data);
                     gotoCamera();
                 }
             }
@@ -409,7 +410,6 @@ public class ApplySecondActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!data.isEmpty()) {
-                    Log.e(TAG, "123: " + data);
                     gotoPhoto();
                 }
             }
@@ -612,13 +612,14 @@ public class ApplySecondActivity extends AppCompatActivity {
             }
         }
 
-        //分享
+        //分享功能
         @JavascriptInterface
         public void shareSDKData(String shareData) {
             wxApi = WXAPIFactory.createWXAPI(ApplySecondActivity.this, Constant.APP_ID);
             wxApi.registerApp(Constant.APP_ID);
             Gson gson = new Gson();
             shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
+            getImage(shareSdkBean.getIcon());
             //集成分享类
             shareSDK_web = new ShareSDK_Web(ApplySecondActivity.this, shareData);
             View centerView = LayoutInflater.from(ApplySecondActivity.this).inflate(R.layout.popupwindow, null);
@@ -699,7 +700,6 @@ public class ApplySecondActivity extends AppCompatActivity {
     }
 
     private void downFilePath(String fileLoad, String downPath) {
-        Log.e(TAG, "downLoadFile: " + downPath);
         FileDownloader.setup(ApplySecondActivity.this);
         FileDownloader.getImpl().create(downPath)
                 .setPath(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + fileLoad + getNameFromUrl(downPath))
@@ -721,7 +721,6 @@ public class ApplySecondActivity extends AppCompatActivity {
                     //下载完成
                     @Override
                     protected void completed(BaseDownloadTask task) {
-                        Log.e(TAG, "completed: " + task.getPath());
                         Toast.makeText(ApplySecondActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
                         new AlertDialog.Builder(ApplySecondActivity.this)
                                 .setTitle("保存路径：")
@@ -1151,12 +1150,13 @@ public class ApplySecondActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Uri uri1 = data.getData();
         if (requestCode == FILE_CHOOSER_RESULT_CODE) {
             if (null == uploadMessage && null == uploadMessageAboveL) return;
             Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
             // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
             if (uploadMessageAboveL != null) {
-                onActivityResultAboveL(requestCode, resultCode, data);
+                onActivityResultAboveL(requestCode, resultCode, data, uri1);
             } else if (uploadMessage != null) {
                 uploadMessage.onReceiveValue(result);
                 uploadMessage = null;
@@ -1175,6 +1175,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         }
         switch (requestCode) {
             case REQUEST_CODE_SCAN: //二维码扫描
+            {
                 if (resultCode == RESULT_OK) {
                     if (data != null) {
                         String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
@@ -1186,9 +1187,11 @@ public class ApplySecondActivity extends AppCompatActivity {
                         });
                     }
                 }
-                break;
-            case REQUEST_CAPTURE:
-                if (resultCode == RESULT_OK) {//调用系统相机返回
+            }
+            break;
+            case REQUEST_CAPTURE://调用系统相机返回
+            {
+                if (resultCode == RESULT_OK) {
                     gotoClipActivity(Uri.fromFile(tempFile));
                 } else if (resultCode == RESULT_CANCELED) {
                     mNewWeb.post(new Runnable() {
@@ -1203,8 +1206,10 @@ public class ApplySecondActivity extends AppCompatActivity {
                         }
                     });
                 }
-                break;
+            }
+            break;
             case REQUEST_PICK://调用系统相册返回
+            {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     String realPathFromUri = getRealPathFromUri(this, uri);
@@ -1232,7 +1237,8 @@ public class ApplySecondActivity extends AppCompatActivity {
                         }
                     });
                 }
-                break;
+            }
+            break;
             case REQUEST_CODE://获取文件返回
                 break;
             case REQ_CLIP_AVATAR: //图片裁剪
@@ -1261,7 +1267,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                 Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
                 // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
                 if (uploadMessageAboveL != null) {
-                    onActivityResultAboveL(requestCode, resultCode, data);
+                    onActivityResultAboveL(requestCode, resultCode, data, uri1);
                 } else if (uploadMessage != null) {
                     uploadMessage.onReceiveValue(result);
                     uploadMessage = null;
@@ -1271,11 +1277,22 @@ public class ApplySecondActivity extends AppCompatActivity {
         }
     }
 
+    String path;
+
     // 选择内容回调到Html页面
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void onActivityResultAboveL(int requestCode, int resultCode, Intent intent) {
+    private void onActivityResultAboveL(int requestCode, int resultCode, Intent intent, Uri uri) {
         if (requestCode != FILE_CHOOSER_RESULT_CODE || uploadMessageAboveL == null)
             return;
+        if ("file".equalsIgnoreCase(intent.getScheme())) {//使用第三方应用打开
+            path = intent.getDataString();
+            return;
+        }
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
+            path = getPath(this, uri);
+        } else {//4.4以下下系统调用方法
+            path = getRealPathFromURI(uri);
+        }
         Uri[] results = null;
         if (resultCode == Activity.RESULT_OK) {
             if (intent != null) {
@@ -1288,13 +1305,158 @@ public class ApplySecondActivity extends AppCompatActivity {
                         results[i] = item.getUri();
                     }
                 }
-                if (dataString != null)
+                if (dataString != null) {
                     results = new Uri[]{Uri.parse(dataString)};
-                Log.e(TAG, "wang111: " + results);
+                    if (path == null){
+                        String nameFromUrl = getNameFromUrl(uri.toString());
+                        mNewWeb.evaluateJavascript("window.sdk.getFileInfo(\"" + nameFromUrl + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+
+                            }
+                        });
+                    }else{
+                        String nameFromUrl = getNameFromUrl(path);
+                        mNewWeb.evaluateJavascript("window.sdk.getFileInfo(\"" + nameFromUrl + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+
+                            }
+                        });
+                    }
+                }
             }
         }
         uploadMessageAboveL.onReceiveValue(results);
         uploadMessageAboveL = null;
+    }
+
+    //4.4以下下系统调用方法 将uri转文件真实路径
+    public String getRealPathFromURI(Uri contentUri) {
+        String res = null;
+        String[] proj = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        if (null != cursor && cursor.moveToFirst()) {
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            res = cursor.getString(column_index);
+            cursor.close();
+        }
+        return res;
+    }
+
+    /**
+     * 专为Android4.4设计的从Uri获取文件绝对路径，以前的方法已不好使
+     */
+    @SuppressLint("NewApi")
+    public String getPath(final Context context, final Uri uri) {
+
+        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+
+        // DocumentProvider
+        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            // ExternalStorageProvider
+            if (isExternalStorageDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                }
+            }
+            // DownloadsProvider
+            else if (isDownloadsDocument(uri)) {
+
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
+                return getDataColumn(context, contentUri, null, null);
+            }
+            // MediaProvider
+            else if (isMediaDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                Uri contentUri = null;
+                if ("image".equals(type)) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[]{split[1]};
+
+                return getDataColumn(context, contentUri, selection, selectionArgs);
+            }
+        }
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            return getDataColumn(context, uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+        return null;
+    }
+
+    /**
+     * Get the value of the data column for this Uri. This is useful for
+     * MediaStore Uris, and other file-based ContentProviders.
+     *
+     * @param context       The context.
+     * @param uri           The Uri to query.
+     * @param selection     (Optional) Filter used in the query.
+     * @param selectionArgs (Optional) Selection arguments used in the query.
+     * @return The value of the _data column, which is typically a file path.
+     */
+    public String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {column};
+
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
+                    null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is ExternalStorageProvider.
+     */
+    public boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is DownloadsProvider.
+     */
+    public boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is MediaProvider.
+     */
+    public boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
 
     //上传头像
