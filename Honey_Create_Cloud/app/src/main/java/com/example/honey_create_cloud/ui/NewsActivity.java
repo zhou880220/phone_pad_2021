@@ -80,6 +80,7 @@ public class NewsActivity extends AppCompatActivity {
     private ShareSdkBean shareSdkBean;
     private Bitmap bitmap1;
     private String TAG = "NewsActivity";
+    private String goBackUrl = "";
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -132,7 +133,12 @@ public class NewsActivity extends AppCompatActivity {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        mNewWeb.goBack();
+                        if (goBackUrl.contains("mobileInformation")) {
+//                            returnActivityA = false;
+                            finish();
+                        } else {
+                            mNewWeb.goBack();
+                        }
                         return true;
                     }
                 }
@@ -297,7 +303,14 @@ public class NewsActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
+        ead_web.setWebViewClient(myWebViewClient);
+        myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
+            @Override
+            public void onCityClick(String name) {
+                goBackUrl = name;
+            }
+        });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
