@@ -1,7 +1,5 @@
 package com.example.honey_create_cloud;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -10,11 +8,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.honey_create_cloud.ui.AgreementDialog;
 import com.example.honey_create_cloud.ui.MainActivity;
@@ -25,6 +23,7 @@ import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 public class StartPageActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private boolean isFirstUse;//是否是第一次使用
+
     @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +43,7 @@ public class StartPageActivity extends AppCompatActivity {
             attrs.flags &= (~WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getWindow().setAttributes(attrs);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-            setAndroidNativeLightStatusBar(StartPageActivity.this, true);//黑色字体
+            setAndroidNativeLightStatusBar(StartPageActivity.this, false);//黑色字体
         }
         setContentView(R.layout.activity_start_page);
         showAlterpPolicy();
@@ -82,7 +81,7 @@ public class StartPageActivity extends AppCompatActivity {
                             }
                         }
                     }).show();
-        }else{
+        } else {
             startHome();
         }
     }
@@ -119,7 +118,7 @@ public class StartPageActivity extends AppCompatActivity {
                 @Override
                 public void onSpanClick(View widget) {
                     Intent intent = new Intent(StartPageActivity.this, ReminderActivity.class);
-                    intent.putExtra("type","1");
+                    intent.putExtra("type", "1");
                     startActivity(intent);
                 }
             }, index, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
@@ -135,7 +134,7 @@ public class StartPageActivity extends AppCompatActivity {
                 public void onSpanClick(View widget) {
                     // 点击隐私政策的相关操作，可以使用WebView来加载一个网页
                     Intent intent = new Intent(StartPageActivity.this, ReminderActivity.class);
-                    intent.putExtra("type","2");
+                    intent.putExtra("type", "2");
                     startActivity(intent);
                 }
             }, index, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);

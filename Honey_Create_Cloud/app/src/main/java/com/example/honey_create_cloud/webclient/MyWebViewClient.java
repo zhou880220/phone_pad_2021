@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.view.View;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 
 import com.github.lzyzsd.jsbridge.BridgeWebView;
@@ -27,8 +30,9 @@ public class MyWebViewClient extends BridgeWebViewClient {
         this.onCityChangeListener = listener;
     }
 
-    public MyWebViewClient(BridgeWebView webView) {
+    public MyWebViewClient(BridgeWebView webView,View web_error) {
         super(webView);
+        this.web_error = web_error;
     }
 
     @Override
@@ -60,6 +64,11 @@ public class MyWebViewClient extends BridgeWebViewClient {
         super.onPageFinished(view, url);
     }
 
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+            web_error.setVisibility(View.VISIBLE);
+    }
 
     @Override
     public void onLoadResource(WebView view, String url) {

@@ -1,8 +1,5 @@
 package com.example.honey_create_cloud.ui;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
@@ -15,12 +12,12 @@ import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.honey_create_cloud.MyHandlerCallBack;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
-import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
-import com.github.lzyzsd.jsbridge.BridgeWebView;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -55,10 +52,10 @@ public class ReminderActivity extends AppCompatActivity implements View.OnClickL
         ButterKnife.inject(this);
         Intent intent = getIntent();
         String type = intent.getStringExtra("type");
-        if (type.equals("1")){
-            webview("file:///android_asset/reminder.html","制造云用户服务条款");
-        }else if(type.equals("2")){
-            webview("file:///android_asset/policy.html","法律声明及隐私权政策");
+        if (type.equals("1")) {
+            webview("file:///android_asset/reminder.html", "制造云用户服务条款");
+        } else if (type.equals("2")) {
+            webview("file:///android_asset/policy.html", "法律声明及隐私权政策");
         }
         initview();
     }
@@ -67,7 +64,7 @@ public class ReminderActivity extends AppCompatActivity implements View.OnClickL
         mBackImage.setOnClickListener(this);
     }
 
-    private void webview(String fileurl,String titletext) {
+    private void webview(String fileurl, String titletext) {
         mTitleText.setText(titletext);
         if (Build.VERSION.SDK_INT >= 19) {
             mWebView.getSettings().setLoadsImagesAutomatically(true);
@@ -84,7 +81,7 @@ public class ReminderActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        switch (id){
+        switch (id) {
             case R.id.back_image://返回温馨提示
             {
                 finish();

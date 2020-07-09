@@ -24,8 +24,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -58,7 +56,6 @@ import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.bean.TokenIsOkBean;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
-import com.example.honey_create_cloud.util.QMUITouchableSpan;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
@@ -288,14 +285,14 @@ public class MainActivity extends AppCompatActivity {
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
         webSettings.setUserAgentString(userAgentString + "; application-center");
-        Log.e(TAG, "webView: "+userAgentString);
+        Log.e(TAG, "webView: " + userAgentString);
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
-        MyWebViewClient myWebViewClient = new MyWebViewClient(mNewWeb);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(mNewWeb, mWebError);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
             public void onCityClick(String name) {
@@ -547,6 +544,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showNewsParams(String addressUrl, String appId, String token) {
             if (!addressUrl.isEmpty()) {
+                Log.e(TAG, "showNewsParams: " + addressUrl);
                 Intent intent = new Intent(MainActivity.this, NewsActivity.class);
                 intent.putExtra("url", addressUrl);
                 intent.putExtra("token", token1);
@@ -979,6 +977,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         Log.e(TAG, "onRestart: ");
+        mNewWeb.reload(); //订单页面支付完成返回刷新订单页面
         ShortcutBadger.applyCount(this, 0);
         boolean notificationEnabled = isNotificationEnabled(this);
         if (notificationEnabled == true) {

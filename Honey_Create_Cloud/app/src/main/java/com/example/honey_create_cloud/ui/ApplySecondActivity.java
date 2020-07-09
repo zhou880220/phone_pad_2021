@@ -73,6 +73,7 @@ import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.PictureUpload;
+import com.example.honey_create_cloud.bean.QueryUrl;
 import com.example.honey_create_cloud.bean.RecentlyApps;
 import com.example.honey_create_cloud.bean.ShareSdkBean;
 import com.example.honey_create_cloud.bean.TakePhoneBean;
@@ -264,6 +265,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     private HashMap<String, String> hashMap = new HashMap<String, String>();
     private RecentlyApps recentlyApps;
     private RecyclerView mGridPopup;
+    private String appUrlData;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -293,6 +295,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         appId = intent.getStringExtra("appId");
         webView(url);
         mLodingTime();
+        intentAppUrlOkhttp();
         intentOkhttp();
 
         IntentFilter intentFilter = new IntentFilter();
@@ -326,7 +329,14 @@ public class ApplySecondActivity extends AppCompatActivity {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
                         if (goBackUrl.contains("systemIndex")) {
-//                            returnActivityA = false;
+                            finish();
+                        } else if (goBackUrl.contains("mobileHome/")) {//制造云头条
+                            finish();
+                        } else if (goBackUrl.contains("index.html")) {  //图纸通
+                            finish();
+                        } else if (goBackUrl.contains("yyzx_dianji/")) { //点击功率
+                            finish();
+                        } else if (mWebError.getVisibility() == View.VISIBLE) {
                             finish();
                         } else {
                             mNewWeb.goBack();
@@ -435,7 +445,6 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("openVoice", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "handler: 打开了");
                 View centerView = LayoutInflater.from(ApplySecondActivity.this).inflate(R.layout.recorder_layout, null);
                 PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT, 290);
                 popupWindow.setTouchable(true);
@@ -469,7 +478,6 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getCookie", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "handler: " + data);
                 if (data != null) {
                     Map map = JSONObject.parseObject(data, Map.class);
                     Set<String> set = map.keySet();
@@ -549,7 +557,6 @@ public class ApplySecondActivity extends AppCompatActivity {
         //启动本地浏览器
         @JavascriptInterface
         public void intentBrowser(String browser) {
-            Log.e("wangpan", browser);
             Gson gson = new Gson();
             BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
             if (!browser.isEmpty()) {
@@ -582,7 +589,6 @@ public class ApplySecondActivity extends AppCompatActivity {
                 if (appId.equals(ApplyId)) {
                     char[] chars = data.get(i).getAppName().toCharArray();
                     String pinYinHeadChar = getPinYinHeadChar(chars);
-                    Log.e(TAG, "downLoadFile: " + downPath);
                     String FileLoad = "fengchaohulian/download/" + pinYinHeadChar + "/";
                     downFilePath(FileLoad, downPath);
                 }
@@ -596,7 +602,6 @@ public class ApplySecondActivity extends AppCompatActivity {
         public void setCookie(String cookiemessage) {
             String cookieKey = "key";
             String cookieValue = "value";
-            Log.e(TAG, "setCookie: " + cookiemessage);
             ArrayList<Object> list = new ArrayList<>();
             List objects = JSONObject.parseObject(cookiemessage, List.class);
             if (objects != null && objects.size() > 0) {
@@ -606,7 +611,6 @@ public class ApplySecondActivity extends AppCompatActivity {
                         String key = (String) map.get(cookieKey);
                         String value = (String) map.get(cookieValue);
                         hashMap.put(key, value);
-                        Log.e(TAG, "setCookie: " + key + value);
                     }
                 }
             }
@@ -1118,6 +1122,34 @@ public class ApplySecondActivity extends AppCompatActivity {
     }
 
     /**
+     * 获取当前应用链接
+     */
+    private void intentAppUrlOkhttp() {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request builder = new Request.Builder()
+                .url(Constant.GETAPPLY_URL + appId + "&equipmentId=3")
+                .get()
+                .build();
+        okHttpClient.newCall(builder).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.code() == 200) {
+                    String string = response.body().string();
+                    Log.e(TAG, "onResponse: " + string);
+                    Gson gson = new Gson();
+                    QueryUrl queryUrl = gson.fromJson(string, QueryUrl.class);
+                    appUrlData = queryUrl.getData();
+                }
+            }
+        });
+    }
+
+    /**
      * 获取悬浮窗接口信息
      */
     private void intentOkhttp() {
@@ -1146,20 +1178,39 @@ public class ApplySecondActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 系统回调
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Uri uri1 = data.getData();
         if (requestCode == FILE_CHOOSER_RESULT_CODE) {
-            if (null == uploadMessage && null == uploadMessageAboveL) return;
-            Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
-            // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
-            if (uploadMessageAboveL != null) {
-                onActivityResultAboveL(requestCode, resultCode, data, uri1);
-            } else if (uploadMessage != null) {
-                uploadMessage.onReceiveValue(result);
-                uploadMessage = null;
+            if (data != null) {
+                if (null == uploadMessage && null == uploadMessageAboveL) return;
+                Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
+                // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
+                if (uploadMessageAboveL != null) {
+                    onActivityResultAboveL(requestCode, resultCode, data, result);
+                } else if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(result);
+                    uploadMessage = null;
+                }
+            } else {
+                //这里uploadMessage跟uploadMessageAboveL在不同系统版本下分别持有了
+                //WebView对象，在用户取消文件选择器的情况下，需给onReceiveValue传null返回值
+                //否则WebView在未收到返回值的情况下，无法进行任何操作，文件选择器会失效
+                if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(null);
+                    uploadMessage = null;
+                } else if (uploadMessageAboveL != null) {
+                    uploadMessageAboveL.onReceiveValue(null);
+                    uploadMessageAboveL = null;
+                }
             }
         } else {
             //这里uploadMessage跟uploadMessageAboveL在不同系统版本下分别持有了
@@ -1261,19 +1312,8 @@ public class ApplySecondActivity extends AppCompatActivity {
                 }
             }
             break;
-            case FILE_CHOOSER_RESULT_CODE: //返回H5文件选择
-            {
-                if (null == uploadMessage && null == uploadMessageAboveL) return;
-                Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
-                // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
-                if (uploadMessageAboveL != null) {
-                    onActivityResultAboveL(requestCode, resultCode, data, uri1);
-                } else if (uploadMessage != null) {
-                    uploadMessage.onReceiveValue(result);
-                    uploadMessage = null;
-                }
-            }
-            break;
+            default:
+                break;
         }
     }
 
@@ -1307,7 +1347,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                 }
                 if (dataString != null) {
                     results = new Uri[]{Uri.parse(dataString)};
-                    if (path == null){
+                    if (path == null) {
                         String nameFromUrl = getNameFromUrl(uri.toString());
                         mNewWeb.evaluateJavascript("window.sdk.getFileInfo(\"" + nameFromUrl + "\")", new ValueCallback<String>() {
                             @Override
@@ -1315,7 +1355,7 @@ public class ApplySecondActivity extends AppCompatActivity {
 
                             }
                         });
-                    }else{
+                    } else {
                         String nameFromUrl = getNameFromUrl(path);
                         mNewWeb.evaluateJavascript("window.sdk.getFileInfo(\"" + nameFromUrl + "\")", new ValueCallback<String>() {
                             @Override
@@ -1516,7 +1556,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         ClipImageActivity.goToClipActivity(this, uri);
     }
 
-    // broadcast receiver
+    // 广播通知
     private BroadcastReceiver mRefreshBroadcastReceiver = new BroadcastReceiver() {
 
         @SuppressLint("NewApi")
@@ -1745,7 +1785,7 @@ public class ApplySecondActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web, mWebError);
         ead_web.setWebViewClient(myWebViewClient);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
@@ -1780,7 +1820,6 @@ public class ApplySecondActivity extends AppCompatActivity {
                     //进度跳显示
                     mNewWebProgressbar.setVisibility(View.VISIBLE);
                     mNewWebProgressbar.setProgress(newProgress);
-                    Log.e("wangpan", newProgress + "");
                 }
                 super.onProgressChanged(view, newProgress);
             }
@@ -1813,7 +1852,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                 openImageChooserActivity();
             }
 
-            // For Android >= 5.0
+            // For Android >= 5.0 打开系统文件管理系统
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 uploadMessageAboveL = filePathCallback;

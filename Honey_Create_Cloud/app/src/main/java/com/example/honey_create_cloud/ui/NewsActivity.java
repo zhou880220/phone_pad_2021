@@ -169,7 +169,7 @@ public class NewsActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res= R.drawable.loding_gif;
+        int res = R.drawable.loding_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).
@@ -202,7 +202,7 @@ public class NewsActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public void goLogin(){
+        public void goLogin() {
             SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
             SharedPreferences.Editor edit1 = sp1.edit();
             edit1.putString("apply_url", Constant.login_url);
@@ -303,7 +303,7 @@ public class NewsActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(ead_web, mWebError);
         ead_web.setWebViewClient(myWebViewClient);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
@@ -311,7 +311,7 @@ public class NewsActivity extends AppCompatActivity {
                 goBackUrl = name;
             }
         });
-        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
+        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 

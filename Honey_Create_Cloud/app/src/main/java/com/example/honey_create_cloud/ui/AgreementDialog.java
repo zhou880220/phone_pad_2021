@@ -8,14 +8,11 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.example.honey_create_cloud.R;
-import com.example.honey_create_cloud.StartPageActivity;
 
 /**
  * Created by wangpan on 2020/7/6
@@ -32,9 +29,11 @@ public class AgreementDialog extends Dialog {
     private String btnName;
     private String no;
     private String strContent;
+
     public AgreementDialog(@NonNull Context context) {
         super(context);
     }
+
     //构造方法
     public AgreementDialog(Context context, SpannableString content, String strContent, String title) {
         super(context, R.style.MyDialog);
@@ -43,15 +42,18 @@ public class AgreementDialog extends Dialog {
         this.strContent = strContent;
         this.title = title;
     }
+
     public AgreementDialog setOnClickListener(View.OnClickListener onClick) {
         this.mClickListener = onClick;
         return this;
     }
+
     public AgreementDialog setBtName(String yes, String no) {
         this.btnName = yes;
         this.no = no;
         return this;
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +61,7 @@ public class AgreementDialog extends Dialog {
         setContentView(R.layout.widget_sprint_user_dialog);
         initView();
     }
+
     private void initView() {
         tv_dialog_ok = (TextView) findViewById(R.id.tv_dialog_ok);
         tv_tittle = (TextView) findViewById(R.id.tv_sprint_title);

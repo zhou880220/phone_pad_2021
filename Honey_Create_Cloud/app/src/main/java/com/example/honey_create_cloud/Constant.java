@@ -20,7 +20,7 @@ public class Constant {
     public static final String APP_ID = "wx5b3f59728cb6aa71"; //微信支付ID
     public static final String locahost_url = "https://njtestyyzx.zhizaoyun.com/cashierDesk"; //路径前缀
     public static final String text_url = "https://njtestyyzx.zhizaoyun.com/home"; //用户首页  172.16.23.67:3002    https://njtestyyzx.zhizaoyun.com/home
-    public static final String login_url = "https://njtestyyzx.zhizaoyun.com/login"; //用户首页  172.16.23.67:3002    https://njtestyyzx.zhizaoyun.com/home
+    public static final String login_url = "https://njtestyyzx.zhizaoyun.com/login"; //登录页  172.16.23.67:3002    https://njtestyyzx.zhizaoyun.com/home
     public static final String apply_url = "https://njtestyyzx.zhizaoyun.com/apply"; //用户中心  172.16.23.67:3002    https://njtestyyzx.zhizaoyun.com/home
     public static final String Apply_Details = "https://njtesthoneycomb.zhizaoyun.com/gateway/api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
     public static final String upload_multifile = "https://njtesthoneycomb.zhizaoyun.com/gateway/api-f/upload/multifile"; //上传图片
@@ -34,4 +34,5 @@ public class Constant {
     public static final String MyOrderList = "https://njtestyyzx.zhizaoyun.com/myOrder";//订单列表
     public static final String TOKEN_IS_OK = "https://njtesthoneycomb.zhizaoyun.com/gateway/api-u/users/current?access_token=";//token是否有效
     public static final String DELETE_QUEUE = "https://njtesthoneycomb.zhizaoyun.com/gateway/api-n/notification-anon/queue/delete?userId=";//用户登录删除队列
+    public static final String GETAPPLY_URL = "https://njtesthoneycomb.zhizaoyun.com/gateway/api-apps/operation/apps-anon/interfaceUrl?appId=";
 }

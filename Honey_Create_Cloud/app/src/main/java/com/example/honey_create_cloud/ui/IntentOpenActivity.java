@@ -158,6 +158,11 @@ public class IntentOpenActivity extends AppCompatActivity {
                     Toast.makeText(IntentOpenActivity.this, aonmaly, Toast.LENGTH_SHORT).show();
                     break;
                 }
+                case PcAONMALY: {
+                    String Pcaonmaly = (String) msg.obj;
+                    Toast.makeText(IntentOpenActivity.this, Pcaonmaly, Toast.LENGTH_SHORT).show();
+                }
+                break;
                 default:
                     break;
             }
@@ -170,7 +175,8 @@ public class IntentOpenActivity extends AppCompatActivity {
     private String appId;
     private static final int SDK_PAY_FLAG = 1;
     private static final int SDK_AUTH_FLAG = 2;
-    private static final int AONMALY = 0;
+    private static final int AONMALY = 0; //手机端在次code重复支付
+    private static final int PcAONMALY = 3; //微信支付PC端支付在手机端支付提示
     private String TAG = "TAG";
     //    // 用来计算返回键的点击间隔时间
     private long exitTime = 0;
@@ -548,6 +554,11 @@ public class IntentOpenActivity extends AppCompatActivity {
                     request.sign = wxPayBean.getData().getSign();
                     msgApi.sendReq(request);
                     Log.e(TAG, "onResponse: " + string);
+                } else if (response.code() == 500) {
+                    Message message = new Message();
+                    message.what = PcAONMALY;
+                    message.obj = "您好，该订单需要在对应平台完成支付！";
+                    mHandler.sendMessage(message);
                 } else {
                     Message message = new Message();
                     message.what = AONMALY;
@@ -564,7 +575,7 @@ public class IntentOpenActivity extends AppCompatActivity {
      * @param mIntentOpenPay
      */
     private void wvClientSetting(BridgeWebView mIntentOpenPay) {
-        MyWebViewClient myWebViewClient = new MyWebViewClient(mIntentOpenPay);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(mIntentOpenPay, mWebError);
         mIntentOpenPay.setWebViewClient(myWebViewClient);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override

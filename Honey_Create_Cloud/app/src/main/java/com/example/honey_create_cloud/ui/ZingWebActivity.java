@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -109,7 +108,7 @@ public class ZingWebActivity extends AppCompatActivity {
      */
     private void mLodingTime() {
         ImageView imageView = findViewById(R.id.image_view);
-        int res= R.drawable.loding_gif;
+        int res = R.drawable.loding_gif;
         Glide.with(this).
                 load(res).placeholder(res).
                 error(res).
@@ -123,8 +122,8 @@ public class ZingWebActivity extends AppCompatActivity {
      * @param ead_web
      */
     private void wvClientSetting(BridgeWebView ead_web) {
-        ead_web.setWebViewClient(new MyWebViewClient(ead_web));
-        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError,mLoadingPage);
+        ead_web.setWebViewClient(new MyWebViewClient(ead_web, mWebError));
+        mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 
