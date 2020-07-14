@@ -4,19 +4,19 @@ package com.example.honey_create_cloud;
 public class Constant {
     /**
      * 测试环境前缀
-     * 页面前缀 ：http://njtestyyzx.zhizaoyun.com/
-     * 接口前缀 ：http://njtesthoneycomb.zhizaoyun.com/gateway/
+     * 页面前缀 ：https://njtestyyzx.zhizaoyun.com/
+     * 接口前缀 ：https://njtesthoneycomb.zhizaoyun.com/gateway/
      */
-    public static final String TEST_PAGE_URL = "http://njtestyyzx.zhizaoyun.com/";
-    public static final String TEST_INTERFACE_URL = "http://njtesthoneycomb.zhizaoyun.com/gateway/";
+    public static final String TEST_PAGE_URL = "https://njtestyyzx.zhizaoyun.com/";
+    public static final String TEST_INTERFACE_URL = "https://njtesthoneycomb.zhizaoyun.com/gateway/";
 
     /**
      * 生产环境前缀
-     * 页面前缀 ：http://mobileclient.zhizaoyun.com/
-     * 接口前缀 ：http://ulogin.zhizaoyun.com/gateway/
+     * 页面前缀 ：https://mobileclient.zhizaoyun.com/
+     * 接口前缀 ：https://ulogin.zhizaoyun.com/gateway/
      */
-    public static final String PRODUCTION_PAGE_URL = "http://mobileclient.zhizaoyun.com/";
-    public static final String PRODUCTION_INTERFACE_URL = "http://ulogin.zhizaoyun.com/gateway/";
+    public static final String PRODUCTION_PAGE_URL = "https://mobileclient.zhizaoyun.com/";
+    public static final String PRODUCTION_INTERFACE_URL = "https://ulogin.zhizaoyun.com/gateway/";
 
     /**
      * 演示环境前缀
