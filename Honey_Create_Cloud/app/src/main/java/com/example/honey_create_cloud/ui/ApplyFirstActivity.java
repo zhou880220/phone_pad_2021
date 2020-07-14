@@ -126,6 +126,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -260,7 +262,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String goBackUrl;
     private IWXAPI wxApi;
     private ShareSdkBean shareSdkBean;
-    private Bitmap bitmap1;
+//    private Bitmap bitmap1;
     private HashMap<String, String> hashMap = new HashMap<String, String>();
     private RecentlyApps recentlyApps;
     private RecyclerView mGridPopup;
@@ -582,6 +584,16 @@ public class ApplyFirstActivity extends AppCompatActivity {
             finish();
         }
 
+        //登陆异常到登录页
+        @JavascriptInterface
+        public void goLogin() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.login_url);
+            edit1.commit();
+            finish();
+        }
+
         //下载文件保存到PartLib/download/
         @JavascriptInterface
         public void downLoadFile(String downPath) {
@@ -627,7 +639,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             wxApi.registerApp(Constant.APP_ID);
             Gson gson = new Gson();
             shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
-            getImage(shareSdkBean.getIcon());
+//            getImage(shareSdkBean.getIcon());
             //集成分享类
             shareSDK_web = new ShareSDK_Web(ApplyFirstActivity.this, shareData);
             View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.popupwindow, null);
@@ -782,44 +794,44 @@ public class ApplyFirstActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-    public void getImage(String path) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                URL imageUrl = null;
-                try {
-                    imageUrl = new URL(path);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
-                    conn.setDoInput(true);
-                    conn.connect();
-                    InputStream is = conn.getInputStream();
-                    Bitmap bitmap = BitmapFactory.decodeStream(is);
-                    bitmap1 = createBitmapThumbnail(bitmap, false);
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
-                int width = bitmap.getWidth();
-                int height = bitmap.getHeight();
-                int newWidth = 80;
-                int newHeight = 80;
-                float scaleWidth = ((float) newWidth) / width;
-                float scaleHeight = ((float) newHeight) / height;
-                Matrix matrix = new Matrix();
-                matrix.postScale(scaleWidth, scaleHeight);
-                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
-                if (needRecycler) bitmap.recycle();
-                return newBitMap;
-            }
-        }).start();
-    }
+//    public void getImage(String path) {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                URL imageUrl = null;
+//                try {
+//                    imageUrl = new URL(path);
+//                } catch (MalformedURLException e) {
+//                    e.printStackTrace();
+//                }
+//                try {
+//                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
+//                    conn.setDoInput(true);
+//                    conn.connect();
+//                    InputStream is = conn.getInputStream();
+//                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+//                    bitmap1 = createBitmapThumbnail(bitmap, false);
+//                    is.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
+//                int width = bitmap.getWidth();
+//                int height = bitmap.getHeight();
+//                int newWidth = 80;
+//                int newHeight = 80;
+//                float scaleWidth = ((float) newWidth) / width;
+//                float scaleHeight = ((float) newHeight) / height;
+//                Matrix matrix = new Matrix();
+//                matrix.postScale(scaleWidth, scaleHeight);
+//                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+//                if (needRecycler) bitmap.recycle();
+//                return newBitMap;
+//            }
+//        }).start();
+//    }
 
     /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
@@ -840,13 +852,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
 //一定要压缩，不然会分享失败
             Bitmap thumbBmp = compressImage(thumb);
 //Bitmap回收
-            bitmap1.recycle();
+//            bitmap1.recycle();
             msg.thumbData = bmpToByteArray(thumbBmp, true);
 //      msg.setThumbImage(thumb);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        msg.setThumbImage(bitmap1);
+//        msg.setThumbImage(bitmap1);
         SendMessageToWX.Req req = new SendMessageToWX.Req();
         req.transaction = buildTransaction("webpage");
 //        req.transaction = String.valueOf(System.currentTimeMillis());
@@ -897,7 +909,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
      */
     public static void saveImageToGallery(Context context, Bitmap bmp) {
         // 首先保存图片 创建文件夹
-        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhoyun");
+        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhaoyun");
         if (!appDir.exists()) {
             appDir.mkdir();
         }
@@ -937,16 +949,37 @@ public class ApplyFirstActivity extends AppCompatActivity {
     @NonNull
     private String getNameFromUrl(String url) {
         try {
-            Log.e(TAG, "getNameFromUrl: " + url);
             String subUrl = url.substring(url.lastIndexOf("/") + 1);
             if (!TextUtils.isEmpty(subUrl) && subUrl.contains("%")) {
-                return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
+                boolean b = inputJudge(subUrl);
+                if (b == false) {
+                    return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
+                }else{
+//                    Toast.makeText(this, "检测到该文件名有非法字符", Toast.LENGTH_SHORT).show();
+                }
             }
             return subUrl;
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         return "";
+    }
+
+    /**
+     * 判断是否包含特殊字符
+     * @return  false:未包含 true：包含
+     */
+    public static boolean inputJudge(String editText) {
+        String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
+        Pattern pattern = Pattern.compile(speChat);
+        Log.d("inputJudge", "pattern: "+ pattern);
+        Matcher matcher = pattern.matcher(editText);
+        Log.d("inputJudge", "matcher: "+ matcher);
+        if (matcher.find()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 

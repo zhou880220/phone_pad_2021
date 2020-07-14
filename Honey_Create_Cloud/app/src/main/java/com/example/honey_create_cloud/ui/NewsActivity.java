@@ -217,7 +217,7 @@ public class NewsActivity extends AppCompatActivity {
             wxApi.registerApp(Constant.APP_ID);
             Gson gson = new Gson();
             shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
-            getImage(shareSdkBean.getIcon());
+//            getImage(shareSdkBean.getIcon());
             //集成分享类
             shareSDK_web = new ShareSDK_Web(NewsActivity.this, shareData);
             View centerView = LayoutInflater.from(NewsActivity.this).inflate(R.layout.popupwindow, null);
@@ -309,50 +309,51 @@ public class NewsActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {
                 goBackUrl = name;
+                Log.e(TAG, "onCityClick: "+name);
             }
         });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
 
-    public void getImage(String path) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                URL imageUrl = null;
-                try {
-                    imageUrl = new URL(path);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
-                    conn.setDoInput(true);
-                    conn.connect();
-                    InputStream is = conn.getInputStream();
-                    Bitmap bitmap = BitmapFactory.decodeStream(is);
-                    bitmap1 = createBitmapThumbnail(bitmap, false);
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
-                int width = bitmap.getWidth();
-                int height = bitmap.getHeight();
-                int newWidth = 80;
-                int newHeight = 80;
-                float scaleWidth = ((float) newWidth) / width;
-                float scaleHeight = ((float) newHeight) / height;
-                Matrix matrix = new Matrix();
-                matrix.postScale(scaleWidth, scaleHeight);
-                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
-                if (needRecycler) bitmap.recycle();
-                return newBitMap;
-            }
-        }).start();
-    }
+//    public void getImage(String path) {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                URL imageUrl = null;
+//                try {
+//                    imageUrl = new URL(path);
+//                } catch (MalformedURLException e) {
+//                    e.printStackTrace();
+//                }
+//                try {
+//                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
+//                    conn.setDoInput(true);
+//                    conn.connect();
+//                    InputStream is = conn.getInputStream();
+//                    Bitmap bitmap = BitmapFactory.decodeStream(is);
+//                    bitmap1 = createBitmapThumbnail(bitmap, false);
+//                    is.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
+//                int width = bitmap.getWidth();
+//                int height = bitmap.getHeight();
+//                int newWidth = 80;
+//                int newHeight = 80;
+//                float scaleWidth = ((float) newWidth) / width;
+//                float scaleHeight = ((float) newHeight) / height;
+//                Matrix matrix = new Matrix();
+//                matrix.postScale(scaleWidth, scaleHeight);
+//                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+//                if (needRecycler) bitmap.recycle();
+//                return newBitMap;
+//            }
+//        }).start();
+//    }
 
     /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
@@ -373,13 +374,13 @@ public class NewsActivity extends AppCompatActivity {
 //一定要压缩，不然会分享失败
             Bitmap thumbBmp = compressImage(thumb);
 //Bitmap回收
-            bitmap1.recycle();
+//            bitmap1.recycle();
             msg.thumbData = bmpToByteArray(thumbBmp, true);
 //      msg.setThumbImage(thumb);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        msg.setThumbImage(bitmap1);
+//        msg.setThumbImage(bitmap1);
         SendMessageToWX.Req req = new SendMessageToWX.Req();
         req.transaction = buildTransaction("webpage");
 //        req.transaction = String.valueOf(System.currentTimeMillis());

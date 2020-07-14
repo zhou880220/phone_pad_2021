@@ -154,8 +154,12 @@ public class IntentOpenActivity extends AppCompatActivity {
 //                    break;
 //                }
                 case AONMALY: {
-                    String aonmaly = (String) msg.obj;
-                    Toast.makeText(IntentOpenActivity.this, aonmaly, Toast.LENGTH_SHORT).show();
+                    SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sp1.edit();
+                    edit1.putString("apply_url", Constant.text_url);
+                    edit1.commit();
+                    Intent intent = new Intent(IntentOpenActivity.this,MainActivity.class);
+                    startActivity(intent);
                     break;
                 }
                 case PcAONMALY: {
@@ -419,7 +423,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                 PayType payType = gson.fromJson(string, PayType.class);
                 if (payType.getCode() == 200) {
                     alipayOkhttp(payBean);
-                } else {
+                } else if(payType.getCode() == 401){
                     Message message = new Message();
                     message.what = AONMALY;
                     message.obj = payType.getMsg();
@@ -427,7 +431,6 @@ public class IntentOpenActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 
     private void wxpaytypeOkhttp(final PayBean payBean) {
@@ -459,7 +462,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                 PayType payType = gson.fromJson(string, PayType.class);
                 if (payType.getCode() == 200) {
                     wxPayOkhttp(payBean);
-                } else {
+                } else if(payType.getCode() == 401){
                     Message message = new Message();
                     message.what = AONMALY;
                     message.obj = payType.getMsg();

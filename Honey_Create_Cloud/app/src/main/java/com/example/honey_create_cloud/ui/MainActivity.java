@@ -54,6 +54,7 @@ import com.example.honey_create_cloud.bean.HeadPic;
 import com.example.honey_create_cloud.bean.NotificationBean;
 import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.bean.TokenIsOkBean;
+import com.example.honey_create_cloud.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
@@ -266,7 +267,8 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 webView(Constant.text_url);
             }
-        } else {
+        }
+        else {
             webView(Constant.text_url);
         }
     }
@@ -306,6 +308,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else if (name.equals(Constant.login_url)) {
                     mCloseLoginPage.setVisibility(View.VISIBLE);
+                } else if (name.equals(Constant.register_url)) {
+                    mCloseLoginPage.setVisibility(View.VISIBLE);
                 } else {
                     pageReload = true;
                     mCloseLoginPage.setVisibility(View.GONE);
@@ -340,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mNewWeb.canGoBack()) {
-                    mNewWeb.goBack();
+                    webView(Constant.text_url);
                     mCloseLoginPage.setVisibility(View.GONE);
                 }
             }
@@ -497,14 +501,12 @@ public class MainActivity extends AppCompatActivity {
         public void setUserInfo(String userInfo) {
             Log.e("wangpan", userInfo);
             if (!userInfo.isEmpty()) {
-
                 SharedPreferences sb = context.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sb.edit();
                 edit.putString("userInfo", userInfo);
                 edit.commit();
             }
         }
-
 
         //联系客服  打开通讯录
         @JavascriptInterface
@@ -539,7 +541,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /**
-         * 获取跳转头条url
+         * 获取跳转咨询url
          */
         @JavascriptInterface
         public void showNewsParams(String addressUrl, String appId, String token) {
@@ -643,6 +645,7 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void CashierDeskGo(String userId, String orderNo, String outTradeNo) {
+            pageReload = true;
             Log.e(TAG, "CashierDeskGo: " + userId + "--" + orderNo + "--" + outTradeNo + "--" + usertoken1);
             Intent intent = new Intent(MainActivity.this, IntentOpenActivity.class);
             intent.putExtra("userId", userId);
@@ -792,8 +795,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendNotification() {
         Gson gson1 = new Gson();
-        Intent msgIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getPackageName());//获取启动Activity
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplication(), 0, msgIntent, 0);
+//        Intent msgIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getPackageName());//获取启动Activity
+//        PendingIntent pendingIntent = PendingIntent.getActivity(getApplication(), 0, msgIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent intent = new Intent(this, NotificationClickReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
         Log.e(TAG, "sendNotification: " + receiveMsg);
         NotificationBean notificationBean = gson1.fromJson(receiveMsg, NotificationBean.class);
         SharedPreferences sb1 = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
@@ -980,7 +985,7 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.reload(); //订单页面支付完成返回刷新订单页面
         ShortcutBadger.applyCount(this, 0);
         boolean notificationEnabled = isNotificationEnabled(this);
-        if (notificationEnabled == true) {
+        if (notificationEnabled == true && usertoken1 != null) {
             notificationChange(userid1, "0");
         } else {
 
@@ -1242,6 +1247,18 @@ public class MainActivity extends AppCompatActivity {
         }
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String app_notice_list = intent.getStringExtra("APP_NOTICE_LIST");
+        if(app_notice_list != null){
+            webView(Constant.APP_NOTICE_LIST);
+//            Toast.makeText(this, app_notice_list+"1", Toast.LENGTH_SHORT).show();
+        }else{
+            webView(Constant.text_url);
+        }
     }
 
     /**
