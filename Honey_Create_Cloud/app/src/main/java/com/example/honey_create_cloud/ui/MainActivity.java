@@ -1259,7 +1259,6 @@ public class MainActivity extends AppCompatActivity {
         String app_notice_list = intent.getStringExtra("APP_NOTICE_LIST");
         if (app_notice_list != null) {
             webView(Constant.APP_NOTICE_LIST);
-            Toast.makeText(this, app_notice_list + "1", Toast.LENGTH_SHORT).show();
         }
     }
 
