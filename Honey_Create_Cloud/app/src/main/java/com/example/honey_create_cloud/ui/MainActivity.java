@@ -294,14 +294,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {
                 myOrder = name;
-                if (name.equals(Constant.MyOrderList)) {
-                    if (pageReload == true) {
-                        mNewWeb.reload();
-                        pageReload = false;
-                    } else {
-
-                    }
-                } else if (name.equals(Constant.login_url)) {
+//                if (name.equals(Constant.MyOrderList)) {
+//                    if (pageReload == true) {
+//                        Log.e(TAG, "onCityClick: 刷新了");
+//                        mNewWeb.reload();
+//                        pageReload = false;
+//                    } else {
+//
+//                    }
+//                } else
+                    if (name.equals(Constant.login_url)) {
                     mCloseLoginPage.setVisibility(View.VISIBLE);
                 } else if (name.equals(Constant.register_url)) {
                     mCloseLoginPage.setVisibility(View.VISIBLE);
@@ -991,6 +993,12 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        mNewWeb.evaluateJavascript("window.sdk.getOrderNotice()", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String value) {
+
+            }
+        });
         SharedPreferences sb = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
         String notifyUserId = sb.getString("NotifyUserId", "");
 
@@ -1002,8 +1010,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
+        Log.e(TAG, "onStop: ");
+        new Thread(() -> basicConsume(myHandler)).start();
         super.onStop();
-//        ShortcutBadger.applyCount(MainActivity.this, badgeCount); //for 1.1.4+
     }
 
     /**

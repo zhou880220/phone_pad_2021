@@ -441,7 +441,7 @@ public class NewsActivity extends AppCompatActivity {
      */
     public static void saveImageToGallery(Context context, Bitmap bmp) {
         // 首先保存图片 创建文件夹
-        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhaoyun");
+        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizaoyun");
         if (!appDir.exists()) {
             appDir.mkdir();
         }

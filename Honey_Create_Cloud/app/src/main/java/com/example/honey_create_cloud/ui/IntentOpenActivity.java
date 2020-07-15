@@ -185,6 +185,7 @@ public class IntentOpenActivity extends AppCompatActivity {
     //    // 用来计算返回键的点击间隔时间
     private long exitTime = 0;
     private String userId;
+    private MyDialog dialog;
 
     @SuppressLint("NewApi")
     @Override
@@ -252,6 +253,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                         } else if (newUrl.contains("cashierDesk/")) {
                             if ((System.currentTimeMillis() - exitTime) > 2000) {
                                 exitTime = System.currentTimeMillis();
+                                Log.e(TAG, "onKey: 1111111");
                                 showAlterDialog();
                             }
                         } else if (newUrl.contains("paymentSuccess/")) {
@@ -259,6 +261,7 @@ public class IntentOpenActivity extends AppCompatActivity {
                         } else if (!userId.isEmpty()) {
                             if ((System.currentTimeMillis() - exitTime) > 2000) {
                                 exitTime = System.currentTimeMillis();
+                                Log.e(TAG, "onKey: 2222222");
                                 showAlterDialog();
                             }
                         } else {
@@ -375,6 +378,7 @@ public class IntentOpenActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void CashierDeskBack() {
+            Log.e(TAG, "onKey: 3333333");
             showAlterDialog();
         }
 
@@ -395,6 +399,7 @@ public class IntentOpenActivity extends AppCompatActivity {
     }
 
     private void alipaytypeOkhttp(final PayBean payBean) {
+        Log.e(TAG, "请求头: "+token+"////"+payBean.getUserId()+"////"+payBean.getOutTradeNo()+"////"+payBean.getPayType());
         String formBody = "{" +
                 "userId:'" + payBean.getUserId() + '\'' +
                 ", outTradeNo:'" + payBean.getOutTradeNo() + '\'' +
@@ -653,20 +658,33 @@ public class IntentOpenActivity extends AppCompatActivity {
         Toast.makeText(this, event, Toast.LENGTH_SHORT).show();
     }
 
+//    @Override
+//    public void finish() {
+//        if (userId != null) {
+//            if ((System.currentTimeMillis() - exitTime) > 2000) {
+//                exitTime = System.currentTimeMillis();
+//                showAlterDialog();
+//            }
+//        } else {
+//            mIntentOpenPayWeb.goBack();
+//        }
+//        super.finish();
+//    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (userId != null) {
-                if ((System.currentTimeMillis() - exitTime) > 2000) {
-                    exitTime = System.currentTimeMillis();
-                    showAlterDialog();
-                }
-            } else {
-                mIntentOpenPayWeb.goBack();
-            }
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            showAlterDialog();
+//            if (userId != null) {
+//                if ((System.currentTimeMillis() - exitTime) > 2000) {
+//                    exitTime = System.currentTimeMillis();
+//
+//                }
+//            } else {
+//                mIntentOpenPayWeb.goBack();
+//            }
         }
-        return super.onKeyDown(keyCode, event);
+        return false;
     }
 
 
@@ -683,14 +701,15 @@ public class IntentOpenActivity extends AppCompatActivity {
 //    }
 
     private void showAlterDialog() {
-        MyDialog dialog = new MyDialog(IntentOpenActivity.this, R.style.mdialog,
+        dialog = new MyDialog(IntentOpenActivity.this, R.style.mdialog,
                 new MyDialog.OncloseListener() {
                     @Override
                     public void onClick(boolean confirm) {
                         if (confirm) {
+                            Log.e(TAG, "onClick: 关闭了");
                             finish();
                         } else {
-                            Log.e(TAG, "onClick: " + confirm);
+                            dialog.dismiss();
                         }
                     }
                 });
@@ -710,6 +729,9 @@ public class IntentOpenActivity extends AppCompatActivity {
             ((ViewGroup) mIntentOpenPayWeb.getParent()).removeView(mIntentOpenPayWeb);
             mIntentOpenPayWeb.destroy();
             mIntentOpenPayWeb = null;
+        }
+        if (dialog != null){
+            dialog.dismiss();
         }
         super.onDestroy();
     }
