@@ -697,12 +697,22 @@ public class ApplySecondActivity extends AppCompatActivity {
                 }
                 break;
                 case R.id.wechat:
-                    wechatShare(0); //好友
-                    popupWindow.dismiss();
+                    boolean wxAppInstalled = isWxAppInstalled(ApplySecondActivity.this);
+                    if (wxAppInstalled == true) {
+                        wechatShare(0); //好友
+                        popupWindow.dismiss();
+                    }else{
+                        Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case R.id.wechatmoments:
-                    wechatShare(1); //朋友圈
-                    popupWindow.dismiss();
+                    boolean wxAppInstalled1 = isWxAppInstalled(ApplySecondActivity.this);
+                    if (wxAppInstalled1 == true) {
+                        wechatShare(1); //朋友圈
+                        popupWindow.dismiss();
+                    }else{
+                        Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case R.id.qq:
 //                    shareSDK_web.QQshowShare();
@@ -907,7 +917,7 @@ public class ApplySecondActivity extends AppCompatActivity {
      */
     public static void saveImageToGallery(Context context, Bitmap bmp) {
         // 首先保存图片 创建文件夹
-        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhoyun");
+        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhaoyun");
         if (!appDir.exists()) {
             appDir.mkdir();
         }
@@ -1943,6 +1953,20 @@ public class ApplySecondActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    /**
+     * 判断微信是否安装
+     *
+     * @param context
+     * @return true 已安装   false 未安装
+     */
+    public static boolean isWxAppInstalled(Context context) {
+        IWXAPI wxApi = WXAPIFactory.createWXAPI(context, null);
+        wxApi.registerApp(Constant.APP_ID);
+        boolean bIsWXAppInstalled = false;
+        bIsWXAppInstalled = wxApi.isWXAppInstalled();
+        return bIsWXAppInstalled;
     }
 
     @Override

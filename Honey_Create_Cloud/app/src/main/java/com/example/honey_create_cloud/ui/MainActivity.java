@@ -253,23 +253,18 @@ public class MainActivity extends AppCompatActivity {
         createNotificationChannel();
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
+        webView(Constant.text_url);
         myRequetPermission();
         initVersionName();
-        Intent intent = getIntent();
-        Uri uri = intent.getData();
+        Uri uri = getIntent().getData();
         if (uri != null) {
-            String id = uri.getQueryParameter("id");
+            String id = uri.getQueryParameter("thirdId");
+            Log.e(TAG, "外部打开的链接: 0"+id);
             if (id != null) {
-                StringBuffer sb = new StringBuffer();
-                sb.append(Constant.text_url) //http://172.16.23.210:3001/home
-                        .append("?id=");
-                webView(sb.toString() + id);//http://172.16.23.210:3001/home?id=
-            } else {
-                webView(Constant.text_url);
+                Intent intent = new Intent(this, NewsActivity.class);
+                intent.putExtra("url", id);
+                startActivity(intent);
             }
-        }
-        else {
-            webView(Constant.text_url);
         }
     }
 
@@ -982,7 +977,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         Log.e(TAG, "onRestart: ");
-        mNewWeb.reload(); //订单页面支付完成返回刷新订单页面
+//        mNewWeb.reload(); //订单页面支付完成返回刷新订单页面
         ShortcutBadger.applyCount(this, 0);
         boolean notificationEnabled = isNotificationEnabled(this);
         if (notificationEnabled == true && usertoken1 != null) {
@@ -1253,11 +1248,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         String app_notice_list = intent.getStringExtra("APP_NOTICE_LIST");
-        if(app_notice_list != null){
+        if (app_notice_list != null) {
             webView(Constant.APP_NOTICE_LIST);
-//            Toast.makeText(this, app_notice_list+"1", Toast.LENGTH_SHORT).show();
-        }else{
-            webView(Constant.text_url);
+            Toast.makeText(this, app_notice_list + "1", Toast.LENGTH_SHORT).show();
         }
     }
 

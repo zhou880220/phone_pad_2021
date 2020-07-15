@@ -17,7 +17,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -114,8 +113,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -262,7 +259,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String goBackUrl;
     private IWXAPI wxApi;
     private ShareSdkBean shareSdkBean;
-//    private Bitmap bitmap1;
+    //    private Bitmap bitmap1;
     private HashMap<String, String> hashMap = new HashMap<String, String>();
     private RecentlyApps recentlyApps;
     private RecyclerView mGridPopup;
@@ -699,12 +696,23 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
                 break;
                 case R.id.wechat:
-                    wechatShare(0); //好友
-                    popupWindow.dismiss();
+                    boolean wxAppInstalled = isWxAppInstalled(ApplyFirstActivity.this);
+                    if (wxAppInstalled == true) {
+                        wechatShare(0); //好友
+                        popupWindow.dismiss();
+                    }else{
+                        Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case R.id.wechatmoments:
-                    wechatShare(1); //朋友圈
-                    popupWindow.dismiss();
+                    boolean wxAppInstalled1 = isWxAppInstalled(ApplyFirstActivity.this);
+                    if (wxAppInstalled1 == true) {
+                        wechatShare(1); //朋友圈
+                        popupWindow.dismiss();
+                    }else{
+                        Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
+
                     break;
                 case R.id.qq:
 //                    shareSDK_web.QQshowShare();
@@ -954,7 +962,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 boolean b = inputJudge(subUrl);
                 if (b == false) {
                     return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
-                }else{
+                } else {
 //                    Toast.makeText(this, "检测到该文件名有非法字符", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -967,14 +975,15 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
     /**
      * 判断是否包含特殊字符
-     * @return  false:未包含 true：包含
+     *
+     * @return false:未包含 true：包含
      */
     public static boolean inputJudge(String editText) {
         String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Pattern pattern = Pattern.compile(speChat);
-        Log.d("inputJudge", "pattern: "+ pattern);
+        Log.d("inputJudge", "pattern: " + pattern);
         Matcher matcher = pattern.matcher(editText);
-        Log.d("inputJudge", "matcher: "+ matcher);
+        Log.d("inputJudge", "matcher: " + matcher);
         if (matcher.find()) {
             return true;
         } else {
@@ -1931,8 +1940,20 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 });
             }
         });
+    }
 
-
+    /**
+     * 判断微信是否安装
+     *
+     * @param context
+     * @return true 已安装   false 未安装
+     */
+    public static boolean isWxAppInstalled(Context context) {
+        IWXAPI wxApi = WXAPIFactory.createWXAPI(context, null);
+        wxApi.registerApp(Constant.APP_ID);
+        boolean bIsWXAppInstalled = false;
+        bIsWXAppInstalled = wxApi.isWXAppInstalled();
+        return bIsWXAppInstalled;
     }
 
     @Override

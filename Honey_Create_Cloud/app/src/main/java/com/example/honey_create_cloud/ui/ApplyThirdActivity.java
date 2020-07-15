@@ -17,7 +17,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -114,8 +113,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -696,12 +693,22 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 }
                 break;
                 case R.id.wechat:
-                    wechatShare(0); //好友
-                    popupWindow.dismiss();
+                    boolean wxAppInstalled = isWxAppInstalled(ApplyThirdActivity.this);
+                    if (wxAppInstalled == true) {
+                        wechatShare(0); //好友
+                        popupWindow.dismiss();
+                    }else{
+                        Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case R.id.wechatmoments:
-                    wechatShare(1); //朋友圈
-                    popupWindow.dismiss();
+                    boolean wxAppInstalled1 = isWxAppInstalled(ApplyThirdActivity.this);
+                    if (wxAppInstalled1 == true) {
+                        wechatShare(1); //朋友圈
+                        popupWindow.dismiss();
+                    }else{
+                        Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
                     break;
                 case R.id.qq:
 //                    shareSDK_web.QQshowShare();
@@ -907,7 +914,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
      */
     public static void saveImageToGallery(Context context, Bitmap bmp) {
         // 首先保存图片 创建文件夹
-        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhoyun");
+        File appDir = new File(Environment.getExternalStorageDirectory(), "zhizhaoyun");
         if (!appDir.exists()) {
             appDir.mkdir();
         }
@@ -952,7 +959,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 boolean b = inputJudge(subUrl);
                 if (b == false) {
                     return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
-                }else{
+                } else {
 
                 }
             }
@@ -965,14 +972,15 @@ public class ApplyThirdActivity extends AppCompatActivity {
 
     /**
      * 判断是否包含特殊字符
-     * @return  false:未包含 true：包含
+     *
+     * @return false:未包含 true：包含
      */
     public static boolean inputJudge(String editText) {
         String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Pattern pattern = Pattern.compile(speChat);
-        Log.d("inputJudge", "pattern: "+ pattern);
+        Log.d("inputJudge", "pattern: " + pattern);
         Matcher matcher = pattern.matcher(editText);
-        Log.d("inputJudge", "matcher: "+ matcher);
+        Log.d("inputJudge", "matcher: " + matcher);
         if (matcher.find()) {
             return true;
         } else {
@@ -1935,6 +1943,21 @@ public class ApplyThirdActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * 判断微信是否安装
+     *
+     * @param context
+     * @return true 已安装   false 未安装
+     */
+    public static boolean isWxAppInstalled(Context context) {
+        IWXAPI wxApi = WXAPIFactory.createWXAPI(context, null);
+        wxApi.registerApp(Constant.APP_ID);
+        boolean bIsWXAppInstalled = false;
+        bIsWXAppInstalled = wxApi.isWXAppInstalled();
+        return bIsWXAppInstalled;
+    }
+
 
     @Override
     protected void onDestroy() {
