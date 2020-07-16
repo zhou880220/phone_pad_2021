@@ -224,7 +224,8 @@ public class NewsActivity extends AppCompatActivity {
             popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
                     400);
             popupWindow.setTouchable(true);
-            popupWindow.setOutsideTouchable(true);
+            popupWindow.setFocusable(true);
+            popupWindow.setOutsideTouchable(false);
             popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
 
             View mCopyUrl = centerView.findViewById(R.id.copyurl);
@@ -255,7 +256,8 @@ public class NewsActivity extends AppCompatActivity {
                     popupWindow1 = new PopupWindow(centerView, ViewGroup.LayoutParams.WRAP_CONTENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT);
                     popupWindow1.setTouchable(true);
-                    popupWindow1.setOutsideTouchable(true);
+                    popupWindow1.setFocusable(true);
+                    popupWindow1.setOutsideTouchable(false);
                     popupWindow1.showAtLocation(centerView, Gravity.CENTER, 0, 0);
                     ImageView mErWeiMaImage = centerView.findViewById(R.id.main_image);
                     try {
