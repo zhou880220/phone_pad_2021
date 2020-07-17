@@ -116,4 +116,6 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.1.71.android'
     //汉语转拼音
     implementation 'com.github.open-android:pinyin4j:2.5.0'
+    //QQ分享集成
+    implementation fileTree(dir: 'libs', include: '*.jar')
 }

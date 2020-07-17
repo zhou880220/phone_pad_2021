@@ -14,6 +14,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -89,11 +91,16 @@ import com.google.gson.Gson;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloader;
+import com.tencent.connect.common.Constants;
+import com.tencent.connect.share.QQShare;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.tencent.tauth.IUiListener;
+import com.tencent.tauth.Tencent;
+import com.tencent.tauth.UiError;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 import com.yzq.zxinglibrary.encode.CodeCreator;
 
@@ -112,7 +119,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -258,6 +264,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private StringBuffer stringBuffer;
     private String goBackUrl;
     private IWXAPI wxApi;
+    public static Tencent mTencent;
     private ShareSdkBean shareSdkBean;
     //    private Bitmap bitmap1;
     private HashMap<String, String> hashMap = new HashMap<String, String>();
@@ -633,8 +640,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //分享功能
         @JavascriptInterface
         public void shareSDKData(String shareData) {
+            //微信初始化
             wxApi = WXAPIFactory.createWXAPI(ApplyFirstActivity.this, Constant.APP_ID);
             wxApi.registerApp(Constant.APP_ID);
+            //QQ初始化
+            mTencent = Tencent.createInstance(Constant.QQ_APP_ID, ApplyFirstActivity.this);
             Gson gson = new Gson();
             shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
 //            getImage(shareSdkBean.getIcon());
@@ -698,27 +708,33 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     }
                 }
                 break;
-                case R.id.wechat:
+                case R.id.wechat: {
                     boolean wxAppInstalled = isWxAppInstalled(ApplyFirstActivity.this);
                     if (wxAppInstalled == true) {
                         wechatShare(0); //好友
                         popupWindow.dismiss();
-                    }else{
+                    } else {
                         Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
-                    break;
-                case R.id.wechatmoments:
+                }
+                break;
+                case R.id.wechatmoments: {
                     boolean wxAppInstalled1 = isWxAppInstalled(ApplyFirstActivity.this);
                     if (wxAppInstalled1 == true) {
                         wechatShare(1); //朋友圈
                         popupWindow.dismiss();
-                    }else{
+                    } else {
                         Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
-
-                    break;
+                }
+                break;
                 case R.id.qq:
-//                    shareSDK_web.QQshowShare();
+                    boolean qqClientAvailable = isQQClientAvailable(ApplyFirstActivity.this);
+                    if (qqClientAvailable==true) {
+                        qqFriend();
+                    }else{
+                        Toast.makeText(context, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                    }
                     popupWindow.dismiss();
                     break;
                 case R.id.popup_dismiss:
@@ -729,6 +745,81 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         }
     }
+
+    /**
+     * 判断是否安装了QQ
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isQQClientAvailable(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
+        if (pinfo != null) {
+            for (int i = 0; i < pinfo.size(); i++) {
+                String pn = pinfo.get(i).packageName;
+                if (pn.equals("com.tencent.mobileqq")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 发送给QQ朋友
+     */
+    int shareType = 1;
+    //IMG
+    public static String IMG = "";
+    int mExtarFlag = 0x00;
+    private void qqFriend() {
+        final Bundle params = new Bundle();
+        //
+        params.putString(QQShare.SHARE_TO_QQ_TITLE, shareSdkBean.getTitle()); //分享的标题
+        params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, shareSdkBean.getUrl());//分享的链接
+        params.putString(QQShare.SHARE_TO_QQ_SUMMARY, shareSdkBean.getTxt());//分享的摘要
+
+        params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, shareSdkBean.getIcon());//分享的图片
+//        params.putString(shareType == QQShare.SHARE_TO_QQ_TYPE_IMAGE ? QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL
+//                : QQShare.SHARE_TO_QQ_IMAGE_URL, IMG);
+        params.putString(QQShare.SHARE_TO_QQ_APP_NAME, getPackageName());
+        params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, shareType);
+        params.putInt(QQShare.SHARE_TO_QQ_EXT_INT, mExtarFlag);
+
+        doShareToQQ(params);
+        return;
+    }
+    private void doShareToQQ(final Bundle params) {
+
+        // QQ分享要在主线程做
+        handler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                if (null != mTencent) {
+                    mTencent.shareToQQ(ApplyFirstActivity.this, params, qqShareListener);
+                }
+            }
+        });
+    }
+
+    IUiListener qqShareListener = new IUiListener() {
+        @Override
+        public void onCancel() {
+            if (shareType != QQShare.SHARE_TO_QQ_TYPE_IMAGE) {
+                Log.e(TAG, "onCancel: 取消" );
+            }
+        }
+        @Override
+        public void onComplete(Object response) {
+            Log.e(TAG, "onComplete: 成功" );
+        }
+        @Override
+        public void onError(UiError e) {
+            Log.e(TAG, "onError: 失败" );
+        }
+    };
 
     private void downFilePath(String fileLoad, String downPath) {
         FileDownloader.setup(ApplyFirstActivity.this);
@@ -951,47 +1042,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         intent.setData(uri);
         context.sendBroadcast(intent);
         Toast.makeText(context, "保存成功", Toast.LENGTH_SHORT).show();
-    }
-
-    /**
-     * @param url
-     * @return 从下载连接中解析出文件名
-     */
-    @NonNull
-    private String getNameFromUrl(String url) {
-        try {
-            String subUrl = url.substring(url.lastIndexOf("/") + 1);
-            if (!TextUtils.isEmpty(subUrl) && subUrl.contains("%")) {
-                boolean b = inputJudge(subUrl);
-                if (b == false) {
-                    return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
-                } else {
-//                    Toast.makeText(this, "检测到该文件名有非法字符", Toast.LENGTH_SHORT).show();
-                }
-            }
-            return subUrl;
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    /**
-     * 判断是否包含特殊字符
-     *
-     * @return false:未包含 true：包含
-     */
-    public static boolean inputJudge(String editText) {
-        String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
-        Pattern pattern = Pattern.compile(speChat);
-        Log.d("inputJudge", "pattern: " + pattern);
-        Matcher matcher = pattern.matcher(editText);
-        Log.d("inputJudge", "matcher: " + matcher);
-        if (matcher.find()) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
 
@@ -1275,6 +1325,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         }
 
+        if (requestCode == Constants.REQUEST_QQ_SHARE) {
+            Tencent.onActivityResultData(requestCode, resultCode, data, qqShareListener);
+        }
+
         switch (requestCode) {
             case REQUEST_CODE_SCAN: //二维码扫描
             {
@@ -1546,6 +1600,52 @@ public class ApplyFirstActivity extends AppCompatActivity {
      */
     public boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param url
+     * @return 从下载连接中解析出文件名 对文件名的% 进行解码
+     */
+    @NonNull
+    private String getNameFromUrl(String url) {
+        Log.e(TAG, "原subUrl: " + url);
+
+        String subUrl = url.substring(url.lastIndexOf("/") + 1);
+        Log.e(TAG, "截取的subUrl: " + subUrl);
+        if (!TextUtils.isEmpty(subUrl) && subUrl.contains("%")) {
+//                subUrl = new String(decode, StandardCharsets.UTF_8.name());
+            try {
+                subUrl = URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.e(TAG, "转换的subUrl: " + subUrl);
+//                String b = inputJudge(subUrl);
+//                Log.e(TAG, "wp: "+b);
+//                Log.e(TAG, "wp: "+URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name()) );
+//                    return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
+        }
+        Log.e(TAG, "现subUrl: " + subUrl);
+        return subUrl == null ? url.substring(url.lastIndexOf("/") + 1) : subUrl;
+    }
+
+    /**
+     * 判断是否包含特殊字符
+     *
+     * @return false:未包含 true：包含
+     */
+    public static String inputJudge(String editText) {
+        String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
+        Pattern pattern = Pattern.compile(speChat);
+        Log.d("inputJudge", "pattern: " + pattern);
+        Matcher matcher = pattern.matcher(editText);
+        Log.d("inputJudge", "matcher: " + matcher);
+        return matcher.replaceAll("").trim();
+//        if (matcher.find()) {
+//            return true;
+//        } else {
+//            return false;
+//        }
     }
 
     //上传头像

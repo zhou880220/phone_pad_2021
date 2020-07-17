@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -11,6 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
@@ -45,11 +48,15 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.tencent.connect.share.QQShare;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.tencent.tauth.IUiListener;
+import com.tencent.tauth.Tencent;
+import com.tencent.tauth.UiError;
 import com.yzq.zxinglibrary.encode.CodeCreator;
 
 import java.io.ByteArrayInputStream;
@@ -62,6 +69,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -77,10 +85,13 @@ public class NewsActivity extends AppCompatActivity {
     View mLoadingPage;
     private MWebChromeClient mWebChromeClient;
     private IWXAPI wxApi;
+    public static Tencent mTencent;
     private ShareSdkBean shareSdkBean;
     private Bitmap bitmap1;
     private String TAG = "NewsActivity";
     private String goBackUrl = "";
+
+    private Handler handler = new Handler();
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -215,6 +226,8 @@ public class NewsActivity extends AppCompatActivity {
         public void shareSDKData(String shareData) {
             wxApi = WXAPIFactory.createWXAPI(NewsActivity.this, Constant.APP_ID);
             wxApi.registerApp(Constant.APP_ID);
+            //QQ初始化
+            mTencent = Tencent.createInstance(Constant.QQ_APP_ID, NewsActivity.this);
             Gson gson = new Gson();
             shareSdkBean = gson.fromJson(shareData, new ShareSdkBean().getClass());
 //            getImage(shareSdkBean.getIcon());
@@ -297,7 +310,12 @@ public class NewsActivity extends AppCompatActivity {
                     }
                     break;
                 case R.id.qq:
-//                    shareSDK_web.QQshowShare();
+                    boolean qqClientAvailable = isQQClientAvailable(NewsActivity.this);
+                    if (qqClientAvailable==true) {
+                        qqFriend();
+                    }else{
+                        Toast.makeText(context, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                    }
                     popupWindow.dismiss();
                     break;
                 case R.id.popup_dismiss:
@@ -308,6 +326,81 @@ public class NewsActivity extends AppCompatActivity {
             }
         }
     }
+
+    /**
+     * 判断是否安装了QQ
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isQQClientAvailable(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
+        if (pinfo != null) {
+            for (int i = 0; i < pinfo.size(); i++) {
+                String pn = pinfo.get(i).packageName;
+                if (pn.equals("com.tencent.mobileqq")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 发送给QQ朋友
+     */
+    int shareType = 1;
+    //IMG
+    public static String IMG = "";
+    int mExtarFlag = 0x00;
+    private void qqFriend() {
+        final Bundle params = new Bundle();
+        //
+        params.putString(QQShare.SHARE_TO_QQ_TITLE, shareSdkBean.getTitle()); //分享的标题
+        params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, shareSdkBean.getUrl());//分享的链接
+        params.putString(QQShare.SHARE_TO_QQ_SUMMARY, shareSdkBean.getTxt());//分享的摘要
+
+        params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, shareSdkBean.getIcon());//分享的图片
+//        params.putString(shareType == QQShare.SHARE_TO_QQ_TYPE_IMAGE ? QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL
+//                : QQShare.SHARE_TO_QQ_IMAGE_URL, IMG);
+        params.putString(QQShare.SHARE_TO_QQ_APP_NAME, getPackageName());
+        params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, shareType);
+        params.putInt(QQShare.SHARE_TO_QQ_EXT_INT, mExtarFlag);
+
+        doShareToQQ(params);
+        return;
+    }
+    private void doShareToQQ(final Bundle params) {
+
+        // QQ分享要在主线程做
+        handler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                if (null != mTencent) {
+                    mTencent.shareToQQ(NewsActivity.this, params, qqShareListener);
+                }
+            }
+        });
+    }
+
+    IUiListener qqShareListener = new IUiListener() {
+        @Override
+        public void onCancel() {
+            if (shareType != QQShare.SHARE_TO_QQ_TYPE_IMAGE) {
+                Log.e(TAG, "onCancel: 取消" );
+            }
+        }
+        @Override
+        public void onComplete(Object response) {
+            Log.e(TAG, "onComplete: 成功" );
+        }
+        @Override
+        public void onError(UiError e) {
+            Log.e(TAG, "onError: 失败" );
+        }
+    };
 
     /**
      * webview监听
