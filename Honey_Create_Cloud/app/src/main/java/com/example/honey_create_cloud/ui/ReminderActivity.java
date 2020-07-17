@@ -53,9 +53,9 @@ public class ReminderActivity extends AppCompatActivity implements View.OnClickL
         Intent intent = getIntent();
         String type = intent.getStringExtra("type");
         if (type.equals("1")) {
-            webview("file:///android_asset/reminder.html", "制造云用户服务条款");
+            webview("file:///android_asset/reminder.html", "用户协议");
         } else if (type.equals("2")) {
-            webview("file:///android_asset/policy.html", "法律声明及隐私权政策");
+            webview("file:///android_asset/policy.html", "隐私政策");
         }
         initview();
     }

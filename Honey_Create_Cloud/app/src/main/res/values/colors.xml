@@ -21,6 +21,8 @@
 
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
+    <color name="white_PolicyAndReminder">#00FFFFFF</color>
     <color name="blue">#5cabfa</color>
+    <color name="blue_PolicyAndReminder">#0b1f47</color>
 
 </resources>

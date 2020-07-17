@@ -58,8 +58,8 @@ public class StartPageActivity extends AppCompatActivity {
                     "您在使用蜂巢制造云产品或服务前，请认真阅读并充分理解相关用户条款、平台规则及隐私政策。当您点击同意相关条款" +
                     "，并开始使用产品或服务，即表示您已经理解并同意该条款，该条款将构成对您具有法律约束力的文件。" +
                     "用户隐私政策主要包含以下内容：个人信息及设备权限（手机号、用户名、邮箱、设备属性信息、设备位置信息、设备连接信息等）" +
-                    "的收集、使用与调用等。您可以通过阅读完整版的《制造云用户服务条款》和《法律声明及隐私权政策》了解详细信息。如您同意，" +
-                    "请点击“同意并继续”开始接受我们的服务"), null, "温馨提示").setBtName("同意", "不同意")
+                    "的收集、使用与调用等。您可以通过阅读完整版的《用户协议》和《隐私政策》了解详细信息。如您同意，" +
+                    "请点击“同意并继续”开始接受我们的服务"), null, "用户协议").setBtName("同意", "不同意")
                     .setOnClickListener(new View.OnClickListener() {
 
                         @Override
@@ -99,8 +99,8 @@ public class StartPageActivity extends AppCompatActivity {
 
     private SpannableString generateSp(String text) {
         //定义需要操作的内容
-        String high_light_1 = "《制造云用户服务条款》";
-        String high_light_2 = "《法律声明及隐私权政策》";
+        String high_light_1 = "《用户协议》";
+        String high_light_2 = "《隐私政策》";
 
         SpannableString spannableString = new SpannableString(text);
         //初始位置

@@ -24,7 +24,10 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -35,6 +38,8 @@ import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -57,6 +62,7 @@ import com.example.honey_create_cloud.bean.TokenIsOkBean;
 import com.example.honey_create_cloud.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
+import com.example.honey_create_cloud.util.QMUITouchableSpan;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
@@ -110,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
     View mWebError;
     @InjectView(R.id.closeLoginPage)
     ImageView mCloseLoginPage;
+    @InjectView(R.id.text_policy_reminder)
+    TextView mTextPolicyReminder;
+    @InjectView(R.id.text_policy_reminder_back)
+    RelativeLayout mTextPolicyReminderBack;
 
 
     private Handler myHandler = new Handler(new Handler.Callback() {
@@ -222,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
     private String myOrder;
     private Channel channel;
     private String receiveMsg;
+    private String PolicyAndReminder = "《用户协议》及《隐私政策》";
 
 
     @SuppressLint("NewApi")
@@ -259,13 +270,62 @@ public class MainActivity extends AppCompatActivity {
         Uri uri = getIntent().getData();
         if (uri != null) {
             String id = uri.getQueryParameter("thirdId");
-            Log.e(TAG, "外部打开的链接: 0"+id);
+            Log.e(TAG, "外部打开的链接: 0" + id);
             if (id != null) {
                 Intent intent = new Intent(this, NewsActivity.class);
                 intent.putExtra("url", id);
                 startActivity(intent);
             }
         }
+        mTextPolicyReminder.setText(generateSp(PolicyAndReminder));
+        mTextPolicyReminder.setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    private SpannableString generateSp(String text) {
+        //定义需要操作的内容
+        String high_light_1 = "《用户协议》";
+        String high_light_2 = "《隐私政策》";
+
+        SpannableString spannableString = new SpannableString(text);
+        //初始位置
+        int start = 0;
+        //结束位置
+        int end;
+        int index;
+        //indexOf(String str, int fromIndex): 返回从 fromIndex 位置开始查找指定字符在字符串中第一次出现处的索引，如果此字符串中没有这样的字符，则返回 -1。
+        //简单来说，(index = text.indexOf(high_light_1, start)) > -1这部分代码就是为了查找你的内容里面有没有high_light_1这个值的内容，并确定它的起始位置
+        while ((index = text.indexOf(high_light_1, start)) > -1) {
+            //结束的位置
+            end = index + high_light_1.length();
+            spannableString.setSpan(new QMUITouchableSpan(this.getResources().getColor(R.color.blue_PolicyAndReminder), this.getResources().getColor(R.color.blue_PolicyAndReminder),
+                    this.getResources().getColor(R.color.white_PolicyAndReminder), this.getResources().getColor(R.color.white_PolicyAndReminder)) {
+                @Override
+                public void onSpanClick(View widget) {
+                    Intent intent = new Intent(MainActivity.this, ReminderActivity.class);
+                    intent.putExtra("type", "1");
+                    startActivity(intent);
+                }
+            }, index, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            start = end;
+        }
+
+        start = 0;
+        while ((index = text.indexOf(high_light_2, start)) > -1) {
+            end = index + high_light_2.length();
+            spannableString.setSpan(new QMUITouchableSpan(this.getResources().getColor(R.color.blue_PolicyAndReminder), this.getResources().getColor(R.color.blue_PolicyAndReminder),
+                    this.getResources().getColor(R.color.white_PolicyAndReminder), this.getResources().getColor(R.color.white_PolicyAndReminder)) {
+                @Override
+                public void onSpanClick(View widget) {
+                    // 点击隐私政策的相关操作，可以使用WebView来加载一个网页
+                    Intent intent = new Intent(MainActivity.this, ReminderActivity.class);
+                    intent.putExtra("type", "2");
+                    startActivity(intent);
+                }
+            }, index, end, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            start = end;
+        }
+        //最后返回SpannableString
+        return spannableString;
     }
 
     /**
@@ -303,13 +363,19 @@ public class MainActivity extends AppCompatActivity {
 //
 //                    }
 //                } else
-                    if (name.equals(Constant.login_url)) {
+                if (name.equals(Constant.login_url)) {
+                    mTextPolicyReminder.setVisibility(View.VISIBLE);
                     mCloseLoginPage.setVisibility(View.VISIBLE);
+                    mTextPolicyReminderBack.setVisibility(View.VISIBLE);
                 } else if (name.equals(Constant.register_url)) {
+                    mTextPolicyReminder.setVisibility(View.VISIBLE);
                     mCloseLoginPage.setVisibility(View.VISIBLE);
+                    mTextPolicyReminderBack.setVisibility(View.VISIBLE);
                 } else {
                     pageReload = true;
+                    mTextPolicyReminder.setVisibility(View.GONE);
                     mCloseLoginPage.setVisibility(View.GONE);
+                    mTextPolicyReminderBack.setVisibility(View.GONE);
                 }
             }
         });

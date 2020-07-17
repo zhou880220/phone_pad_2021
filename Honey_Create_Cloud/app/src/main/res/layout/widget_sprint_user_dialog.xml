@@ -11,7 +11,7 @@
         android:layout_height="wrap_content">
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_sprint_title"
-            android:text="温馨提示"
+            android:text="用户协议"
             android:padding="12dp"
             android:layout_gravity="center_horizontal"
             android:textSize="18sp"

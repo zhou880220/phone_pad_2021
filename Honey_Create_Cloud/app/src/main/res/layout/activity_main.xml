@@ -27,12 +27,32 @@
         android:layout_marginRight="10dp"
         android:visibility="gone"/>
 
+    <RelativeLayout
+        android:id="@+id/text_policy_reminder_back"
+        android:layout_width="match_parent"
+        android:layout_height="28dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/jbshape"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/text_policy_reminder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="2dp"
+            android:textColor="@color/white"
+            android:visibility="gone"/>
+    </RelativeLayout>
+
     <include
         android:id="@+id/web_error"
         layout="@layout/layout_load_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
+
 
 
 </RelativeLayout>
