@@ -645,7 +645,7 @@ public class MainActivity extends AppCompatActivity {
                 //获取userId用于通知
                 String notifyUserId = sb.getString("NotifyUserId", "");
                 Log.e(TAG, "getToken: " + notifyUserId);
-                deleteUserQueue(); //删除队列
+//                deleteUserQueue(); //删除队列
                 if (!TextUtils.isEmpty(notifyUserId)) {
                     notificationChange(userid1, "0");
                     new Thread(() -> basicConsume(myHandler)).start();
