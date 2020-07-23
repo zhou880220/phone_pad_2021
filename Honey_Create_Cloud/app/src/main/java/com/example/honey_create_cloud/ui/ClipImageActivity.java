@@ -68,9 +68,9 @@ public class ClipImageActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//        requestWindowFeature(Window.FEATURE_NO_TITLE);
+//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         setContentView(R.layout.activity_clip_image);
         mType = getIntent().getIntExtra(TYPE, ClipView.TYPE_ROUND);
         Log.i(TAG, "onCreate: mType =" + mType);

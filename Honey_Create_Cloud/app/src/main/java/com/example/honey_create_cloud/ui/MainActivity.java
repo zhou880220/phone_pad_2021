@@ -240,26 +240,26 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
-        if (rects == true) {
-            //有刘海屏
-            setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
-            WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-            getWindow().setAttributes(lp);
-        } else if (rects == false) {
-            //无刘海屏
+//        requestWindowFeature(Window.FEATURE_NO_TITLE);
+//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+//        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
+//        if (rects == true) {
+//            //有刘海屏
+//            setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
 //            WindowManager.LayoutParams lp = getWindow().getAttributes();
 //            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 //            getWindow().setAttributes(lp);
-
-//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-//            View decor = this.getWindow().getDecorView();
-//            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-//            setAndroidNativeLightStatusBar(MainActivity.this, true);//白色字体
-        }
+//        } else if (rects == false) {
+//            //无刘海屏
+////            WindowManager.LayoutParams lp = getWindow().getAttributes();
+////            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+////            getWindow().setAttributes(lp);
+//
+////            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+////            View decor = this.getWindow().getDecorView();
+////            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+////            setAndroidNativeLightStatusBar(MainActivity.this, true);//白色字体
+//        }
         setContentView(R.layout.activity_main);
         createNotificationChannel();
         ButterKnife.inject(this);
