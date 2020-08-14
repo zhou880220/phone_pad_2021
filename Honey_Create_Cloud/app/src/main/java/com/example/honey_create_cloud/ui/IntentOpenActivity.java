@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.alibaba.fastjson.JSONObject;
 import com.alipay.sdk.app.PayTask;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -104,6 +105,12 @@ public class IntentOpenActivity extends AppCompatActivity {
                                         Log.e("wangpan", "---");
                                     }
                                 });
+                                mIntentOpenPayWeb.callHandler("paymentFeedback", "1", new CallBackFunction() {
+                                    @Override
+                                    public void onCallBack(String data) {
+
+                                    }
+                                });
                             }
                         });
                         Toast.makeText(IntentOpenActivity.this, "支付成功", Toast.LENGTH_SHORT).show();
@@ -119,6 +126,12 @@ public class IntentOpenActivity extends AppCompatActivity {
                                     @Override
                                     public void onReceiveValue(String value) {
                                         Log.e("wangpan", "---");
+                                    }
+                                });
+                                mIntentOpenPayWeb.callHandler("paymentFeedback", "2", new CallBackFunction() {
+                                    @Override
+                                    public void onCallBack(String data) {
+
                                     }
                                 });
                             }
@@ -253,7 +266,6 @@ public class IntentOpenActivity extends AppCompatActivity {
                         } else if (newUrl.contains("cashierDesk/")) {
                             if ((System.currentTimeMillis() - exitTime) > 2000) {
                                 exitTime = System.currentTimeMillis();
-                                Log.e(TAG, "onKey: 1111111");
                                 showAlterDialog();
                             }
                         } else if (newUrl.contains("paymentSuccess/")) {
@@ -261,7 +273,6 @@ public class IntentOpenActivity extends AppCompatActivity {
                         } else if (!userId.isEmpty()) {
                             if ((System.currentTimeMillis() - exitTime) > 2000) {
                                 exitTime = System.currentTimeMillis();
-                                Log.e(TAG, "onKey: 2222222");
                                 showAlterDialog();
                             }
                         } else {
@@ -281,7 +292,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!purchaseOfEntry.isEmpty()) {
-                    Log.e(TAG, "handler: " + purchaseOfEntry);
+                    Log.e(TAG, "handler: 231231" + purchaseOfEntry);
                     function.onCallBack(purchaseOfEntry);
                 } else {
 
@@ -305,6 +316,29 @@ public class IntentOpenActivity extends AppCompatActivity {
             }
         });
 
+        mIntentOpenPayWeb.registerHandler("openPay", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "支付: "+data);
+                if (!data.isEmpty()) {
+                    Gson gson = new Gson();
+                    payBean = gson.fromJson(data, PayBean.class);
+                    Log.e(TAG, "openPay: " + data);
+                    if (payBean.getPayType().equals("alipay")) { // 支付宝支付
+                        alipaytypeOkhttp(payBean);
+                    } else if (payBean.getPayType().equals("weixin")) { //微信支付
+                        boolean wxAppInstalled = isWxAppInstalled(IntentOpenActivity.this);
+                        if (wxAppInstalled == true) {
+                            Log.e(TAG, "openPay: " + wxAppInstalled);
+                            wxpaytypeOkhttp(payBean);
+                        } else {
+                            Toast.makeText(IntentOpenActivity.this, "未安装微信，请安装微信后在进行支付", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            }
+        });
+
         mIntentOpenPayWeb.registerHandler("getAppId", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -312,6 +346,46 @@ public class IntentOpenActivity extends AppCompatActivity {
                     Log.e(TAG, "handler: appid" + appId);
                     function.onCallBack(appId);
                 }
+            }
+        });
+        mIntentOpenPayWeb.registerHandler("goThirdApply", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                finish();
+            }
+        });
+
+        mIntentOpenPayWeb.registerHandler("CashierDeskBack", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                showAlterDialog();
+            }
+        });
+        /**
+         * 拨打电话
+         */
+        mIntentOpenPayWeb.registerHandler("openCall", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Map map = JSONObject.parseObject(data, Map.class);
+                String num = (String) map.get("num");
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+
+        /**
+         * 拨打电话
+         */
+        mIntentOpenPayWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Map map = JSONObject.parseObject(data, Map.class);
+                String tele = (String) map.get("tele");
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
             }
         });
     }
@@ -370,6 +444,7 @@ public class IntentOpenActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void goThirdApply() {
+            Log.e(TAG, "handler: 123123123123123");
             finish();
         }
 
@@ -381,7 +456,6 @@ public class IntentOpenActivity extends AppCompatActivity {
             Log.e(TAG, "onKey: 3333333");
             showAlterDialog();
         }
-
     }
 
     /**
@@ -638,6 +712,12 @@ public class IntentOpenActivity extends AppCompatActivity {
                             Log.e("wangpan", "---");
                         }
                     });
+                    mIntentOpenPayWeb.callHandler("paymentFeedback", "1", new CallBackFunction() {
+                        @Override
+                        public void onCallBack(String data) {
+
+                        }
+                    });
                 }
             });
         } else if (event.equals("支付失败")) {
@@ -650,6 +730,12 @@ public class IntentOpenActivity extends AppCompatActivity {
                         @Override
                         public void onReceiveValue(String value) {
                             Log.e("wangpan", "---");
+                        }
+                    });
+                    mIntentOpenPayWeb.callHandler("paymentFeedback", "2", new CallBackFunction() {
+                        @Override
+                        public void onCallBack(String data) {
+
                         }
                     });
                 }

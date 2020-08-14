@@ -1,28 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/popupwindow_background"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_above="@id/grid_popup"
+        android:paddingLeft="25dp">
+
+        <ImageView
+            android:id="@+id/popupimage"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_centerVertical="true"
+            android:background="@drawable/change_apply_back"
+            android:scaleType="center"
+            android:src="@drawable/change_apply"
+            android:padding="60dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:layout_toRightOf="@id/popupimage"
+            android:text="切换应用"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/grid_popup"
         android:layout_width="match_parent"
-        android:layout_height="180dp"
+        android:layout_height="136dp"
+        android:layout_above="@id/apply_line"
         android:layout_centerInParent="true"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:background="@drawable/popupwindow_background"
-        android:layout_above="@id/dismiss_popup_button"
         android:numColumns="3"
-        android:paddingTop="20dp"
-        android:paddingRight="15dp"
-        android:paddingLeft="15dp"/>
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp" />
+
+    <View
+        android:id="@+id/apply_line"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_above="@id/go_apply_home"
+        android:background="#F5F5F5" />
+
+    <RelativeLayout
+        android:id="@+id/go_apply_home"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_above="@id/dismiss_popup_button"
+        android:layout_margin="20dp"
+        android:background="@drawable/go_apply_home_back">
+
+        <ImageView
+            android:id="@+id/go_apply_home_image"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/apply_center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:layout_toRightOf="@id/go_apply_home_image"
+            android:text="前往应用中心"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerInParent="true"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/go_apply_home" />
+    </RelativeLayout>
 
     <Button
         android:id="@+id/dismiss_popup_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#DCE2E6"
-        android:text="取消"/>
+        android:background="#F5F5F5"
+        android:text="取消" />
 
 </RelativeLayout>

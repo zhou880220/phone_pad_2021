@@ -63,7 +63,7 @@ public class MWebViewClient extends WebViewClient {
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
         if (!webView.getSettings().getLoadsImagesAutomatically()) {
-            webView.getSettings().setLoadsImagesAutomatically(true);
+            webView.getSettings().setLoadsImagesAutomatically(true); //支持自动加载图片
         }
     }
 

@@ -5,10 +5,62 @@
     android:layout_height="match_parent"
     tools:context=".ui.ApplyThirdActivity">
 
+    <RelativeLayout
+        android:id="@+id/popup_menu_3"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <ImageView
+            android:id="@+id/apply_back_image3"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:padding="18dp"
+            android:src="@drawable/apply_back" />
+
+        <TextView
+            android:id="@+id/apply_title_text3"
+            android:layout_width="wrap_content"
+            android:layout_height="17dp"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:textColor="@color/black" />
+
+        <LinearLayout
+            android:layout_width="87dp"
+            android:layout_height="32dp"
+            android:orientation="horizontal"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="7dp"
+            android:background="@drawable/title_back_iamge"
+            android:layout_centerInParent="true">
+            <ImageView
+                android:id="@+id/apply_menu_image3"
+                android:layout_width="43dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:padding="10dp"
+                android:src="@mipmap/yingyong" />
+            <View
+                android:layout_width="0.5dp"
+                android:layout_height="18.5dp"
+                android:layout_gravity="center"
+                android:background="#CCCCCC"/>
+            <ImageView
+                android:id="@+id/apply_menu_home3"
+                android:layout_width="43dp"
+                android:layout_height="32dp"
+                android:padding="10dp"
+                android:layout_gravity="center"
+                android:src="@mipmap/back_home" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
     <com.github.lzyzsd.jsbridge.BridgeWebView
         android:id="@+id/new_Web3"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_below="@id/popup_menu_3"/>
 
     <ProgressBar
         android:id="@+id/NewWebProgressbar"
@@ -39,7 +91,6 @@
             android:layout_gravity="center"
             android:text="暂时没有内容哦" />
     </LinearLayout>
-
 
     <RelativeLayout
         android:id="@+id/dimiss_popup"
@@ -122,7 +173,8 @@
         android:alpha="0.95"
         android:onClick="onClick"
         android:padding="16dp"
-        android:src="@drawable/floating" />
+        android:src="@drawable/floating"
+        android:visibility="gone"/>
 
     <RelativeLayout
         android:id="@+id/glide_gif"

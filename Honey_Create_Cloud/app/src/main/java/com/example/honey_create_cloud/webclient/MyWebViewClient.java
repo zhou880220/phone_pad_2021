@@ -5,12 +5,15 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
+import android.os.Build;
 import android.view.View;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
+
+import androidx.annotation.RequiresApi;
 
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.BridgeWebViewClient;
@@ -70,6 +73,20 @@ public class MyWebViewClient extends BridgeWebViewClient {
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
         super.onReceivedSslError(view, handler, error);
 //        handler.proceed();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        if (request.isForMainFrame()) {
+            ChangErrorView();
+        }
+    }
+
+    private void ChangErrorView() {
+//        webView.setVisibility(View.GONE);
+        web_error.setVisibility(View.VISIBLE);
     }
 
     @Override

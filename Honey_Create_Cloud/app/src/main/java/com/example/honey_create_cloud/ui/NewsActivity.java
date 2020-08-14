@@ -8,7 +8,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,7 +20,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -34,12 +32,12 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.bean.ShareSdkBean;
-import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
@@ -65,11 +63,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -173,6 +169,81 @@ public class NewsActivity extends AppCompatActivity {
                 }
             }
         });
+        /**
+         * 用户登录异常回调登录页
+         */
+        mNewWeb.registerHandler("goLogin", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit1 = sp1.edit();
+                edit1.putString("apply_url", Constant.login_url);
+                edit1.commit();
+                finish();
+            }
+        });
+
+        mNewWeb.registerHandler("backNewParams", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "handler: 关闭了");
+                finish();
+            }
+        });
+
+        /**
+         * 分享更具传递的type类型进行分享的页面
+         */
+        mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                //微信初始化
+                wxApi = WXAPIFactory.createWXAPI(NewsActivity.this, Constant.APP_ID);
+                wxApi.registerApp(Constant.APP_ID);
+                //QQ初始化
+                mTencent = Tencent.createInstance(Constant.QQ_APP_ID, NewsActivity.this);
+
+                Map map = JSONObject.parseObject(data, Map.class);
+                String num = (String) map.get("obj");
+                Map mapType = JSONObject.parseObject(num, Map.class);
+                int type = (int) mapType.get("type");
+                String value = String.valueOf(mapType.get("data"));
+                Gson gson = new Gson();
+                ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
+                if (type == 1) {
+                    boolean wxAppInstalled = isWxAppInstalled(NewsActivity.this);
+                    if (wxAppInstalled == true) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                wechatShare(0, shareSdkBean); //好友
+                            }
+                        }).start();
+                    } else {
+                        Toast.makeText(NewsActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
+                } else if (type == 2) {
+                    boolean wxAppInstalled1 = isWxAppInstalled(NewsActivity.this);
+                    if (wxAppInstalled1 == true) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                wechatShare(1, shareSdkBean); //朋友圈
+                            }
+                        }).start();
+                    } else {
+                        Toast.makeText(NewsActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                    }
+                } else if (type == 3) {
+                    boolean qqClientAvailable = isQQClientAvailable(NewsActivity.this);
+                    if (qqClientAvailable == true) {
+                        qqFriend(shareSdkBean);
+                    } else {
+                        Toast.makeText(NewsActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -205,11 +276,7 @@ public class NewsActivity extends AppCompatActivity {
         //关闭页面
         @JavascriptInterface
         public void backNewParams(String flag) {
-            if (!flag.isEmpty()) {
-                finish();
-            } else {
-
-            }
+            finish();
         }
 
         @JavascriptInterface
@@ -294,26 +361,26 @@ public class NewsActivity extends AppCompatActivity {
                 case R.id.wechat:
                     boolean wxAppInstalled = isWxAppInstalled(NewsActivity.this);
                     if (wxAppInstalled == true) {
-                        wechatShare(0); //好友
+                        wechatShare(0, shareSdkBean); //好友
                         popupWindow.dismiss();
-                    }else{
+                    } else {
                         Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
                     break;
                 case R.id.wechatmoments:
                     boolean wxAppInstalled1 = isWxAppInstalled(NewsActivity.this);
                     if (wxAppInstalled1 == true) {
-                        wechatShare(1); //朋友圈
+                        wechatShare(1, shareSdkBean); //朋友圈
                         popupWindow.dismiss();
-                    }else{
+                    } else {
                         Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
                     break;
                 case R.id.qq:
                     boolean qqClientAvailable = isQQClientAvailable(NewsActivity.this);
-                    if (qqClientAvailable==true) {
-                        qqFriend();
-                    }else{
+                    if (qqClientAvailable == true) {
+                        qqFriend(shareSdkBean);
+                    } else {
                         Toast.makeText(context, "手机未安装QQ", Toast.LENGTH_SHORT).show();
                     }
                     popupWindow.dismiss();
@@ -354,7 +421,8 @@ public class NewsActivity extends AppCompatActivity {
     //IMG
     public static String IMG = "";
     int mExtarFlag = 0x00;
-    private void qqFriend() {
+
+    private void qqFriend(ShareSdkBean shareSdkBean) {
         final Bundle params = new Bundle();
         //
         params.putString(QQShare.SHARE_TO_QQ_TITLE, shareSdkBean.getTitle()); //分享的标题
@@ -371,6 +439,7 @@ public class NewsActivity extends AppCompatActivity {
         doShareToQQ(params);
         return;
     }
+
     private void doShareToQQ(final Bundle params) {
 
         // QQ分享要在主线程做
@@ -389,16 +458,18 @@ public class NewsActivity extends AppCompatActivity {
         @Override
         public void onCancel() {
             if (shareType != QQShare.SHARE_TO_QQ_TYPE_IMAGE) {
-                Log.e(TAG, "onCancel: 取消" );
+                Log.e(TAG, "onCancel: 取消");
             }
         }
+
         @Override
         public void onComplete(Object response) {
-            Log.e(TAG, "onComplete: 成功" );
+            Log.e(TAG, "onComplete: 成功");
         }
+
         @Override
         public void onError(UiError e) {
-            Log.e(TAG, "onError: 失败" );
+            Log.e(TAG, "onError: 失败");
         }
     };
 
@@ -414,7 +485,8 @@ public class NewsActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {
                 goBackUrl = name;
-                Log.e(TAG, "onCityClick: "+name);
+                getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                Log.e(TAG, "onCityClick: " + name);
             }
         });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
@@ -463,7 +535,7 @@ public class NewsActivity extends AppCompatActivity {
     /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
      */
-    private void wechatShare(int flag) {
+    private void wechatShare(int flag, ShareSdkBean shareSdkBean) {
         WXWebpageObject webpage = new WXWebpageObject();
         webpage.webpageUrl = shareSdkBean.getUrl();
         WXMediaMessage msg = new WXMediaMessage(webpage);

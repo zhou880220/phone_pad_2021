@@ -16,6 +16,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,7 +32,6 @@ import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -50,6 +50,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import com.alibaba.fastjson.JSONObject;
 import com.example.honey_create_cloud.BuildConfig;
 import com.example.honey_create_cloud.Constant;
 import com.example.honey_create_cloud.MyHandlerCallBack;
@@ -63,7 +64,6 @@ import com.example.honey_create_cloud.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.QMUITouchableSpan;
-import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -88,6 +88,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
@@ -160,13 +161,25 @@ public class MainActivity extends AppCompatActivity {
                             Gson gson = new Gson();
                             HeadPic headPic = gson.fromJson(string, HeadPic.class);
                             if (headPic.getCode() == 200) {
-                                final String tete = "mytest";
+                                String tete = "mytest";
+                                Log.e(TAG, "onResponse: " + tete);
                                 mNewWeb.post(new Runnable() {
                                     @Override
                                     public void run() {
                                         mNewWeb.evaluateJavascript("window.sdk.double(\"" + tete + "\")", new ValueCallback<String>() {
                                             @Override
                                             public void onReceiveValue(String value) {
+                                            }
+                                        });
+                                    }
+                                });
+                                mNewWeb.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mNewWeb.callHandler("double", "tete", new CallBackFunction() {
+                                            @Override
+                                            public void onCallBack(String data) {
+                                                Log.e(TAG, "onCallBack: ");
                                             }
                                         });
                                     }
@@ -354,6 +367,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {
                 myOrder = name;
+                Log.e(TAG, "onCityClick: " + name);
 //                if (name.equals(Constant.MyOrderList)) {
 //                    if (pageReload == true) {
 //                        Log.e(TAG, "onCityClick: 刷新了");
@@ -367,7 +381,13 @@ public class MainActivity extends AppCompatActivity {
                     mTextPolicyReminder.setVisibility(View.VISIBLE);
                     mCloseLoginPage.setVisibility(View.VISIBLE);
                     mTextPolicyReminderBack.setVisibility(View.VISIBLE);
+                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
                 } else if (name.equals(Constant.register_url)) {
+                    mTextPolicyReminder.setVisibility(View.VISIBLE);
+                    mCloseLoginPage.setVisibility(View.VISIBLE);
+                    mTextPolicyReminderBack.setVisibility(View.GONE);
+                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+                } else if (name.contains("/about")) {
                     mTextPolicyReminder.setVisibility(View.VISIBLE);
                     mCloseLoginPage.setVisibility(View.VISIBLE);
                     mTextPolicyReminderBack.setVisibility(View.VISIBLE);
@@ -376,6 +396,7 @@ public class MainActivity extends AppCompatActivity {
                     mTextPolicyReminder.setVisibility(View.GONE);
                     mCloseLoginPage.setVisibility(View.GONE);
                     mTextPolicyReminderBack.setVisibility(View.GONE);
+                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);  //SOFT_INPUT_ADJUST_RESIZE
                 }
             }
         });
@@ -544,6 +565,181 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mNewWeb.registerHandler("getToken", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+
+                Map map = JSONObject.parseObject(data, Map.class);
+                String usertoken = (String) map.get("token");
+                String userID = (String) map.get("userID");
+                Log.e(TAG, "用户登录信息: " + usertoken + "---" + userID);
+                if (!usertoken.isEmpty()) {
+                    usertoken1 = usertoken;
+                    userid1 = userID;
+                    Log.e(TAG, "getToken: " + usertoken1);
+
+                    SharedPreferences sb = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+                    SharedPreferences.Editor edit = sb.edit();
+                    edit.putString("NotifyUserId", usertoken1);
+                    edit.commit();
+
+                    //获取userId用于通知
+                    String notifyUserId = sb.getString("NotifyUserId", "");
+                    Log.e(TAG, "getToken: " + notifyUserId);
+//                deleteUserQueue(); //删除队列
+                    if (!TextUtils.isEmpty(notifyUserId)) {
+                        notificationChange(userid1, "0");
+                        new Thread(() -> basicConsume(myHandler)).start();
+                    }
+                }
+            }
+        });
+
+        mNewWeb.registerHandler("showApplyParams", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "跳转第三方: " + data);
+                Map map = JSONObject.parseObject(data, Map.class);
+                String redirectUrl = (String) map.get("redirectUrl");
+                int appLyId = (int) map.get("appId");
+                String appId = String.valueOf(appLyId);
+                Log.e(TAG, "跳转第三方: " + redirectUrl + "---" + appId);
+
+                if (!redirectUrl.isEmpty()) {
+                    Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                    intent.putExtra("url", redirectUrl);
+                    intent.putExtra("token", usertoken1);
+                    intent.putExtra("userid", userid1);
+                    intent.putExtra("appId", appId);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        mNewWeb.registerHandler("NewNotifiction", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                gotoSet();
+            }
+        });
+
+        mNewWeb.registerHandler("showNewsParams", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "跳转咨询页面: " + data);
+                Map map = JSONObject.parseObject(data, Map.class);
+                String link = (String) map.get("link");
+                String code = (String) map.get("code");
+                String token = (String) map.get("token");
+
+                if (!link.isEmpty()) {
+                    Log.e(TAG, "showNewsParams: " + link);
+                    Intent intent = new Intent(MainActivity.this, NewsActivity.class);
+                    intent.putExtra("url", link);
+                    intent.putExtra("token", token1);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        mNewWeb.registerHandler("CashierDeskGo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "跳转支付页面: " + data);
+                Map map = JSONObject.parseObject(data, Map.class);
+                String userId = (String) map.get("userId");
+                String orderNo = (String) map.get("orderNo");
+                String outTradeNo = (String) map.get("outTradeNo");
+
+                pageReload = true;
+                Log.e(TAG, "CashierDeskGo: " + userId + "--" + orderNo + "--" + outTradeNo + "--" + usertoken1);
+                Intent intent = new Intent(MainActivity.this, IntentOpenActivity.class);
+                intent.putExtra("userId", userId);
+                intent.putExtra("orderNo", orderNo);
+                intent.putExtra("outTradeNo", outTradeNo);
+                intent.putExtra("token", usertoken1);
+                startActivity(intent);
+            }
+        });
+
+        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "打开通讯录: " + data);
+                Map map = JSONObject.parseObject(data, Map.class);
+                String tele = (String) map.get("tele");
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+
+        mNewWeb.registerHandler("ClearUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit = sb.edit();
+                edit.clear();
+                edit.commit();
+
+                SharedPreferences sb1 = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+                SharedPreferences.Editor edit1 = sb1.edit();
+                edit1.clear();
+                edit1.commit();
+
+                SharedPreferences sb2 = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit2 = sb2.edit();
+                edit2.clear();
+                edit2.commit();
+            }
+        });
+
+        mNewWeb.registerHandler("setUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "获取用户登录信息: " + data);
+                if (!data.isEmpty()) {
+                    SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit = sb.edit();
+                    edit.putString("userInfo", data);
+                    edit.commit();
+                }
+            }
+        });
+        /**
+         * 拨打电话
+         */
+        mNewWeb.registerHandler("openCall", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Map map = JSONObject.parseObject(data, Map.class);
+                String num = (String) map.get("num");
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+        mNewWeb.registerHandler("intentBrowser", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Map map = JSONObject.parseObject(data, Map.class);
+                String Url = (String) map.get("url");
+                Gson gson = new Gson();
+                BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
+                if (!Url.isEmpty()) {
+                    Intent intent = new Intent();
+                    intent.setAction("android.intent.action.VIEW");
+                    Uri content_url = Uri.parse(browserBean.getUrl());
+                    intent.setData(content_url);
+                    startActivity(intent);
+                }
+            }
+        });
     }
 
     /**
@@ -575,9 +771,6 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void OpenPayIntent(String intentOpenPay) {
             Log.e(TAG, "OpenPayIntent: " + intentOpenPay);
-//            int i = Integer.parseInt(intentOpenPay);
-//            String s = String.valueOf(intentOpenPay);
-//            Log.e(TAG, "OpenPayIntent: "+s);
             Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
@@ -875,11 +1068,12 @@ public class MainActivity extends AppCompatActivity {
                     .setContentTitle(notificationBean.getTitle())
                     .setContentText(notificationBean.getContent())
                     .setWhen(System.currentTimeMillis())
-                    .setSmallIcon(R.mipmap.ic_launcher_back)
+                    .setSmallIcon(R.drawable.logo)
                     .setDefaults(DEFAULT_ALL)
+                    .setColor(Color.parseColor("#5cabfa"))
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true).setNumber(badgeCount)
-                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_back))
+                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.logo))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .build();
             Log.e(TAG, "notifyToken: " + badgeCount);
@@ -906,15 +1100,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      * 连接设置
      */
     private Connection getConnection() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("122.112.141.135");//主机地址：192.168.1.105
-        factory.setPort(25672);// 端口号:25672
-        factory.setUsername("honeycom");// 用户名
-        factory.setPassword("wu168@QqFn2019");// 密码
+        factory.setHost("119.3.28.24");//主机地址
+        factory.setPort(5672);// 端口号
+        factory.setUsername("honeycomb");// 用户名
+        factory.setPassword("honeycomb");// 密码
         factory.setVirtualHost("/");
         try {
             return factory.newConnection();
@@ -1059,9 +1254,15 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        mNewWeb.evaluateJavascript("window.sdk.getOrderNotice()", new ValueCallback<String>() {
+        mNewWeb.evaluateJavascript("window.sdk.getOrderNotice()", new ValueCallback<String>() {  //用于订单跳转支付后刷新订单页面
             @Override
             public void onReceiveValue(String value) {
+
+            }
+        });
+        mNewWeb.callHandler("getOrderNotice", "", new CallBackFunction() {  //用于订单跳转支付后刷新订单页面
+            @Override
+            public void onCallBack(String data) {
 
             }
         });
@@ -1258,7 +1459,7 @@ public class MainActivity extends AppCompatActivity {
                     final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
                     builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
                     builder.addFormDataPart("fileNames", "");
-                    builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
+                    builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
                     builder.addFormDataPart("folderName", "headPic");
                     MultipartBody requestBody = builder.build();
                     final Request request = new Request.Builder()
