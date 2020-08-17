@@ -19,32 +19,30 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcelable;
 import android.provider.ContactsContract;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.webkit.JavascriptInterface;
-import android.webkit.JsPromptResult;
-import android.webkit.JsResult;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -75,14 +73,12 @@ import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.adapter.MyContactAdapter;
 import com.example.honey_create_cloud.bean.BrowserBean;
 import com.example.honey_create_cloud.bean.PictureUpload;
-import com.example.honey_create_cloud.bean.QueryUrl;
 import com.example.honey_create_cloud.bean.RecentlyApps;
 import com.example.honey_create_cloud.bean.ShareSdkBean;
 import com.example.honey_create_cloud.bean.TakePhoneBean;
 import com.example.honey_create_cloud.bean.TitleName;
 import com.example.honey_create_cloud.recorder.AudioRecorderButton;
 import com.example.honey_create_cloud.util.FileUtil;
-import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
@@ -123,16 +119,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -248,7 +243,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                     });
                     break;
                 }
-                case TITLENAME:{
+                case TITLENAME: {
                     String titlename = (String) msg.obj;
                     if (titlename != null) {
                         mApplyTitleText2.setText(titlename);
@@ -295,11 +290,12 @@ public class ApplySecondActivity extends AppCompatActivity {
     private IWXAPI wxApi;
     public static Tencent mTencent;
     private ShareSdkBean shareSdkBean;
-//    private Bitmap bitmap1;
+    //    private Bitmap bitmap1;
     private HashMap<String, String> hashMap = new HashMap<String, String>();
     private RecentlyApps recentlyApps;
     private RecyclerView mGridPopup;
     private String appUrlData;
+    private Uri imageUriThreeApply;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -623,10 +619,10 @@ public class ApplySecondActivity extends AppCompatActivity {
                 Map map = JSONObject.parseObject(data, Map.class);
                 String num = (String) map.get("url");
                 String filename = (String) map.get("filename");
-                Log.e(TAG, "新的文件名下载路径: 0"+filename );
-                if (filename != null && !filename.equals("")){
+                Log.e(TAG, "新的文件名下载路径: 0" + filename);
+                if (filename != null && !filename.equals("")) {
                     String newReplaceUrl = num.replace(num.substring(num.lastIndexOf("/") + 1), filename);
-                    Log.e(TAG, "新的文件名下载路径: 1"+newReplaceUrl );
+                    Log.e(TAG, "新的文件名下载路径: 1" + newReplaceUrl);
                     List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
                     for (int i = 0; i < Listdata.size() - 1; i++) {
                         String ApplyId = String.valueOf(Listdata.get(i).getAppId());
@@ -637,8 +633,8 @@ public class ApplySecondActivity extends AppCompatActivity {
                             downFilePath(FileLoad, newReplaceUrl);
                         }
                     }
-                }else{
-                    Log.e(TAG, "新的文件名下载路径:2 "+num );
+                } else {
+                    Log.e(TAG, "新的文件名下载路径:2 " + num);
                     List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
                     for (int i = 0; i < Listdata.size() - 1; i++) {
                         String ApplyId = String.valueOf(Listdata.get(i).getAppId());
@@ -684,31 +680,31 @@ public class ApplySecondActivity extends AppCompatActivity {
                 String value = String.valueOf(mapType.get("data"));
                 Gson gson = new Gson();
                 ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
-                if (type == 1){
+                if (type == 1) {
                     boolean wxAppInstalled = isWxAppInstalled(ApplySecondActivity.this);
                     if (wxAppInstalled == true) {
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
-                                wechatShare(0,shareSdkBean); //好友
+                                wechatShare(0, shareSdkBean); //好友
                             }
                         }).start();
                     } else {
                         Toast.makeText(ApplySecondActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
-                }else if(type == 2){
+                } else if (type == 2) {
                     boolean wxAppInstalled1 = isWxAppInstalled(ApplySecondActivity.this);
                     if (wxAppInstalled1 == true) {
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
-                                wechatShare(1,shareSdkBean); //朋友圈
+                                wechatShare(1, shareSdkBean); //朋友圈
                             }
                         }).start();
                     } else {
                         Toast.makeText(ApplySecondActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
-                }else if(type == 3){
+                } else if (type == 3) {
                     boolean qqClientAvailable = isQQClientAvailable(ApplySecondActivity.this);
                     if (qqClientAvailable == true) {
                         qqFriend(shareSdkBean);
@@ -724,7 +720,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("goLogin", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe",MODE_PRIVATE);
+                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit1 = sp1.edit();
                 edit1.putString("apply_url", Constant.login_url);
                 edit1.commit();
@@ -787,7 +783,7 @@ public class ApplySecondActivity extends AppCompatActivity {
 
                 Map map = JSONObject.parseObject(data, Map.class);
                 String num = (String) map.get("obj");
-                Log.e(TAG, "handler: "+num );
+                Log.e(TAG, "handler: " + num);
                 if (!num.isEmpty()) {
                     Intent intent = new Intent(ApplySecondActivity.this, IntentOpenActivity.class);
                     intent.putExtra("PurchaseOfEntry", num);
@@ -820,7 +816,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                         }
                     }
                 }
-                Log.e(TAG, "setCookie: "+num);
+                Log.e(TAG, "setCookie: " + num);
             }
         });
         /**
@@ -1057,28 +1053,28 @@ public class ApplySecondActivity extends AppCompatActivity {
                 case R.id.wechat: {
                     boolean wxAppInstalled = isWxAppInstalled(ApplySecondActivity.this);
                     if (wxAppInstalled == true) {
-                        wechatShare(0,shareSdkBean); //好友
+                        wechatShare(0, shareSdkBean); //好友
                         popupWindow.dismiss();
                     } else {
                         Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
                 }
-                    break;
+                break;
                 case R.id.wechatmoments: {
                     boolean wxAppInstalled1 = isWxAppInstalled(ApplySecondActivity.this);
                     if (wxAppInstalled1 == true) {
-                        wechatShare(1,shareSdkBean); //朋友圈
+                        wechatShare(1, shareSdkBean); //朋友圈
                         popupWindow.dismiss();
                     } else {
                         Toast.makeText(context, "手机未安装微信", Toast.LENGTH_SHORT).show();
                     }
                 }
-                    break;
+                break;
                 case R.id.qq:
                     boolean qqClientAvailable = isQQClientAvailable(ApplySecondActivity.this);
-                    if (qqClientAvailable==true) {
+                    if (qqClientAvailable == true) {
                         qqFriend(shareSdkBean);
-                    }else{
+                    } else {
                         Toast.makeText(context, "手机未安装QQ", Toast.LENGTH_SHORT).show();
                     }
                     popupWindow.dismiss();
@@ -1119,6 +1115,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     //IMG
     public static String IMG = "";
     int mExtarFlag = 0x00;
+
     private void qqFriend(ShareSdkBean shareSdkBean) {
         final Bundle params = new Bundle();
         //
@@ -1136,6 +1133,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         doShareToQQ(params);
         return;
     }
+
     private void doShareToQQ(final Bundle params) {
 
         // QQ分享要在主线程做
@@ -1154,16 +1152,18 @@ public class ApplySecondActivity extends AppCompatActivity {
         @Override
         public void onCancel() {
             if (shareType != QQShare.SHARE_TO_QQ_TYPE_IMAGE) {
-                Log.e(TAG, "onCancel: 取消" );
+                Log.e(TAG, "onCancel: 取消");
             }
         }
+
         @Override
         public void onComplete(Object response) {
-            Log.e(TAG, "onComplete: 成功" );
+            Log.e(TAG, "onComplete: 成功");
         }
+
         @Override
         public void onError(UiError e) {
-            Log.e(TAG, "onError: 失败" );
+            Log.e(TAG, "onError: 失败");
         }
     };
 
@@ -1286,7 +1286,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
      */
-    private void wechatShare(int flag,ShareSdkBean shareSdkBean) {
+    private void wechatShare(int flag, ShareSdkBean shareSdkBean) {
         WXWebpageObject webpage = new WXWebpageObject();
         webpage.webpageUrl = shareSdkBean.getUrl();
         WXMediaMessage msg = new WXMediaMessage(webpage);
@@ -1399,10 +1399,10 @@ public class ApplySecondActivity extends AppCompatActivity {
      */
     @NonNull
     private String getNameFromUrl(String url) {
-        Log.e(TAG, "原subUrl: " + url );
+        Log.e(TAG, "原subUrl: " + url);
 
         String subUrl = url.substring(url.lastIndexOf("/") + 1);
-        Log.e(TAG, "截取的subUrl: " + subUrl );
+        Log.e(TAG, "截取的subUrl: " + subUrl);
         if (!TextUtils.isEmpty(subUrl) && subUrl.contains("%")) {
 //                subUrl = new String(decode, StandardCharsets.UTF_8.name());
             try {
@@ -1410,26 +1410,27 @@ public class ApplySecondActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.e(TAG, "转换的subUrl: " + subUrl );
+            Log.e(TAG, "转换的subUrl: " + subUrl);
 //                String b = inputJudge(subUrl);
 //                Log.e(TAG, "wp: "+b);
 //                Log.e(TAG, "wp: "+URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name()) );
 //                    return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
         }
-        Log.e(TAG, "现subUrl: " + subUrl );
-        return subUrl == null? url.substring(url.lastIndexOf("/") + 1):subUrl;
+        Log.e(TAG, "现subUrl: " + subUrl);
+        return subUrl == null ? url.substring(url.lastIndexOf("/") + 1) : subUrl;
     }
 
     /**
      * 判断是否包含特殊字符
-     * @return  false:未包含 true：包含
+     *
+     * @return false:未包含 true：包含
      */
     public static boolean inputJudge(String editText) {
         String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Pattern pattern = Pattern.compile(speChat);
-        Log.d("inputJudge", "pattern: "+ pattern);
+        Log.d("inputJudge", "pattern: " + pattern);
         Matcher matcher = pattern.matcher(editText);
-        Log.d("inputJudge", "matcher: "+ matcher);
+        Log.d("inputJudge", "matcher: " + matcher);
         if (matcher.find()) {
             return true;
         } else {
@@ -1688,12 +1689,23 @@ public class ApplySecondActivity extends AppCompatActivity {
                 if (null == uploadMessage && null == uploadMessageAboveL) return;
                 Uri result = data == null || resultCode != RESULT_OK ? null : data.getData();
                 // Uri result = (((data == null) || (resultCode != RESULT_OK)) ? null : data.getData());
+                if (result == null) {
+                    if (uploadMessage != null) {
+                        uploadMessage.onReceiveValue(null);
+                        uploadMessage = null;
+                    } else if (uploadMessageAboveL != null) {
+                        uploadMessageAboveL.onReceiveValue(null);
+                        uploadMessageAboveL = null;
+                    }
+                }
                 if (uploadMessageAboveL != null) {
                     onActivityResultAboveL(requestCode, resultCode, data, result);
                 } else if (uploadMessage != null) {
                     uploadMessage.onReceiveValue(result);
                     uploadMessage = null;
                 }
+            } else if (imageUriThreeApply != null) {
+                uploadMessageAboveL.onReceiveValue(new Uri[]{imageUriThreeApply});
             } else {
                 //这里uploadMessage跟uploadMessageAboveL在不同系统版本下分别持有了
                 //WebView对象，在用户取消文件选择器的情况下，需给onReceiveValue传null返回值
@@ -2394,13 +2406,124 @@ public class ApplySecondActivity extends AppCompatActivity {
             // For Android >= 5.0 打开系统文件管理系统
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
+                String[] acceptTypes = fileChooserParams.getAcceptTypes();
                 uploadMessageAboveL = filePathCallback;
-                openFileChooserActivity();
+                if (acceptTypes[0].equals("*/*")) {
+                    openFileChooserActivity(); //文件系统管理
+                } else if (acceptTypes[0].equals("image/*")) {
+                    Log.e(TAG, "onShowFileChooser: 打开系统拍照及相册选取");
+                    openImageChooserActivity();//打开系统拍照及相册选取
+                } else if (acceptTypes[0].equals("video/*")) {
+                    openVideoChooserActivity();//打开系统拍摄/选取视频
+                }
                 return true;
             }
         });
     }
 
+    /**
+     * 跳转到用户拍摄/选取视频
+     */
+    public void openVideoChooserActivity() {
+        backgroundAlpha(this, 0.5f);//0.0-welcome1.0
+        View centerView = LayoutInflater.from(ApplySecondActivity.this).inflate(R.layout.video_chooser_popup, null);
+        PopupWindow videoPopupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                465);
+        videoPopupWindow.setTouchable(true);
+        videoPopupWindow.setFocusable(false);
+        videoPopupWindow.setOutsideTouchable(false);
+        videoPopupWindow.setAnimationStyle(R.style.pop_animation);
+        videoPopupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+        mGridPopup = centerView.findViewById(R.id.grid_popup);
+//        Photograph_popup
+//                Photo_album_popup
+        Button mPhotoGraphPopupButton = centerView.findViewById(R.id.Photo_graph_popup); //用户点击拍摄按钮
+        Button mPhotoAlbumPopup = centerView.findViewById(R.id.Photo_album_popup);      //用户点击视频选取按钮
+        Button mDismissPopupButton = centerView.findViewById(R.id.video_dismiss_popup_button);  //用户点击取消按钮
+
+        mPhotoGraphPopupButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backgroundAlpha(ApplySecondActivity.this, 1f);//0.0-welcome1.0
+                videoPopupWindow.dismiss();
+                Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+//        intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+                //限制时长
+                intent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30);
+                //开启摄像机
+                startActivityForResult(intent, FILE_CHOOSER_RESULT_CODE);
+            }
+        });
+
+        mPhotoAlbumPopup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backgroundAlpha(ApplySecondActivity.this, 1f);//0.0-welcome1.0
+                videoPopupWindow.dismiss();
+
+                if (android.os.Build.BRAND.equals("Huawei")) {
+                    Intent intentPic = new Intent(Intent.ACTION_PICK,
+                            android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+                    startActivityForResult(intentPic, FILE_CHOOSER_RESULT_CODE);
+                }
+                if (android.os.Build.BRAND.equals("Xiaomi")) {//是否是小米设备,是的话用到弹窗选取入口的方法去选取视频
+                    Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "video/*");
+                    startActivityForResult(Intent.createChooser(intent, "选择要导入的视频"), FILE_CHOOSER_RESULT_CODE);
+                } else {//直接跳到系统相册去选取视频
+                    Intent intent = new Intent();
+                    if (Build.VERSION.SDK_INT < 19) {
+                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                        intent.setType("video/*");
+                    } else {
+                        intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("video/*");
+                    }
+                    startActivityForResult(Intent.createChooser(intent, "选择要导入的视频"), FILE_CHOOSER_RESULT_CODE);
+                }
+            }
+        });
+
+        mDismissPopupButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backgroundAlpha(ApplySecondActivity.this, 1f);//0.0-welcome1.0
+                videoPopupWindow.dismiss();
+                if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(null);
+                    uploadMessage = null;
+                } else if (uploadMessageAboveL != null) {
+                    uploadMessageAboveL.onReceiveValue(null);
+                    uploadMessageAboveL = null;
+                }
+            }
+        });
+
+
+    }
+
+    /**
+     * 跳转到用户拍照/选取相册
+     */
+    public void openImageChooserActivity() {
+        String filePath = Environment.getExternalStorageDirectory() + File.separator
+                + Environment.DIRECTORY_PICTURES + File.separator;
+        String fileName = "IMG_" + DateFormat.format("yyyyMMdd_hhmmss", Calendar.getInstance(Locale.CHINA)) + ".jpg";
+        imageUriThreeApply = Uri.fromFile(new File(filePath + fileName));
+//相册相机选择窗
+        Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUriThreeApply);
+        Intent Photo = new Intent(Intent.ACTION_PICK,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent chooserIntent = Intent.createChooser(Photo, "Image Chooser");
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{captureIntent});
+        startActivityForResult(chooserIntent, FILE_CHOOSER_RESULT_CODE);
+    }
+
+    /**
+     * 跳转到系统文件选择
+     */
     public void openFileChooserActivity() {
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);

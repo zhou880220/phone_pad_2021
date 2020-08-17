@@ -1627,7 +1627,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     message.what = TITLENAME;
                     message.obj = titleName.getData();
                     handler.sendMessage(message);
-                }else{
+                } else {
 
                 }
             }
@@ -2078,106 +2078,106 @@ public class ApplyFirstActivity extends AppCompatActivity {
         return subUrl == null ? url.substring(url.lastIndexOf("/") + 1) : subUrl;
     }
 
-    /**
-     * 判断是否包含特殊字符
-     *
-     * @return false:未包含 true：包含
-     */
-    public static String inputJudge(String editText) {
-        String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
-        Pattern pattern = Pattern.compile(speChat);
-        Log.d("inputJudge", "pattern: " + pattern);
-        Matcher matcher = pattern.matcher(editText);
-        Log.d("inputJudge", "matcher: " + matcher);
-        return matcher.replaceAll("").trim();
-//        if (matcher.find()) {
-//            return true;
-//        } else {
-//            return false;
-//        }
-    }
+//    /**
+//     * 判断是否包含特殊字符
+//     *
+//     * @return false:未包含 true：包含
+//     */
+//    public static String inputJudge(String editText) {
+//        String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
+//        Pattern pattern = Pattern.compile(speChat);
+//        Log.d("inputJudge", "pattern: " + pattern);
+//        Matcher matcher = pattern.matcher(editText);
+//        Log.d("inputJudge", "matcher: " + matcher);
+//        return matcher.replaceAll("").trim();
+////        if (matcher.find()) {
+////            return true;
+////        } else {
+////            return false;
+////        }
+//    }
 
 
     //在webviewActiviy的onActivityResult中，回调下方代码，将图片返回给h5
 
-    /**
-     * Android API < 21(Android 5.0)版本的回调处理
-     *
-     * @param resultCode 选取文件或拍照的返回码
-     * @param data       选取文件或拍照的返回结果
-     */
-    public void chooseBelow(int resultCode, Intent data) {
-        Log.e("WangJ", "返回调用方法--chooseBelow");
-        if (Activity.RESULT_OK == resultCode) {
-            updatePhotos();
-            if (data != null) {
-                // 这里是针对文件路径处理
-                Uri uri = data.getData();
+//    /**
+//     * Android API < 21(Android 5.0)版本的回调处理
+//     *
+//     * @param resultCode 选取文件或拍照的返回码
+//     * @param data       选取文件或拍照的返回结果
+//     */
+//    public void chooseBelow(int resultCode, Intent data) {
+//        Log.e("WangJ", "返回调用方法--chooseBelow");
+//        if (Activity.RESULT_OK == resultCode) {
+//            updatePhotos();
+//            if (data != null) {
+//                // 这里是针对文件路径处理
+//                Uri uri = data.getData();
+//
+////                results = new Uri[]{Uri.parse(dataString)};
+//                if (uri != null) {
+//                    Log.e("WangJ", "系统返回URI：" + uri.toString());
+//                    uploadMessage.onReceiveValue(uri);
+//                } else {
+//                    uploadMessage.onReceiveValue(null);
+//                }
+//            } else {
+//                // 以指定图像存储路径的方式调起相机，成功后返回data为空
+//                Log.e("WangJ", "自定义结果：" + imageUriThreeApply.toString());
+//                uploadMessage.onReceiveValue(imageUriThreeApply);
+//            }
+//        } else {
+//            uploadMessage.onReceiveValue(null);
+//        }
+//        uploadMessage = null;
+//    }
 
-//                results = new Uri[]{Uri.parse(dataString)};
-                if (uri != null) {
-                    Log.e("WangJ", "系统返回URI：" + uri.toString());
-                    uploadMessage.onReceiveValue(uri);
-                } else {
-                    uploadMessage.onReceiveValue(null);
-                }
-            } else {
-                // 以指定图像存储路径的方式调起相机，成功后返回data为空
-                Log.e("WangJ", "自定义结果：" + imageUriThreeApply.toString());
-                uploadMessage.onReceiveValue(imageUriThreeApply);
-            }
-        } else {
-            uploadMessage.onReceiveValue(null);
-        }
-        uploadMessage = null;
-    }
+//    /**
+//     * Android API >= 21(Android 5.0) 版本的回调处理
+//     *
+//     * @param resultCode 选取文件或拍照的返回码
+//     * @param data       选取文件或拍照的返回结果
+//     */
+//    public void chooseAbove(int resultCode, Intent data) {
+//        Log.e("WangJ", "返回调用方法--chooseAbove");
+//        Log.e("WangJ", data + "");
+//
+//        if (Activity.RESULT_OK == resultCode) {
+//            if (null == uploadMessage && null == uploadMessageAboveL) {
+//                return;
+//            }
+//            updatePhotos();
+//            if (data != null) {
+//                // 这里是针对从文件中选图片的处理
+//                Uri[] results;
+//                Uri uriData = data.getData();
+//
+//                if (uriData != null) {
+//                    results = new Uri[]{uriData};
+//                    for (Uri uri : results) {
+//                        //Log.e("WangJ", "系统返回URI：" + uri.toString());
+//                    }
+//                    Log.e("WangJ", results + "");
+//                    uploadMessageAboveL.onReceiveValue(results);
+//                } else {
+//                    uploadMessageAboveL.onReceiveValue(null);
+//                }
+//            } else {
+//                Log.e("WangJ", "自定义结果：" + imageUriThreeApply.toString());
+//                uploadMessageAboveL.onReceiveValue(new Uri[]{imageUriThreeApply});
+//            }
+//        } else {
+//            uploadMessageAboveL.onReceiveValue(null);
+//        }
+//        uploadMessageAboveL = null;
+//    }
 
-    /**
-     * Android API >= 21(Android 5.0) 版本的回调处理
-     *
-     * @param resultCode 选取文件或拍照的返回码
-     * @param data       选取文件或拍照的返回结果
-     */
-    public void chooseAbove(int resultCode, Intent data) {
-        Log.e("WangJ", "返回调用方法--chooseAbove");
-        Log.e("WangJ", data + "");
-
-        if (Activity.RESULT_OK == resultCode) {
-            if (null == uploadMessage && null == uploadMessageAboveL) {
-                return;
-            }
-            updatePhotos();
-            if (data != null) {
-                // 这里是针对从文件中选图片的处理
-                Uri[] results;
-                Uri uriData = data.getData();
-
-                if (uriData != null) {
-                    results = new Uri[]{uriData};
-                    for (Uri uri : results) {
-                        //Log.e("WangJ", "系统返回URI：" + uri.toString());
-                    }
-                    Log.e("WangJ", results + "");
-                    uploadMessageAboveL.onReceiveValue(results);
-                } else {
-                    uploadMessageAboveL.onReceiveValue(null);
-                }
-            } else {
-                Log.e("WangJ", "自定义结果：" + imageUriThreeApply.toString());
-                uploadMessageAboveL.onReceiveValue(new Uri[]{imageUriThreeApply});
-            }
-        } else {
-            uploadMessageAboveL.onReceiveValue(null);
-        }
-        uploadMessageAboveL = null;
-    }
-
-    private void updatePhotos() {
-        // 该广播即使多发（即选取照片成功时也发送）也没有关系，只是唤醒系统刷新媒体文件
-        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        intent.setData(imageUriThreeApply);
-        sendBroadcast(intent);
-    }
+//    private void updatePhotos() {
+//        // 该广播即使多发（即选取照片成功时也发送）也没有关系，只是唤醒系统刷新媒体文件
+//        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+//        intent.setData(imageUriThreeApply);
+//        sendBroadcast(intent);
+//    }
 
 
     //上传头像
