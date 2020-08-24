@@ -18,10 +18,6 @@ import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-
-/**
- * Created by jun xu on 19-4-8
- */
 public class ClipView extends View {
 
     private static final String TAG = "ClipView";
@@ -87,12 +83,8 @@ public class ClipView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        Log.i(TAG, "onDraw: clipType =" + clipType);
-
         //通过Xfermode的DST_OUT来产生中间的透明裁剪区域，一定要另起一个Layer（层）
         canvas.saveLayer(0, 0, this.getWidth(), this.getHeight(), null, Canvas.ALL_SAVE_FLAG);
-
         //设置背景
         canvas.drawColor(Color.parseColor("#a8000000"));
         paint.setXfermode(xfermode);

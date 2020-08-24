@@ -132,10 +132,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "handleMessage: " + msg.obj);
                     newName = (String) msg.obj;
                     OkHttpClient client1 = new OkHttpClient();
-//                    final FormBody formBody = new FormBody.Builder()
-//                            .add("userId", userid)
-//                            .add("url", newName)
-//                            .build();
                     String post = "{" +
                             "userId:'" + userid1 + '\'' +
                             ", url:'" + newName + '\'' +
@@ -162,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
                             HeadPic headPic = gson.fromJson(string, HeadPic.class);
                             if (headPic.getCode() == 200) {
                                 String tete = "mytest";
-                                Log.e(TAG, "onResponse: " + tete);
                                 mNewWeb.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -179,7 +174,6 @@ public class MainActivity extends AppCompatActivity {
                                         mNewWeb.callHandler("double", "tete", new CallBackFunction() {
                                             @Override
                                             public void onCallBack(String data) {
-                                                Log.e(TAG, "onCallBack: ");
                                             }
                                         });
                                     }
@@ -253,26 +247,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        requestWindowFeature(Window.FEATURE_NO_TITLE);
-//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-//        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
-//        if (rects == true) {
-//            //有刘海屏
-//            setAndroidNativeLightStatusBar(MainActivity.this, false);//白色字体
-//            WindowManager.LayoutParams lp = getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            getWindow().setAttributes(lp);
-//        } else if (rects == false) {
-//            //无刘海屏
-////            WindowManager.LayoutParams lp = getWindow().getAttributes();
-////            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-////            getWindow().setAttributes(lp);
-//
-////            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-////            View decor = this.getWindow().getDecorView();
-////            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-////            setAndroidNativeLightStatusBar(MainActivity.this, true);//白色字体
-//        }
         setContentView(R.layout.activity_main);
         createNotificationChannel();
         ButterKnife.inject(this);
@@ -283,7 +257,6 @@ public class MainActivity extends AppCompatActivity {
         Uri uri = getIntent().getData();
         if (uri != null) {
             String id = uri.getQueryParameter("thirdId");
-            Log.e(TAG, "外部打开的链接: 0" + id);
             if (id != null) {
                 Intent intent = new Intent(this, NewsActivity.class);
                 intent.putExtra("url", id);
@@ -355,7 +328,6 @@ public class MainActivity extends AppCompatActivity {
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
         webSettings.setUserAgentString(userAgentString + "; application-center");
-        Log.e(TAG, "webView: " + userAgentString);
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
@@ -367,16 +339,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {
                 myOrder = name;
-                Log.e(TAG, "onCityClick: " + name);
-//                if (name.equals(Constant.MyOrderList)) {
-//                    if (pageReload == true) {
-//                        Log.e(TAG, "onCityClick: 刷新了");
-//                        mNewWeb.reload();
-//                        pageReload = false;
-//                    } else {
-//
-//                    }
-//                } else
                 if (name.equals(Constant.login_url)) {
                     mTextPolicyReminder.setVisibility(View.VISIBLE);
                     mCloseLoginPage.setVisibility(View.VISIBLE);
@@ -412,8 +374,9 @@ public class MainActivity extends AppCompatActivity {
                         SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                         String userInfo = sb.getString("userInfo", "");
                         if (myOrder.contains("/home")) {
-                            Log.e(TAG, "onKey: 退出");
                             finish();
+                        } else if (myOrder.contains("/information")) {
+                            webView(Constant.text_url);
                         } else {
                             mNewWeb.goBack();
                         }
@@ -443,7 +406,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 if (!mVersionName.isEmpty()) {
-//                    mEditText.setText("通过调用Native方法接收数据：\n" + data);
                     function.onCallBack("V" + mVersionName);
                 }
             }
@@ -472,7 +434,6 @@ public class MainActivity extends AppCompatActivity {
                 clearSize = CleanDataUtils.getTotalCacheSize(Objects.requireNonNull(MainActivity.this));
                 if (!clearSize.isEmpty()) {
                     ChaceSize = false;
-                    Log.e(TAG, "handler: " + clearSize);
                     function.onCallBack(clearSize);
                 }
             }
@@ -577,7 +538,6 @@ public class MainActivity extends AppCompatActivity {
                 if (!usertoken.isEmpty()) {
                     usertoken1 = usertoken;
                     userid1 = userID;
-                    Log.e(TAG, "getToken: " + usertoken1);
 
                     SharedPreferences sb = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
                     SharedPreferences.Editor edit = sb.edit();
@@ -586,7 +546,6 @@ public class MainActivity extends AppCompatActivity {
 
                     //获取userId用于通知
                     String notifyUserId = sb.getString("NotifyUserId", "");
-                    Log.e(TAG, "getToken: " + notifyUserId);
 //                deleteUserQueue(); //删除队列
                     if (!TextUtils.isEmpty(notifyUserId)) {
                         notificationChange(userid1, "0");
@@ -604,8 +563,6 @@ public class MainActivity extends AppCompatActivity {
                 String redirectUrl = (String) map.get("redirectUrl");
                 int appLyId = (int) map.get("appId");
                 String appId = String.valueOf(appLyId);
-                Log.e(TAG, "跳转第三方: " + redirectUrl + "---" + appId);
-
                 if (!redirectUrl.isEmpty()) {
                     Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
                     intent.putExtra("url", redirectUrl);
@@ -618,8 +575,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
+        //一下两个功能一样
         mNewWeb.registerHandler("NewNotifiction", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                gotoSet();
+            }
+        });
+
+        mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
                 gotoSet();
@@ -634,12 +598,12 @@ public class MainActivity extends AppCompatActivity {
                 String link = (String) map.get("link");
                 String code = (String) map.get("code");
                 String token = (String) map.get("token");
-
-                if (!link.isEmpty()) {
-                    Log.e(TAG, "showNewsParams: " + link);
+                String from = (String) map.get("from");
+                if (!data.isEmpty()) {
                     Intent intent = new Intent(MainActivity.this, NewsActivity.class);
                     intent.putExtra("url", link);
                     intent.putExtra("token", token1);
+                    intent.putExtra("from", from);
                     startActivity(intent);
                 } else {
                     Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
@@ -657,7 +621,6 @@ public class MainActivity extends AppCompatActivity {
                 String outTradeNo = (String) map.get("outTradeNo");
 
                 pageReload = true;
-                Log.e(TAG, "CashierDeskGo: " + userId + "--" + orderNo + "--" + outTradeNo + "--" + usertoken1);
                 Intent intent = new Intent(MainActivity.this, IntentOpenActivity.class);
                 intent.putExtra("userId", userId);
                 intent.putExtra("orderNo", orderNo);
@@ -828,7 +791,6 @@ public class MainActivity extends AppCompatActivity {
             if (!usertoken.isEmpty()) {
                 usertoken1 = usertoken;
                 userid1 = userid;
-                Log.e(TAG, "getToken: " + usertoken1);
 
                 SharedPreferences sb = context.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
                 SharedPreferences.Editor edit = sb.edit();
@@ -837,7 +799,6 @@ public class MainActivity extends AppCompatActivity {
 
                 //获取userId用于通知
                 String notifyUserId = sb.getString("NotifyUserId", "");
-                Log.e(TAG, "getToken: " + notifyUserId);
 //                deleteUserQueue(); //删除队列
                 if (!TextUtils.isEmpty(notifyUserId)) {
                     notificationChange(userid1, "0");
@@ -926,7 +887,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.e(TAG, "onResponse: " + response.body().string());
             }
         });
     }
@@ -956,7 +916,6 @@ public class MainActivity extends AppCompatActivity {
                     mNewWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "1" + "\")", new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String value) {
-                            Log.e("wangpan", "---");
                         }
                     });
                 }
@@ -970,7 +929,6 @@ public class MainActivity extends AppCompatActivity {
                     mNewWeb.evaluateJavascript("window.sdk.paymentFeedback(\"" + "2" + "\")", new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String value) {
-                            Log.e("wangpan", "---");
                         }
                     });
                 }
@@ -978,7 +936,6 @@ public class MainActivity extends AppCompatActivity {
         } else if (event.equals("打开应用")) {
             webView(Constant.apply_url);
         } else if (event.equals("打开首页")) {
-            Log.e(TAG, "onMessageEvent:asdasdf ");
             webView(Constant.text_url);
         }
     }
@@ -987,12 +944,10 @@ public class MainActivity extends AppCompatActivity {
      * 收消息（从发布者那边订阅消息）
      */
     private void basicConsume(final Handler handler) {
-        Log.e(TAG, "run:1 ");
         try {
             //连接
             Connection connection = getConnection();
             if (connection != null) {
-                Log.e(TAG, "run:2 ");
                 //通道
                 channel = connection.createChannel();
                 AMQP.Queue.DeclareOk declareOk = channel.queueDeclare("app.notice.queue." + userid1, true, false, false, null);
@@ -1007,13 +962,10 @@ public class MainActivity extends AppCompatActivity {
                             throws IOException {
                         super.handleDelivery(consumerTag, envelope, properties, body);
                         receiveMsg = new String(body, "UTF-8");
-                        Log.e(TAG, "handleDelivery: " + receiveMsg);
                         NotificationConsune();
                     }
                 };
                 channel.basicConsume("app.notice.queue." + userid1, true, consumer);
-
-                Log.e(TAG, "run:3 ");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -1051,8 +1003,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendNotification() {
         Gson gson1 = new Gson();
-//        Intent msgIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(getPackageName());//获取启动Activity
-//        PendingIntent pendingIntent = PendingIntent.getActivity(getApplication(), 0, msgIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         Intent intent = new Intent(this, NotificationClickReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
         Log.e(TAG, "sendNotification: " + receiveMsg);
@@ -1062,7 +1012,6 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(notifyToken) && !TextUtils.isEmpty(notificationBean.getUserId())
                 && userid1.equals(notificationBean.getUserId()) && !notificationBean.getTitle().equals("推送消息数量")) {
 //            try {
-            Log.e(TAG, "notifyToken: " + receiveMsg + "--------");
             ShortcutBadger.applyCount(MainActivity.this, badgeCount++); //for 1.1.4+
             Notification notification = new NotificationCompat.Builder(MainActivity.this, channel_id)
                     .setContentTitle(notificationBean.getTitle())
@@ -1072,14 +1021,12 @@ public class MainActivity extends AppCompatActivity {
                     .setDefaults(DEFAULT_ALL)
                     .setColor(Color.parseColor("#5cabfa"))
                     .setContentIntent(pendingIntent)
-                    .setAutoCancel(true).setNumber(badgeCount)
+                    .setAutoCancel(true)
+                    .setNumber(badgeCount)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.logo))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .build();
-            Log.e(TAG, "notifyToken: " + badgeCount);
             notificationManager.notify(NOTIFICATION_NUMBER, notification);
-//                channel.basicAck(envelope.getDeliveryTag(),true);
-//            if (badgeCount != 0) {
             mNewWeb.post(new Runnable() {
                 @Override
                 public void run() {
@@ -1089,12 +1036,15 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     });
+
+                    mNewWeb.callHandler("noticeTimes", badgeCount + "", new CallBackFunction() {
+                        @Override
+                        public void onCallBack(String data) {
+
+                        }
+                    });
                 }
             });
-//            }
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
         } else {
             //不做处理
         }
@@ -1170,20 +1120,15 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onResume() {
-        Log.e(TAG, "onResume");
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
-                Log.e(TAG, "onResume");
             }
         });
-
         super.onResume();
     }
 
     private void notificationChange(String userId, String openStatus) {
-        Log.e(TAG, "notificationChange: 123");
-
         OkHttpClient client = new OkHttpClient();
         String post = "{" +
                 "userId:'" + userId + '\'' +
@@ -1208,7 +1153,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String string = response.body().string();
-                Log.e(TAG, "onResponse: 2345" + string);
             }
         });
     }
@@ -1217,9 +1161,11 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onStart() {
+        badgeCount = 0;
+        notificationManager.cancel(NOTIFICATION_NUMBER);
+        ShortcutBadger.removeCount(this);
         SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
         String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
-        Log.e(TAG, "onRestart: " + apply_url);
         if (!TextUtils.isEmpty(apply_url)) {
             webView(apply_url);
         }
@@ -1230,7 +1176,6 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
-                Log.e(TAG, "onStart");
             }
         });
         super.onStart();
@@ -1239,9 +1184,11 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
-        Log.e(TAG, "onRestart: ");
+        badgeCount = 0;
 //        mNewWeb.reload(); //订单页面支付完成返回刷新订单页面
-        ShortcutBadger.applyCount(this, 0);
+//        ShortcutBadger.applyCount(this, badgeCount);
+        ShortcutBadger.removeCount(this);
+        notificationManager.cancel(NOTIFICATION_NUMBER);
         boolean notificationEnabled = isNotificationEnabled(this);
         if (notificationEnabled == true && usertoken1 != null) {
             notificationChange(userid1, "0");
@@ -1277,7 +1224,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        Log.e(TAG, "onStop: ");
         new Thread(() -> basicConsume(myHandler)).start();
         super.onStop();
     }
@@ -1412,7 +1358,6 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == 10 && resultCode == 2) {//通过请求码和返回码区分不同的返回
             String apply_url = intent.getStringExtra("apply_url");//data:后一个页面putExtra()中设置的键名
-            Log.e(TAG, "onActivityResult: " + apply_url);
             webView(apply_url);
         }
         switch (requestCode) {

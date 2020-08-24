@@ -5,10 +5,34 @@
     android:layout_height="match_parent"
     tools:context=".ui.NewsActivity">
 
+    <RelativeLayout
+        android:id="@+id/new_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <ImageView
+            android:id="@+id/new_back_image1"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:padding="18dp"
+            android:src="@drawable/apply_back" />
+
+        <TextView
+            android:id="@+id/new_title_text1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
+
+    </RelativeLayout>
+
     <com.github.lzyzsd.jsbridge.BridgeWebView
         android:id="@+id/new_Web_1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_below="@+id/new_title">
 
     </com.github.lzyzsd.jsbridge.BridgeWebView>
 
@@ -30,13 +54,14 @@
         android:id="@+id/glide_gif"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FBFBFB">
+        android:background="#FBFBFB"
+        android:visibility="gone">
 
         <ImageView
             android:id="@+id/image_view"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_centerInParent="true"/>
+            android:layout_centerInParent="true" />
     </RelativeLayout>
 
 </RelativeLayout>

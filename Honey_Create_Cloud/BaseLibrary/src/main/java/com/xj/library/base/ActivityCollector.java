@@ -6,11 +6,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author xujun  on 2016/12/27.
- *  gdutxiaoxu@163.com
- */
-
 public class ActivityCollector {
 
     public static final String TAG = "ActivityCollector";
@@ -46,6 +41,5 @@ public class ActivityCollector {
             System.exit(0);
             Log.e(TAG, "quit: e=" + e.getMessage());
         }
-
     }
 }

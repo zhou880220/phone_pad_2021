@@ -2,8 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/popupwindow_background">
+    android:orientation="vertical">
 
     <com.example.honey_create_cloud.recorder.AudioRecorderButton
         android:id="@+id/id_recorder_button"

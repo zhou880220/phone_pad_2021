@@ -6,10 +6,6 @@ import android.content.Intent;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 
-
-/**
- * Created by jun xu on 19-3-18.
- */
 public class ActivityResultHelper {
 
     private static final String TAG = "ActivityResultHelper";

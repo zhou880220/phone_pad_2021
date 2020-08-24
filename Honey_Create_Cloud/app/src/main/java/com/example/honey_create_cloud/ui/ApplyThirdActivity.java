@@ -131,8 +131,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -222,7 +220,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                             List<TakePhoneBean.DataBean> data = takePhoneBean.getData();
                             String fileUrl1 = data.get(0).getFileUrl();
                             String imageurl = newName + "&&" + fileUrl1;
-                            Log.e(TAG, "onResponse: " + "---" + imageurl);
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -303,22 +300,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        requestWindowFeature(Window.FEATURE_NO_TITLE);
-//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-//        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
-//        if (rects == true) {
-//            //有刘海屏
-//            setAndroidNativeLightStatusBar(ApplyThirdActivity.this, false);//白色字体
-//            WindowManager.LayoutParams lp = getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            getWindow().setAttributes(lp);
-//        } else if (rects == false) {
-//            //无刘海屏
-////            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-////            setAndroidNativeLightStatusBar(ApplyThirdActivity.this, true);//黑色字体
-//        }
         setContentView(R.layout.activity_apply_third);
-//        returnActivityC = true;
         ButterKnife.inject(this);
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
@@ -366,7 +348,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 backgroundAlpha(ApplyThirdActivity.this, 0.5f);//0.0-welcome1.0
                 View centerView = LayoutInflater.from(ApplyThirdActivity.this).inflate(R.layout.windowpopup, null);
                 PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
-                        940);
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
                 popupWindow.setTouchable(true);
                 popupWindow.setFocusable(true);
                 popupWindow.setOutsideTouchable(false);
@@ -479,7 +461,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getSystemVersion", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "{version:" + "Android" + SystemUtil.getSystemVersion() + ",model:" + SystemUtil.getSystemModel() + "}");
                 function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + SystemUtil.getSystemVersion() + "\"" + ",\"" + "model" + "\"" + ":\"" + SystemUtil.getSystemModel() + "\"" + "}");
             }
         });
@@ -843,6 +824,13 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        mNewWeb.registerHandler("openNotification", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                gotoSet();
+            }
+        });
     }
 
     class MJavaScriptInterface implements View.OnClickListener {
@@ -1153,18 +1141,16 @@ public class ApplyThirdActivity extends AppCompatActivity {
         @Override
         public void onCancel() {
             if (shareType != QQShare.SHARE_TO_QQ_TYPE_IMAGE) {
-                Log.e(TAG, "onCancel: 取消");
             }
         }
 
         @Override
         public void onComplete(Object response) {
-            Log.e(TAG, "onComplete: 成功");
         }
 
         @Override
         public void onError(UiError e) {
-            Log.e(TAG, "onError: 失败");
+
         }
     };
 
@@ -1220,7 +1206,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     //已存在相同下载
                     @Override
                     protected void warn(BaseDownloadTask task) {
-                        Log.e(TAG, "" + task.getPath());
                     }
                 }).start();
 
@@ -1245,45 +1230,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-//    public void getImage(String path) {
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                URL imageUrl = null;
-//                try {
-//                    imageUrl = new URL(path);
-//                } catch (MalformedURLException e) {
-//                    e.printStackTrace();
-//                }
-//                try {
-//                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
-//                    conn.setDoInput(true);
-//                    conn.connect();
-//                    InputStream is = conn.getInputStream();
-//                    Bitmap bitmap = BitmapFactory.decodeStream(is);
-//                    bitmap1 = createBitmapThumbnail(bitmap, false);
-//                    is.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
-//                int width = bitmap.getWidth();
-//                int height = bitmap.getHeight();
-//                int newWidth = 80;
-//                int newHeight = 80;
-//                float scaleWidth = ((float) newWidth) / width;
-//                float scaleHeight = ((float) newHeight) / height;
-//                Matrix matrix = new Matrix();
-//                matrix.postScale(scaleWidth, scaleHeight);
-//                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
-//                if (needRecycler) bitmap.recycle();
-//                return newBitMap;
-//            }
-//        }).start();
-//    }
-
     /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
      */
@@ -1298,7 +1244,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         Bitmap thumb = null;
         try {
             thumb = BitmapFactory.decodeStream(new URL(shareSdkBean.getIcon()).openStream());
-            Log.e(TAG, "wechatShare: " + shareSdkBean.getIcon());
 //注意下面的这句压缩，120，150是长宽。
 //一定要压缩，不然会分享失败
             Bitmap thumbBmp = compressImage(thumb);
@@ -1373,7 +1318,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
             fos.flush();
             fos.close();
         } catch (Exception e) {
-            Log.e("111", e.getMessage());
             e.printStackTrace();
         }
 
@@ -1382,7 +1326,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         try {
             MediaStore.Images.Media.insertImage(context.getContentResolver(), path, fileName, null);
         } catch (FileNotFoundException e) {
-            Log.e("333", e.getMessage());
             e.printStackTrace();
         }
         // 最后通知图库更新
@@ -1404,45 +1347,15 @@ public class ApplyThirdActivity extends AppCompatActivity {
         String subUrl = url.substring(url.lastIndexOf("/") + 1);
         Log.e(TAG, "截取的subUrl: " + subUrl);
         if (!TextUtils.isEmpty(subUrl) && subUrl.contains("%")) {
-//                subUrl = new String(decode, StandardCharsets.UTF_8.name());
             try {
                 subUrl = URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
             } catch (Exception e) {
                 e.printStackTrace();
             }
             Log.e(TAG, "转换的subUrl: " + subUrl);
-//                String b = inputJudge(subUrl);
-//                Log.e(TAG, "wp: "+b);
-//                Log.e(TAG, "wp: "+URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name()) );
-//                    return URLDecoder.decode(subUrl, StandardCharsets.UTF_8.name());
         }
         Log.e(TAG, "现subUrl: " + subUrl);
         return subUrl == null ? url.substring(url.lastIndexOf("/") + 1) : subUrl;
-    }
-
-    /**
-     * 判断是否包含特殊字符
-     *
-     * @return false:未包含 true：包含
-     */
-    public static boolean inputJudge(String editText) {
-        String speChat = "[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
-        Pattern pattern = Pattern.compile(speChat);
-        Log.d("inputJudge", "pattern: " + pattern);
-        Matcher matcher = pattern.matcher(editText);
-        Log.d("inputJudge", "matcher: " + matcher);
-        if (matcher.find()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private void updatePhotos() {
-        // 该广播即使多发（即选取照片成功时也发送）也没有关系，只是唤醒系统刷新媒体文件
-        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        intent.setData(imageUriThreeApply);
-        sendBroadcast(intent);
     }
 
     //获取手机唯一标识
@@ -1778,7 +1691,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                             mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
                                 @Override
                                 public void onReceiveValue(String value) {
-                                    Log.e(TAG, "onReceiveValue: 取消");
                                 }
                             });
                             mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
@@ -1803,7 +1715,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                         mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
                             @Override
                             public void onReceiveValue(String value) {
-                                Log.e(TAG, "onReceiveValue: 取消");
                             }
                         });
                         mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
@@ -1822,7 +1733,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                             mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
                                 @Override
                                 public void onReceiveValue(String value) {
-                                    Log.e(TAG, "onReceiveValue: 取消");
                                 }
                             });
                             mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
@@ -1846,13 +1756,11 @@ public class ApplyThirdActivity extends AppCompatActivity {
                         return;
                     }
                     String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
-                    Log.e(TAG, "onActivityResult: " + cropImagePath);
                     takePhoneUrl(cropImagePath);
                 } else {
                     mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String value) {
-                            Log.e(TAG, "onReceiveValue: 取消");
                         }
                     });
                     mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
@@ -2009,16 +1917,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         return null;
     }
 
-    /**
-     * Get the value of the data column for this Uri. This is useful for
-     * MediaStore Uris, and other file-based ContentProviders.
-     *
-     * @param context       The context.
-     * @param uri           The Uri to query.
-     * @param selection     (Optional) Filter used in the query.
-     * @param selectionArgs (Optional) Selection arguments used in the query.
-     * @return The value of the _data column, which is typically a file path.
-     */
     public String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
 
         Cursor cursor = null;
@@ -2039,26 +1937,14 @@ public class ApplyThirdActivity extends AppCompatActivity {
         return null;
     }
 
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is ExternalStorageProvider.
-     */
     public boolean isExternalStorageDocument(Uri uri) {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
 
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is DownloadsProvider.
-     */
     public boolean isDownloadsDocument(Uri uri) {
         return "com.android.providers.downloads.documents".equals(uri.getAuthority());
     }
 
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is MediaProvider.
-     */
     public boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
@@ -2357,15 +2243,15 @@ public class ApplyThirdActivity extends AppCompatActivity {
             public void onCityClick(String name) {
                 goBackUrl = name;
                 Log.e(TAG, "onCityClick: " + name);
-//                try {
-//                    if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
-//                        mFabMore.setVisibility(View.GONE);
-//                    } else {
-//                        mFabMore.setVisibility(View.VISIBLE);
-//                    }
-//                } catch (Exception e) {
-//                    mFabMore.setVisibility(View.VISIBLE);
-//                }
+                try {
+                    if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
+                        mApplyBackImage3.setVisibility(View.GONE);
+                    } else {
+                        mApplyBackImage3.setVisibility(View.VISIBLE);
+                    }
+                } catch (Exception e) {
+                    mApplyBackImage3.setVisibility(View.VISIBLE);
+                }
             }
         });
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
@@ -2416,7 +2302,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 if (acceptTypes[0].equals("*/*")) {
                     openFileChooserActivity(); //文件系统管理
                 } else if (acceptTypes[0].equals("image/*")) {
-                    Log.e(TAG, "onShowFileChooser: 打开系统拍照及相册选取");
                     openImageChooserActivity();//打开系统拍照及相册选取
                 } else if (acceptTypes[0].equals("video/*")) {
                     openVideoChooserActivity();//打开系统拍摄/选取视频
@@ -2504,8 +2389,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 }
             }
         });
-
-
     }
 
     /**
@@ -2569,7 +2452,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 mNewWeb.evaluateJavascript("window.sdk.noticeOfPayment(\"" + s2 + "\")", new ValueCallback<String>() {
                     @Override
                     public void onReceiveValue(String value) {
-                        Log.e(TAG, "onReceiveValue" + s2);
                     }
                 });
                 /**

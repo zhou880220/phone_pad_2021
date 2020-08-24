@@ -49,8 +49,8 @@
                 android:id="@+id/apply_menu_home1"
                 android:layout_width="43dp"
                 android:layout_height="32dp"
-                android:padding="10dp"
-                android:layout_gravity="center"
+                android:padding="13dp"
+                android:scaleType="centerCrop"
                 android:src="@mipmap/back_home" />
         </LinearLayout>
 

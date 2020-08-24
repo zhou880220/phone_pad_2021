@@ -26,6 +26,7 @@ import android.webkit.WebSettings;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -79,6 +80,12 @@ public class NewsActivity extends AppCompatActivity {
     View mWebError;
     @InjectView(R.id.glide_gif)
     View mLoadingPage;
+    @InjectView(R.id.new_title)
+    RelativeLayout mNewTitle;
+    @InjectView(R.id.new_back_image1)
+    ImageView mNewBackImage1;
+    @InjectView(R.id.new_title_text1)
+    TextView mNewTitleText1;
     private MWebChromeClient mWebChromeClient;
     private IWXAPI wxApi;
     public static Tencent mTencent;
@@ -93,26 +100,33 @@ public class NewsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        requestWindowFeature(Window.FEATURE_NO_TITLE);
-//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-//        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
-//        if (rects == true) {
-//            //有刘海屏
-//            setAndroidNativeLightStatusBar(NewsActivity.this, false);//白色字体
-//            WindowManager.LayoutParams lp = getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            getWindow().setAttributes(lp);
-//        } else if (rects == false) {
-//            //无刘海屏
-////            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-////            setAndroidNativeLightStatusBar(NewsActivity.this, true);//黑色字体
-//        }
         setContentView(R.layout.activity_news);
         ButterKnife.inject(this);
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
+        String from = intent.getStringExtra("from");
+        if (from != null) {
+            initView(from);
+        }
         webView(url);
         mLodingTime();
+    }
+
+    private void initView(String from) {
+        //用于某些链接不需要显示title处理
+        if (from.equals("banner") || from.equals("home")) {
+            mNewTitle.setVisibility(View.GONE);
+        } else {
+            mNewTitle.setVisibility(View.VISIBLE);
+        }
+
+        mNewBackImage1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+        mNewTitleText1.setText("制造云头条");
     }
 
     /**
@@ -186,7 +200,6 @@ public class NewsActivity extends AppCompatActivity {
         mNewWeb.registerHandler("backNewParams", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "handler: 关闭了");
                 finish();
             }
         });
@@ -458,18 +471,17 @@ public class NewsActivity extends AppCompatActivity {
         @Override
         public void onCancel() {
             if (shareType != QQShare.SHARE_TO_QQ_TYPE_IMAGE) {
-                Log.e(TAG, "onCancel: 取消");
             }
         }
 
         @Override
         public void onComplete(Object response) {
-            Log.e(TAG, "onComplete: 成功");
+
         }
 
         @Override
         public void onError(UiError e) {
-            Log.e(TAG, "onError: 失败");
+
         }
     };
 
@@ -492,45 +504,6 @@ public class NewsActivity extends AppCompatActivity {
         mWebChromeClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError, mLoadingPage);
         ead_web.setWebChromeClient(mWebChromeClient);
     }
-
-//    public void getImage(String path) {
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                URL imageUrl = null;
-//                try {
-//                    imageUrl = new URL(path);
-//                } catch (MalformedURLException e) {
-//                    e.printStackTrace();
-//                }
-//                try {
-//                    HttpURLConnection conn = (HttpURLConnection) imageUrl.openConnection();
-//                    conn.setDoInput(true);
-//                    conn.connect();
-//                    InputStream is = conn.getInputStream();
-//                    Bitmap bitmap = BitmapFactory.decodeStream(is);
-//                    bitmap1 = createBitmapThumbnail(bitmap, false);
-//                    is.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//            public Bitmap createBitmapThumbnail(Bitmap bitmap, boolean needRecycler) {
-//                int width = bitmap.getWidth();
-//                int height = bitmap.getHeight();
-//                int newWidth = 80;
-//                int newHeight = 80;
-//                float scaleWidth = ((float) newWidth) / width;
-//                float scaleHeight = ((float) newHeight) / height;
-//                Matrix matrix = new Matrix();
-//                matrix.postScale(scaleWidth, scaleHeight);
-//                Bitmap newBitMap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
-//                if (needRecycler) bitmap.recycle();
-//                return newBitMap;
-//            }
-//        }).start();
-//    }
 
     /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
@@ -621,7 +594,6 @@ public class NewsActivity extends AppCompatActivity {
             fos.flush();
             fos.close();
         } catch (Exception e) {
-            Log.e("111", e.getMessage());
             e.printStackTrace();
         }
 
@@ -630,7 +602,6 @@ public class NewsActivity extends AppCompatActivity {
         try {
             MediaStore.Images.Media.insertImage(context.getContentResolver(), path, fileName, null);
         } catch (FileNotFoundException e) {
-            Log.e("333", e.getMessage());
             e.printStackTrace();
         }
         // 最后通知图库更新

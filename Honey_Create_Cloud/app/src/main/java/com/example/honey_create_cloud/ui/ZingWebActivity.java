@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -19,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud.R;
-import com.example.honey_create_cloud.util.ScreenAdapterUtil;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -43,20 +40,6 @@ public class ZingWebActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        requestWindowFeature(Window.FEATURE_NO_TITLE);
-//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-//        boolean rects = ScreenAdapterUtil.hasNotchInScreen(this);
-//        if (rects == true) {
-//            //有刘海屏
-//            setAndroidNativeLightStatusBar(ZingWebActivity.this, false);//白色字体
-//            WindowManager.LayoutParams lp = getWindow().getAttributes();
-//            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-//            getWindow().setAttributes(lp);
-//        } else if (rects == false) {
-//            //无刘海屏
-////            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-////            setAndroidNativeLightStatusBar(ZingWebActivity.this, true);//黑色字体
-//        }
         setContentView(R.layout.activity_zing_web);
         ButterKnife.inject(this);
         Intent intent = getIntent();

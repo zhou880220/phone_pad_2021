@@ -11,8 +11,6 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.ProgressBar;
 
-import java.io.File;
-
 public class MWebChromeClient extends WebChromeClient {
     private Context context;
     private ProgressBar progressBar;

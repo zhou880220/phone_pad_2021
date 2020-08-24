@@ -109,9 +109,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
         if (mContactList.get(position).getLogoUrl() != null){
             //            Glide.with(context).load(beanList.get(position).getSP_LOGOURL()).apply((RequestOptions.bitmapTransform
 //                    (new RoundedCorners(30)))).into((ImageView) viewHolder.studio_image);
-            Glide.with(context).load(mContactList.get(position).getLogoUrl()).apply(RequestOptions.bitmapTransform(new RoundedCorners(30))).into(holder.imageView);
-
-
+            Glide.with(context).load(mContactList.get(position).getLogoUrl()).apply(RequestOptions.bitmapTransform(new RoundedCorners(14))).into(holder.imageView);
             holder.appNameView.setText(mContactList.get(position).getAppName());
         }
     }
