@@ -114,19 +114,25 @@ public class NewsActivity extends AppCompatActivity {
 
     private void initView(String from) {
         //用于某些链接不需要显示title处理
-        if (from.equals("banner") || from.equals("home")) {
+        if (from.equals("banner") || from.equals("home")) {  //该页面不加头部
             mNewTitle.setVisibility(View.GONE);
-        } else {
+        } else if (from.equals("service")) {    //该页面显示头部 不显示标题
             mNewTitle.setVisibility(View.VISIBLE);
+        } else if(from.equals("news")){    //该页面显示头部加返回键 显示标题
+            mNewTitle.setVisibility(View.VISIBLE);
+            mNewTitleText1.setText("制造云头条");
         }
 
-        mNewBackImage1.setOnClickListener(new View.OnClickListener() {
+        mNewBackImage1.setOnClickListener(new View.OnClickListener() {  //返回按钮  逐级返回否则关闭页面
             @Override
             public void onClick(View v) {
-                finish();
+                if (mNewWeb.canGoBack()) {
+                    mNewWeb.goBack();
+                } else {
+                    finish();
+                }
             }
         });
-        mNewTitleText1.setText("制造云头条");
     }
 
     /**
@@ -154,8 +160,7 @@ public class NewsActivity extends AppCompatActivity {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        if (goBackUrl.contains("mobileInformation")) {
-//                            returnActivityA = false;
+                        if (goBackUrl.contains("mobileInformation")) { //咨询页面返回拦截
                             finish();
                         } else {
                             mNewWeb.goBack();
@@ -168,9 +173,7 @@ public class NewsActivity extends AppCompatActivity {
         });
         wvClientSetting(mNewWeb);
 
-        /**
-         * 传递用户登录信息
-         */
+        //传递用户登录信息
         mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -183,9 +186,8 @@ public class NewsActivity extends AppCompatActivity {
                 }
             }
         });
-        /**
-         * 用户登录异常回调登录页
-         */
+
+        //用户登录异常回调登录页
         mNewWeb.registerHandler("goLogin", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -197,6 +199,7 @@ public class NewsActivity extends AppCompatActivity {
             }
         });
 
+        //接口废弃
         mNewWeb.registerHandler("backNewParams", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -210,6 +213,7 @@ public class NewsActivity extends AppCompatActivity {
         mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "shareInterface: "+data);
                 //微信初始化
                 wxApi = WXAPIFactory.createWXAPI(NewsActivity.this, Constant.APP_ID);
                 wxApi.registerApp(Constant.APP_ID);

@@ -696,6 +696,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(ApplyFirstActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
                     }
+                } else{
+
                 }
             }
         });
@@ -825,6 +827,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        //打开手机系统通知界面
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {

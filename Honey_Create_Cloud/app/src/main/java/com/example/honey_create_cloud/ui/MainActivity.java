@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
     private String mVersionName = "";
     private String totalCacheSize = "";
     private String clearSize = "";
-    private static final String[] PERMISSIONS_APPLICATION = {
+    private static final String[] PERMISSIONS_APPLICATION = { //用户授权
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
@@ -267,6 +267,10 @@ public class MainActivity extends AppCompatActivity {
         mTextPolicyReminder.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
+    /**
+     * @param text  用户协议信息
+     * @return
+     */
     private SpannableString generateSp(String text) {
         //定义需要操作的内容
         String high_light_1 = "《用户协议》";
@@ -337,8 +341,9 @@ public class MainActivity extends AppCompatActivity {
         MyWebViewClient myWebViewClient = new MyWebViewClient(mNewWeb, mWebError);
         myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
             @Override
-            public void onCityClick(String name) {
+            public void onCityClick(String name) {  //动态监听页面加载链接
                 myOrder = name;
+                Log.e(TAG, "onCityClick: "+name );
                 if (name.equals(Constant.login_url)) {
                     mTextPolicyReminder.setVisibility(View.VISIBLE);
                     mCloseLoginPage.setVisibility(View.VISIBLE);
@@ -373,9 +378,9 @@ public class MainActivity extends AppCompatActivity {
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
                         SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                         String userInfo = sb.getString("userInfo", "");
-                        if (myOrder.contains("/home")) {
+                        if (myOrder.contains("/home")) { //首页拦截物理返回键  直接关闭应用
                             finish();
-                        } else if (myOrder.contains("/information")) {
+                        } else if (myOrder.contains("/information")) { //确保从该页面返回的是首页
                             webView(Constant.text_url);
                         } else {
                             mNewWeb.goBack();
@@ -386,7 +391,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-
+        //登录页，注册页右上角关闭按钮 返回首页
         mCloseLoginPage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -396,7 +401,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
 
         //js交互接口定义
         mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
@@ -411,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //初始缓存
+        //初始缓存 需用户关闭应用 再次打开
         mNewWeb.registerHandler("getCache", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -425,7 +429,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //用户点击后缓存
+        //用户点击清除后的缓存
         mNewWeb.registerHandler("ClearCache", new BridgeHandler() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
@@ -439,7 +443,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //拍照
+        //跳转到拍照界面
         mNewWeb.registerHandler("getTakeCamera", new BridgeHandler() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
@@ -467,7 +471,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //相册
+        //跳转到系统相册界面
         mNewWeb.registerHandler("getPhotoAlbum", new BridgeHandler() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
@@ -495,9 +499,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /**
-         * 用户加载初始通知
-         */
+        //用户加载初始通知
         mNewWeb.registerHandler("getNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -510,10 +512,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /**
-         * 获取用户基本信息
-         */
+        //存储用户登录页面传递的信息
+        mNewWeb.registerHandler("setUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "获取用户登录信息: " + data);
+                if (!data.isEmpty()) {
+                    SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit = sb.edit();
+                    edit.putString("userInfo", data);
+                    edit.commit();
+                }
+            }
+        });
+
+        //向页面传递用户登录基本信息
         mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
+
             @Override
             public void handler(String data, CallBackFunction function) {
                 SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
@@ -527,6 +542,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //获取用户登录token userID
         mNewWeb.registerHandler("getToken", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -555,6 +571,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //用户点击跳转打开第三方应用
         mNewWeb.registerHandler("showApplyParams", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -575,14 +592,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        //一下两个功能一样
+
+        //一下两个功能一样   跳转到系统通知页面
         mNewWeb.registerHandler("NewNotifiction", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
                 gotoSet();
             }
-        });
-
+        }); //可能不用
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -590,6 +607,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //用户点击跳转打开咨询页面
         mNewWeb.registerHandler("showNewsParams", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -611,6 +629,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //用户在订单页面点击支付跳转到支付页面
         mNewWeb.registerHandler("CashierDeskGo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -630,6 +649,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //用户点击跳转系统手机拨打电话界面  该接口用户自己页面拨打电话
         mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -642,6 +662,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //用户点击跳转系统手机拨打电话界面  该接口用于第三方拨打电话
+        mNewWeb.registerHandler("openCall", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                Map map = JSONObject.parseObject(data, Map.class);
+                String num = (String) map.get("num");
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+
+        //用户退出登录 清除基本存储信息
         mNewWeb.registerHandler("ClearUserInfo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -662,31 +695,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mNewWeb.registerHandler("setUserInfo", new BridgeHandler() {
-            @Override
-            public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "获取用户登录信息: " + data);
-                if (!data.isEmpty()) {
-                    SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                    SharedPreferences.Editor edit = sb.edit();
-                    edit.putString("userInfo", data);
-                    edit.commit();
-                }
-            }
-        });
-        /**
-         * 拨打电话
-         */
-        mNewWeb.registerHandler("openCall", new BridgeHandler() {
-            @Override
-            public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("num");
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            }
-        });
+        //用户点击跳转手机系统浏览器界面
         mNewWeb.registerHandler("intentBrowser", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
