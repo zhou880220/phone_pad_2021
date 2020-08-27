@@ -198,7 +198,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
                             .add("fileNames", newName)
-                            .add("bucketName", Constant.test_bucket_Name)
+                            .add("bucketName", Constant.prod_bucket_Name)
                             .add("folderName", "menu")
                             .build();
                     Request request = new Request.Builder()
@@ -696,7 +696,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(ApplyFirstActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
                     }
-                } else{
+                } else {
 
                 }
             }
@@ -774,7 +774,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     intent.putExtra("appId", appId);
                     intent.putExtra("token", token);
                     startActivity(intent);
-                    Log.e(TAG, "商品信息: " + num);
+                    Log.e(TAG, "商品信息1: " + num);
                 }
             }
         });
@@ -1989,7 +1989,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
-        builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
+        builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
         builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()

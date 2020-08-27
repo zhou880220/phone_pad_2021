@@ -118,7 +118,7 @@ public class NewsActivity extends AppCompatActivity {
             mNewTitle.setVisibility(View.GONE);
         } else if (from.equals("service")) {    //该页面显示头部 不显示标题
             mNewTitle.setVisibility(View.VISIBLE);
-        } else if(from.equals("news")){    //该页面显示头部加返回键 显示标题
+        } else if (from.equals("news")) {    //该页面显示头部加返回键 显示标题
             mNewTitle.setVisibility(View.VISIBLE);
             mNewTitleText1.setText("制造云头条");
         }
@@ -126,9 +126,13 @@ public class NewsActivity extends AppCompatActivity {
         mNewBackImage1.setOnClickListener(new View.OnClickListener() {  //返回按钮  逐级返回否则关闭页面
             @Override
             public void onClick(View v) {
-                if (mNewWeb.canGoBack()) {
-                    mNewWeb.goBack();
-                } else {
+                if (mNewWeb != null && mNewWeb.canGoBack()){
+                    if (goBackUrl.contains("/mobileInformation")) { //咨询页面返回拦截
+                        finish();
+                    }else {
+                        mNewWeb.goBack();
+                    }
+                }else{
                     finish();
                 }
             }
@@ -160,7 +164,7 @@ public class NewsActivity extends AppCompatActivity {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        if (goBackUrl.contains("mobileInformation")) { //咨询页面返回拦截
+                        if (goBackUrl.contains("/mobileInformation")) { //咨询页面返回拦截
                             finish();
                         } else {
                             mNewWeb.goBack();
@@ -213,7 +217,7 @@ public class NewsActivity extends AppCompatActivity {
         mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "shareInterface: "+data);
+                Log.e(TAG, "shareInterface: " + data);
                 //微信初始化
                 wxApi = WXAPIFactory.createWXAPI(NewsActivity.this, Constant.APP_ID);
                 wxApi.registerApp(Constant.APP_ID);
@@ -545,8 +549,9 @@ public class NewsActivity extends AppCompatActivity {
 
     private Bitmap compressImage(Bitmap image) {
 
+        Log.e(TAG, "compressImage: " );
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
+        image.compress(Bitmap.CompressFormat.JPEG, 10, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
         int options = 100;
         while (baos.toByteArray().length / 1024 > 32) {  //循环判断如果压缩后图片是否大于32kb,大于继续压缩
             baos.reset();//重置baos即清空baos

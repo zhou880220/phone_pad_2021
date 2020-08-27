@@ -356,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                     getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
                 } else if (name.contains("/about")) {
                     mTextPolicyReminder.setVisibility(View.VISIBLE);
-                    mCloseLoginPage.setVisibility(View.VISIBLE);
+                    mCloseLoginPage.setVisibility(View.GONE);
                     mTextPolicyReminderBack.setVisibility(View.VISIBLE);
                 } else {
                     pageReload = true;
@@ -1022,6 +1022,7 @@ public class MainActivity extends AppCompatActivity {
                 && userid1.equals(notificationBean.getUserId()) && !notificationBean.getTitle().equals("推送消息数量")) {
 //            try {
             ShortcutBadger.applyCount(MainActivity.this, badgeCount++); //for 1.1.4+
+            Log.e(TAG, "sendNotification: " + badgeCount);
             Notification notification = new NotificationCompat.Builder(MainActivity.this, channel_id)
                     .setContentTitle(notificationBean.getTitle())
                     .setContentText(notificationBean.getContent())
@@ -1065,10 +1066,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private Connection getConnection() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("119.3.28.24");//主机地址
-        factory.setPort(5672);// 端口号
-        factory.setUsername("honeycomb");// 用户名
-        factory.setPassword("honeycomb");// 密码
+        factory.setHost("122.112.141.135");//主机地址：192.168.1.105
+        factory.setPort(25672);// 端口号:25672
+        factory.setUsername("honeycom");// 用户名
+        factory.setPassword("wu168@QqFn2019");// 密码
         factory.setVirtualHost("/");
         try {
             return factory.newConnection();
@@ -1129,6 +1130,7 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onResume() {
+        notificationManager.cancel(NOTIFICATION_NUMBER);
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
@@ -1213,12 +1215,13 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.evaluateJavascript("window.sdk.getOrderNotice()", new ValueCallback<String>() {  //用于订单跳转支付后刷新订单页面
             @Override
             public void onReceiveValue(String value) {
-
+                Log.e(TAG, "onCallBack: 页面刷新了");
             }
         });
         mNewWeb.callHandler("getOrderNotice", "", new CallBackFunction() {  //用于订单跳转支付后刷新订单页面
             @Override
             public void onCallBack(String data) {
+                Log.e(TAG, "onCallBack: 页面刷新了");
 
             }
         });
@@ -1413,7 +1416,7 @@ public class MainActivity extends AppCompatActivity {
                     final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
                     builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
                     builder.addFormDataPart("fileNames", "");
-                    builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
+                    builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
                     builder.addFormDataPart("folderName", "headPic");
                     MultipartBody requestBody = builder.build();
                     final Request request = new Request.Builder()
