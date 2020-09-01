@@ -47,6 +47,7 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.tencent.connect.share.QQShare;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
@@ -181,12 +182,16 @@ public class NewsActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                String userInfo = sb.getString("userInfo", "");
-                if (!userInfo.isEmpty()) {
-                    function.onCallBack(userInfo);
-                } else {
-                    function.onCallBack("false");
+                try {
+                    SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    String userInfo = sb.getString("userInfo", "");
+                    if (!userInfo.isEmpty()) {
+                        function.onCallBack(userInfo);
+                    } else {
+                        function.onCallBack("false");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -195,11 +200,15 @@ public class NewsActivity extends AppCompatActivity {
         mNewWeb.registerHandler("goLogin", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.login_url);
-                edit1.commit();
-                finish();
+                try {
+                    SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sp1.edit();
+                    edit1.putString("apply_url", Constant.login_url);
+                    edit1.commit();
+                    finish();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -217,51 +226,57 @@ public class NewsActivity extends AppCompatActivity {
         mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "shareInterface: " + data);
-                //微信初始化
-                wxApi = WXAPIFactory.createWXAPI(NewsActivity.this, Constant.APP_ID);
-                wxApi.registerApp(Constant.APP_ID);
-                //QQ初始化
-                mTencent = Tencent.createInstance(Constant.QQ_APP_ID, NewsActivity.this);
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "shareInterface: " + data);
+                        //微信初始化
+                        wxApi = WXAPIFactory.createWXAPI(NewsActivity.this, Constant.APP_ID);
+                        wxApi.registerApp(Constant.APP_ID);
+                        //QQ初始化
+                        mTencent = Tencent.createInstance(Constant.QQ_APP_ID, NewsActivity.this);
 
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("obj");
-                Map mapType = JSONObject.parseObject(num, Map.class);
-                int type = (int) mapType.get("type");
-                String value = String.valueOf(mapType.get("data"));
-                Gson gson = new Gson();
-                ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
-                if (type == 1) {
-                    boolean wxAppInstalled = isWxAppInstalled(NewsActivity.this);
-                    if (wxAppInstalled == true) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                wechatShare(0, shareSdkBean); //好友
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("obj");
+                        Map mapType = JSONObject.parseObject(num, Map.class);
+                        int type = (int) mapType.get("type");
+                        String value = String.valueOf(mapType.get("data"));
+                        Gson gson = new Gson();
+                        ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
+                        if (type == 1) {
+                            boolean wxAppInstalled = isWxAppInstalled(NewsActivity.this);
+                            if (wxAppInstalled == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(0, shareSdkBean); //好友
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(NewsActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                             }
-                        }).start();
-                    } else {
-                        Toast.makeText(NewsActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
-                    }
-                } else if (type == 2) {
-                    boolean wxAppInstalled1 = isWxAppInstalled(NewsActivity.this);
-                    if (wxAppInstalled1 == true) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                wechatShare(1, shareSdkBean); //朋友圈
+                        } else if (type == 2) {
+                            boolean wxAppInstalled1 = isWxAppInstalled(NewsActivity.this);
+                            if (wxAppInstalled1 == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(1, shareSdkBean); //朋友圈
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(NewsActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                             }
-                        }).start();
-                    } else {
-                        Toast.makeText(NewsActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                        } else if (type == 3) {
+                            boolean qqClientAvailable = isQQClientAvailable(NewsActivity.this);
+                            if (qqClientAvailable == true) {
+                                qqFriend(shareSdkBean);
+                            } else {
+                                Toast.makeText(NewsActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                            }
+                        }
                     }
-                } else if (type == 3) {
-                    boolean qqClientAvailable = isQQClientAvailable(NewsActivity.this);
-                    if (qqClientAvailable == true) {
-                        qqFriend(shareSdkBean);
-                    } else {
-                        Toast.makeText(NewsActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
-                    }
+                } catch (JsonSyntaxException e) {
+                    e.printStackTrace();
                 }
             }
         });

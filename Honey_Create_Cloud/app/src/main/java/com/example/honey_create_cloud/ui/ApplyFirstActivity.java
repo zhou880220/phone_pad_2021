@@ -1,5 +1,6 @@
 package com.example.honey_create_cloud.ui;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -61,6 +62,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -198,7 +201,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
                             .add("fileNames", newName)
-                            .add("bucketName", Constant.prod_bucket_Name)
+                            .add("bucketName", Constant.test_bucket_Name)
                             .add("folderName", "menu")
                             .build();
                     Request request = new Request.Builder()
@@ -276,6 +279,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private static final int OPLOAD_IMAGE = 2;
     //标题名称
     private static final int TITLENAME = 3;
+    //如果权限勾选了不再询问
+    private static final int NOT_NOTICE = 2;
     //调用照相机返回图片文件
     private File tempFile;
     private String accessToken;
@@ -297,6 +302,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private Uri imageUriThreeApply;
     private String applyTitleName;
 
+    private static final String[] APPLY_PERMISSIONS_APPLICATION = { //第三方应用授权
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.ACCESS_FINE_LOCATION};
+
+    private static final int ADDRESS_PERMISSIONS_CODE = 1;
+
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -312,8 +324,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
         intentOkhttp();
         intentAppNameOkhttp();
         initviewTitle();
-        webView(url);
-
+        try {
+            if (!url.isEmpty()) {
+                webView(url);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mLodingTime();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("action.refreshPay");
@@ -321,7 +338,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
     }
 
     private void initviewTitle() {
-
         mApplyBackImage1.setOnClickListener(new View.OnClickListener() {  //返回
             @Override
             public void onClick(View v) {
@@ -461,7 +477,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getSystemVersion", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + SystemUtil.getSystemVersion() + "\"" + ",\"" + "model" + "\"" + ":\"" + SystemUtil.getSystemModel() + "\"" + "}");
+                try {
+                    function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + SystemUtil.getSystemVersion() + "\"" + ",\"" + "model" + "\"" + ":\"" + SystemUtil.getSystemModel() + "\"" + "}");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -485,10 +505,15 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getStoreData", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sb = getSharedPreferences(appId, MODE_PRIVATE);
-                String storeData = sb.getString("storeData", "");
-                Log.e("wangpan", storeData);
-                function.onCallBack(storeData);
+                try {
+                    SharedPreferences sb = getSharedPreferences(appId, MODE_PRIVATE);
+                    String storeData = sb.getString("storeData", "");
+                    Log.e("wangpan", storeData);
+                    function.onCallBack(storeData);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
             }
         });
         /**
@@ -497,13 +522,18 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                String userInfo = sb.getString("userInfo", "");
-                if (!userInfo.isEmpty()) {
-                    function.onCallBack(userInfo);
-                } else {
-                    Toast.makeText(ApplyFirstActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+                try {
+                    SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    String userInfo = sb.getString("userInfo", "");
+                    if (!userInfo.isEmpty()) {
+                        function.onCallBack(userInfo);
+                    } else {
+                        Toast.makeText(ApplyFirstActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
             }
         });
         /**
@@ -512,8 +542,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setApplyCamera", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (!data.isEmpty()) {
-                    gotoCamera();
+                try {
+                    if (!data.isEmpty()) {
+                        gotoCamera();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -523,9 +557,14 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setApplyPhotoAlbum", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (!data.isEmpty()) {
-                    gotoPhoto();
+                try {
+                    if (!data.isEmpty()) {
+                        gotoPhoto();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
             }
         });
         /**
@@ -534,10 +573,14 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getMailList", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                stringBuffer = new StringBuffer();
-                String allContancts = getAllContancts(stringBuffer);
-                String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
-                function.onCallBack(substring + "]");
+                try {
+                    stringBuffer = new StringBuffer();
+                    String allContancts = getAllContancts(stringBuffer);
+                    String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
+                    function.onCallBack(substring + "]");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -546,24 +589,28 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("openVoice", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.recorder_layout, null);
-                PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT, 290);
-                popupWindow.setTouchable(true);
-                popupWindow.setFocusable(true);
-                popupWindow.setOutsideTouchable(false);
-                popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+                try {
+                    View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.recorder_layout, null);
+                    PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT, 290);
+                    popupWindow.setTouchable(true);
+                    popupWindow.setFocusable(true);
+                    popupWindow.setOutsideTouchable(false);
+                    popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
 
-                AudioRecorderButton mAudioRecorderButton = centerView.findViewById(R.id.id_recorder_button);
-                mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
-                    @Override
-                    public void onFinish(float seconds, String filePath) {
-                        String s = tobase64(filePath);
-                        function.onCallBack("{" + "\"" + "success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
-                        if (popupWindow.isShowing()) {
-                            popupWindow.dismiss();
+                    AudioRecorderButton mAudioRecorderButton = centerView.findViewById(R.id.id_recorder_button);
+                    mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
+                        @Override
+                        public void onFinish(float seconds, String filePath) {
+                            String s = tobase64(filePath);
+                            function.onCallBack("{" + "\"" + "success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
+                            if (popupWindow.isShowing()) {
+                                popupWindow.dismiss();
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -580,17 +627,22 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getCookie", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (data != null) {
-                    Map map = JSONObject.parseObject(data, Map.class);
-                    Set<String> set = map.keySet();
-                    Iterator<String> iterator = set.iterator();
-                    while (iterator.hasNext()) {
-                        String key = iterator.next();
-                        String value = (String) map.get(key);
-                        String getCookieValue = (String) hashMap.get(value);
-                        function.onCallBack(getCookieValue);
+                try {
+                    if (data != null) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        Set<String> set = map.keySet();
+                        Iterator<String> iterator = set.iterator();
+                        while (iterator.hasNext()) {
+                            String key = iterator.next();
+                            String value = (String) map.get(key);
+                            String getCookieValue = (String) hashMap.get(value);
+                            function.onCallBack(getCookieValue);
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
             }
         });
         /**
@@ -599,42 +651,44 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("downLoadFile", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Toast.makeText(ApplyFirstActivity.this, "请稍后...", Toast.LENGTH_SHORT).show();
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("url");
-                String filename = (String) map.get("filename");
-                if (filename != null && !filename.equals("")) {
-                    String newReplaceUrl = num.replace(num.substring(num.lastIndexOf("/") + 1), filename);
-                    Log.e(TAG, "新的文件名下载路径: 2" + newReplaceUrl);
-                    List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
-                    for (int i = 0; i < Listdata.size() - 1; i++) {
-                        String ApplyId = String.valueOf(Listdata.get(i).getAppId());
-                        if (appId.equals(ApplyId)) {
-                            char[] chars = Listdata.get(i).getAppName().toCharArray();
-                            String pinYinHeadChar = getPinYinHeadChar(chars);
-                            String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
-                            downFilePath(FileLoad, newReplaceUrl);
+                try {
+                    if (!data.isEmpty()) {
+                        Toast.makeText(ApplyFirstActivity.this, "请稍后...", Toast.LENGTH_SHORT).show();
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("url");
+                        String filename = (String) map.get("filename");
+                        if (filename != null && !filename.equals("")) {
+                            String newReplaceUrl = num.replace(num.substring(num.lastIndexOf("/") + 1), filename);
+                            Log.e(TAG, "新的文件名下载路径: 2" + newReplaceUrl);
+                            List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
+                            for (int i = 0; i < Listdata.size() - 1; i++) {
+                                String ApplyId = String.valueOf(Listdata.get(i).getAppId());
+                                if (appId.equals(ApplyId)) {
+                                    char[] chars = Listdata.get(i).getAppName().toCharArray();
+                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                                    downFilePath(FileLoad, newReplaceUrl);
+                                }
+                            }
+                        } else {
+                            Log.e(TAG, "新的文件名下载路径:3 " + num);
+                            List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
+                            for (int i = 0; i < Listdata.size() - 1; i++) {
+                                String ApplyId = String.valueOf(Listdata.get(i).getAppId());
+                                if (appId.equals(ApplyId)) {
+                                    char[] chars = Listdata.get(i).getAppName().toCharArray();
+                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                                    downFilePath(FileLoad, num);
+                                }
+                            }
                         }
                     }
-                } else {
-                    Log.e(TAG, "新的文件名下载路径:3 " + num);
-                    List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
-                    for (int i = 0; i < Listdata.size() - 1; i++) {
-                        String ApplyId = String.valueOf(Listdata.get(i).getAppId());
-                        if (appId.equals(ApplyId)) {
-                            char[] chars = Listdata.get(i).getAppName().toCharArray();
-                            String pinYinHeadChar = getPinYinHeadChar(chars);
-                            String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
-                            downFilePath(FileLoad, num);
-                        }
-                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
-
-        /**
-         * 一下注释掉的功能延期开放
-         */
 
         /**
          * 用户取消授权
@@ -642,7 +696,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("cancelAuthorization", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                finish();
+                try {
+                    finish();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -651,54 +709,61 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "shareInterface: " + data);
-                //微信初始化
-                wxApi = WXAPIFactory.createWXAPI(ApplyFirstActivity.this, Constant.APP_ID);
-                wxApi.registerApp(Constant.APP_ID);
-                //QQ初始化
-                mTencent = Tencent.createInstance(Constant.QQ_APP_ID, ApplyFirstActivity.this);
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "shareInterface: " + data);
+                        //微信初始化
+                        wxApi = WXAPIFactory.createWXAPI(ApplyFirstActivity.this, Constant.APP_ID);
+                        wxApi.registerApp(Constant.APP_ID);
+                        //QQ初始化
+                        mTencent = Tencent.createInstance(Constant.QQ_APP_ID, ApplyFirstActivity.this);
 
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("obj");
-                Map mapType = JSONObject.parseObject(num, Map.class);
-                int type = (int) mapType.get("type");
-                String value = String.valueOf(mapType.get("data"));
-                Gson gson = new Gson();
-                ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
-                if (type == 1) {
-                    boolean wxAppInstalled = isWxAppInstalled(ApplyFirstActivity.this);
-                    if (wxAppInstalled == true) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                wechatShare(0, shareSdkBean); //好友
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("obj");
+                        Map mapType = JSONObject.parseObject(num, Map.class);
+                        int type = (int) mapType.get("type");
+                        String value = String.valueOf(mapType.get("data"));
+                        Gson gson = new Gson();
+                        ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
+                        if (type == 1) {
+                            boolean wxAppInstalled = isWxAppInstalled(ApplyFirstActivity.this);
+                            if (wxAppInstalled == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(0, shareSdkBean); //好友
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(ApplyFirstActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                             }
-                        }).start();
-                    } else {
-                        Toast.makeText(ApplyFirstActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
-                    }
-                } else if (type == 2) {
-                    boolean wxAppInstalled1 = isWxAppInstalled(ApplyFirstActivity.this);
-                    if (wxAppInstalled1 == true) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                wechatShare(1, shareSdkBean); //朋友圈
+                        } else if (type == 2) {
+                            boolean wxAppInstalled1 = isWxAppInstalled(ApplyFirstActivity.this);
+                            if (wxAppInstalled1 == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(1, shareSdkBean); //朋友圈
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(ApplyFirstActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                             }
-                        }).start();
-                    } else {
-                        Toast.makeText(ApplyFirstActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
-                    }
-                } else if (type == 3) {
-                    boolean qqClientAvailable = isQQClientAvailable(ApplyFirstActivity.this);
-                    if (qqClientAvailable == true) {
-                        qqFriend(shareSdkBean);
-                    } else {
-                        Toast.makeText(ApplyFirstActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
+                        } else if (type == 3) {
+                            boolean qqClientAvailable = isQQClientAvailable(ApplyFirstActivity.this);
+                            if (qqClientAvailable == true) {
+                                qqFriend(shareSdkBean);
+                            } else {
+                                Toast.makeText(ApplyFirstActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
 
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+
             }
         });
         /**
@@ -707,11 +772,15 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("goLogin", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.login_url);
-                edit1.commit();
-                finish();
+                try {
+                    SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sp1.edit();
+                    edit1.putString("apply_url", Constant.login_url);
+                    edit1.commit();
+                    finish();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -720,11 +789,15 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("backHome", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
-                edit1.commit();
-                finish();
+                try {
+                    SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sp1.edit();
+                    edit1.putString("apply_url", Constant.text_url);
+                    edit1.commit();
+                    finish();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -733,16 +806,22 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("intentBrowser", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String Url = (String) map.get("url");
-                Gson gson = new Gson();
-                BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
-                if (!Url.isEmpty()) {
-                    Intent intent = new Intent();
-                    intent.setAction("android.intent.action.VIEW");
-                    Uri content_url = Uri.parse(browserBean.getUrl());
-                    intent.setData(content_url);
-                    startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String Url = (String) map.get("url");
+                        Gson gson = new Gson();
+                        BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
+                        if (!Url.isEmpty()) {
+                            Intent intent = new Intent();
+                            intent.setAction("android.intent.action.VIEW");
+                            Uri content_url = Uri.parse(browserBean.getUrl());
+                            intent.setData(content_url);
+                            startActivity(intent);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -752,12 +831,18 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("openCall", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "openCall: 1" + data);
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("num");
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "openCall: 1" + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("num");
+                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -766,15 +851,21 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("purchaseOfEntry", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("obj");
-                if (!num.isEmpty()) {
-                    Intent intent = new Intent(ApplyFirstActivity.this, IntentOpenActivity.class);
-                    intent.putExtra("PurchaseOfEntry", num);
-                    intent.putExtra("appId", appId);
-                    intent.putExtra("token", token);
-                    startActivity(intent);
-                    Log.e(TAG, "商品信息1: " + num);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("obj");
+                        if (!num.isEmpty()) {
+                            Intent intent = new Intent(ApplyFirstActivity.this, IntentOpenActivity.class);
+                            intent.putExtra("PurchaseOfEntry", num);
+                            intent.putExtra("appId", appId);
+                            intent.putExtra("token", token);
+                            startActivity(intent);
+                            Log.e(TAG, "商品信息1: " + num);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -784,23 +875,29 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setCookie", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("str");
-                String cookieKey = "key";
-                String cookieValue = "value";
-                ArrayList<Object> list = new ArrayList<>();
-                List objects = JSONObject.parseObject(num, List.class);
-                if (objects != null && objects.size() > 0) {
-                    for (Object o : objects) {
-                        if (o != null) {
-                            Map JsonMap = JSONObject.parseObject(o.toString(), Map.class);
-                            String key = (String) JsonMap.get(cookieKey);
-                            String value = (String) JsonMap.get(cookieValue);
-                            hashMap.put(key, value);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("str");
+                        String cookieKey = "key";
+                        String cookieValue = "value";
+                        ArrayList<Object> list = new ArrayList<>();
+                        List objects = JSONObject.parseObject(num, List.class);
+                        if (objects != null && objects.size() > 0) {
+                            for (Object o : objects) {
+                                if (o != null) {
+                                    Map JsonMap = JSONObject.parseObject(o.toString(), Map.class);
+                                    String key = (String) JsonMap.get(cookieKey);
+                                    String value = (String) JsonMap.get(cookieValue);
+                                    hashMap.put(key, value);
+                                }
+                            }
                         }
+                        Log.e(TAG, "setCookie: " + num);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                Log.e(TAG, "setCookie: " + num);
             }
         });
         /**
@@ -809,8 +906,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("startIntentZing", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Intent intent = new Intent(ApplyFirstActivity.this, CaptureActivity.class);
-                startActivityForResult(intent, REQUEST_CODE_SCAN);
+                try {
+                    Intent intent = new Intent(ApplyFirstActivity.this, CaptureActivity.class);
+                    startActivityForResult(intent, REQUEST_CODE_SCAN);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -819,19 +920,29 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "打开通讯录: " + data);
-                Map map = JSONObject.parseObject(data, Map.class);
-                String tele = (String) map.get("tele");
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "打开通讯录: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String tele = (String) map.get("tele");
+                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         //打开手机系统通知界面
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                gotoSet();
+                try {
+                    gotoSet();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -1200,6 +1311,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
 //                            progressBar.setProgress((soFarBytes * 100 / totalBytes));
 //                            progressDialog.setProgress((soFarBytes * 100 / totalBytes));
+                        Log.e(TAG, "progress: " + (soFarBytes * 100 / totalBytes));
                     }
 
                     //下载完成
@@ -1234,6 +1346,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     //已存在相同下载
                     @Override
                     protected void warn(BaseDownloadTask task) {
+                        Log.e(TAG, "warn: " + task);
                     }
                 }).start();
 
@@ -1604,6 +1717,53 @@ public class ApplyFirstActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case ADDRESS_PERMISSIONS_CODE:
+                //权限请求失败
+                if (grantResults.length == APPLY_PERMISSIONS_APPLICATION.length) {
+                    for (int result : grantResults) {
+                        if (result != PackageManager.PERMISSION_GRANTED) {
+                            //弹出对话框引导用户去设置
+                            showDialog();
+                            Toast.makeText(ApplyFirstActivity.this, "请求权限被拒绝", Toast.LENGTH_LONG).show();
+                            break;
+                        } else {
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    //弹出提示框
+    private void showDialog() {
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("若您取消权限可能会导致某些功能无法使用！！！")
+                .setPositiveButton("设置", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        goToAppSetting();
+                    }
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    // 跳转到当前应用的设置界面
+    private void goToAppSetting() {
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", getPackageName(), null);
+        intent.setData(uri);
+        startActivity(intent);
+    }
+
+
     /**
      * 系统回调
      *
@@ -1666,6 +1826,14 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
 
         switch (requestCode) {
+            case NOT_NOTICE:
+                if (ContextCompat.checkSelfPermission(ApplyFirstActivity.this, Manifest.permission.RECORD_AUDIO)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    //申请READ_EXTERNAL_STORAGE权限
+                    ActivityCompat.requestPermissions(ApplyFirstActivity.this, APPLY_PERMISSIONS_APPLICATION,
+                            ADDRESS_PERMISSIONS_CODE);
+                }//由于不知道是否选择了允许所以需要再次判断
+                break;
             case REQUEST_CODE_SCAN: //二维码扫描
             {
                 if (resultCode == RESULT_OK) {
@@ -1989,7 +2157,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
-        builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
+        builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
         builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
@@ -2270,8 +2438,20 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         mApplyBackImage1.setVisibility(View.GONE);
                     } else {
                         mApplyBackImage1.setVisibility(View.VISIBLE);
+                        if (ContextCompat.checkSelfPermission(ApplyFirstActivity.this, Manifest.permission.RECORD_AUDIO)
+                                != PackageManager.PERMISSION_GRANTED) {
+                            //申请READ_EXTERNAL_STORAGE权限
+                            ActivityCompat.requestPermissions(ApplyFirstActivity.this, APPLY_PERMISSIONS_APPLICATION,
+                                    ADDRESS_PERMISSIONS_CODE);
+                        }
                     }
                 } catch (Exception e) {
+                    if (ContextCompat.checkSelfPermission(ApplyFirstActivity.this, Manifest.permission.RECORD_AUDIO)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        //申请READ_EXTERNAL_STORAGE权限
+                        ActivityCompat.requestPermissions(ApplyFirstActivity.this, APPLY_PERMISSIONS_APPLICATION,
+                                ADDRESS_PERMISSIONS_CODE);
+                    }
                     mApplyBackImage1.setVisibility(View.VISIBLE);
                 }
             }

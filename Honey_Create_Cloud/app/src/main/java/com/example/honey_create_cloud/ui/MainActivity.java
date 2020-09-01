@@ -63,6 +63,7 @@ import com.example.honey_create_cloud.bean.TokenIsOkBean;
 import com.example.honey_create_cloud.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.util.FileUtil;
+import com.example.honey_create_cloud.util.MarketTools;
 import com.example.honey_create_cloud.util.QMUITouchableSpan;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
@@ -209,13 +210,10 @@ public class MainActivity extends AppCompatActivity {
     private String mVersionName = "";
     private String totalCacheSize = "";
     private String clearSize = "";
-    private static final String[] PERMISSIONS_APPLICATION = { //用户授权
+    private static final String[] PERMISSIONS_APPLICATION = { //应用中心授权
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.CALL_PHONE,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.ACCESS_FINE_LOCATION};
+            Manifest.permission.CALL_PHONE};
     private static final int VIDEO_PERMISSIONS_CODE = 1;
     private MyHandlerCallBack.OnSendDataListener mOnSendDataListener;
     private String token1;
@@ -240,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
     private Channel channel;
     private String receiveMsg;
     private String PolicyAndReminder = "《用户协议》及《隐私政策》";
+    private boolean isFirstCache;//是否是第一次使用
 
 
     @SuppressLint("NewApi")
@@ -252,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
         webView(Constant.text_url);
-        myRequetPermission();
+        myRequetPermission(PERMISSIONS_APPLICATION);
         initVersionName();
         Uri uri = getIntent().getData();
         if (uri != null) {
@@ -268,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @param text  用户协议信息
+     * @param text 用户协议信息
      * @return
      */
     private SpannableString generateSp(String text) {
@@ -343,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {  //动态监听页面加载链接
                 myOrder = name;
-                Log.e(TAG, "onCityClick: "+name );
+                Log.e(TAG, "onCityClick: " + name);
                 if (name.equals(Constant.login_url)) {
                     mTextPolicyReminder.setVisibility(View.VISIBLE);
                     mCloseLoginPage.setVisibility(View.VISIBLE);
@@ -395,9 +394,13 @@ public class MainActivity extends AppCompatActivity {
         mCloseLoginPage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mNewWeb.canGoBack()) {
-                    webView(Constant.text_url);
-                    mCloseLoginPage.setVisibility(View.GONE);
+                try {
+                    if (mNewWeb.canGoBack()) {
+                        webView(Constant.text_url);
+                        mCloseLoginPage.setVisibility(View.GONE);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -409,8 +412,12 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getVersionName", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (!mVersionName.isEmpty()) {
-                    function.onCallBack("V" + mVersionName);
+                try {
+                    if (!mVersionName.isEmpty()) {
+                        function.onCallBack("V" + mVersionName);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -419,12 +426,16 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getCache", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (ChaceSize == true) {
-                    if (!totalCacheSize.isEmpty()) {
-                        function.onCallBack(totalCacheSize);
+                try {
+                    if (ChaceSize == true) {
+                        if (!totalCacheSize.isEmpty()) {
+                            function.onCallBack(totalCacheSize);
+                        }
+                    } else {
+                        function.onCallBack("0.00MB");
                     }
-                } else {
-                    function.onCallBack("0.00MB");
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -434,11 +445,15 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                CleanDataUtils.clearAllCache(Objects.requireNonNull(MainActivity.this));
-                clearSize = CleanDataUtils.getTotalCacheSize(Objects.requireNonNull(MainActivity.this));
-                if (!clearSize.isEmpty()) {
-                    ChaceSize = false;
-                    function.onCallBack(clearSize);
+                try {
+                    CleanDataUtils.clearAllCache(Objects.requireNonNull(MainActivity.this));
+                    clearSize = CleanDataUtils.getTotalCacheSize(Objects.requireNonNull(MainActivity.this));
+                    if (!clearSize.isEmpty()) {
+                        ChaceSize = false;
+                        function.onCallBack(clearSize);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -448,25 +463,29 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                //权限判断
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    //申请READ_EXTERNAL_STORAGE权限
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            VIDEO_PERMISSIONS_CODE);
-                } else {
-                    if (!data.isEmpty()) {
-                        String replace1 = data.replace("\"", "");
-                        String replace2 = replace1.replace("token:", "");
-                        String replace3 = replace2.replace("{", "");
-                        String replace4 = replace3.replace("}", "");
-                        String[] s = replace4.split(" ");
-                        token1 = s[0];
-                        userid = s[1];
-                        gotoCamera();
+                try {
+                    //权限判断
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        //申请READ_EXTERNAL_STORAGE权限
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                VIDEO_PERMISSIONS_CODE);
                     } else {
+                        if (!data.isEmpty()) {
+                            String replace1 = data.replace("\"", "");
+                            String replace2 = replace1.replace("token:", "");
+                            String replace3 = replace2.replace("{", "");
+                            String replace4 = replace3.replace("}", "");
+                            String[] s = replace4.split(" ");
+                            token1 = s[0];
+                            userid = s[1];
+                            gotoCamera();
+                        } else {
 
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -476,25 +495,29 @@ public class MainActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void handler(String data, CallBackFunction function) {
-                //权限判断
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    //申请READ_EXTERNAL_STORAGE权限
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                            VIDEO_PERMISSIONS_CODE);
-                } else {
-                    if (!data.isEmpty()) {
-                        String replace1 = data.replace("\"", "");
-                        String replace2 = replace1.replace("token:", "");
-                        String replace3 = replace2.replace("{", "");
-                        String replace4 = replace3.replace("}", "");
-                        String[] s = replace4.split(" ");
-                        token1 = s[0];
-                        userid = s[1];
-                        gotoPhoto();
+                try {
+                    //权限判断
+                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        //申请READ_EXTERNAL_STORAGE权限
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                VIDEO_PERMISSIONS_CODE);
                     } else {
+                        if (!data.isEmpty()) {
+                            String replace1 = data.replace("\"", "");
+                            String replace2 = replace1.replace("token:", "");
+                            String replace3 = replace2.replace("{", "");
+                            String replace4 = replace3.replace("}", "");
+                            String[] s = replace4.split(" ");
+                            token1 = s[0];
+                            userid = s[1];
+                            gotoPhoto();
+                        } else {
 
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -503,11 +526,15 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                boolean enabled = isNotificationEnabled(MainActivity.this);
-                if (enabled == true) {
-                    function.onCallBack("1");
-                } else {
-                    function.onCallBack("2");
+                try {
+                    boolean enabled = isNotificationEnabled(MainActivity.this);
+                    if (enabled == true) {
+                        function.onCallBack("1");
+                    } else {
+                        function.onCallBack("2");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -516,28 +543,35 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setUserInfo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "获取用户登录信息: " + data);
-                if (!data.isEmpty()) {
-                    SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                    SharedPreferences.Editor edit = sb.edit();
-                    edit.putString("userInfo", data);
-                    edit.commit();
+                try {
+                    Log.e(TAG, "获取用户登录信息: " + data);
+                    if (!data.isEmpty()) {
+                        SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                        SharedPreferences.Editor edit = sb.edit();
+                        edit.putString("userInfo", data);
+                        edit.commit();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
 
         //向页面传递用户登录基本信息
         mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
-
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                String userInfo = sb.getString("userInfo", "");
-                Log.e("wangpan", userInfo);
-                if (!userInfo.isEmpty()) {
-                    function.onCallBack(sb.getString("userInfo", ""));
-                } else {
+                try {
+                    SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    String userInfo = sb.getString("userInfo", "");
+                    Log.e("wangpan", userInfo);
+                    if (!userInfo.isEmpty()) {
+                        function.onCallBack(sb.getString("userInfo", ""));
+                    } else {
 
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -546,27 +580,32 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getToken", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String usertoken = (String) map.get("token");
+                        String userID = (String) map.get("userID");
+                        Log.e(TAG, "用户登录信息: " + usertoken + "---" + userID);
+                        if (!usertoken.isEmpty()) {
+                            usertoken1 = usertoken;
+                            userid1 = userID;
 
-                Map map = JSONObject.parseObject(data, Map.class);
-                String usertoken = (String) map.get("token");
-                String userID = (String) map.get("userID");
-                Log.e(TAG, "用户登录信息: " + usertoken + "---" + userID);
-                if (!usertoken.isEmpty()) {
-                    usertoken1 = usertoken;
-                    userid1 = userID;
+                            SharedPreferences sb = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+                            SharedPreferences.Editor edit = sb.edit();
+                            edit.putString("NotifyUserId", usertoken1);
+                            edit.commit();
 
-                    SharedPreferences sb = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
-                    SharedPreferences.Editor edit = sb.edit();
-                    edit.putString("NotifyUserId", usertoken1);
-                    edit.commit();
-
-                    //获取userId用于通知
-                    String notifyUserId = sb.getString("NotifyUserId", "");
+                            //获取userId用于通知
+                            String notifyUserId = sb.getString("NotifyUserId", "");
 //                deleteUserQueue(); //删除队列
-                    if (!TextUtils.isEmpty(notifyUserId)) {
-                        notificationChange(userid1, "0");
-                        new Thread(() -> basicConsume(myHandler)).start();
+                            if (!TextUtils.isEmpty(notifyUserId)) {
+                                notificationChange(userid1, "0");
+                                new Thread(() -> basicConsume(myHandler)).start();
+                            }
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -575,20 +614,26 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("showApplyParams", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "跳转第三方: " + data);
-                Map map = JSONObject.parseObject(data, Map.class);
-                String redirectUrl = (String) map.get("redirectUrl");
-                int appLyId = (int) map.get("appId");
-                String appId = String.valueOf(appLyId);
-                if (!redirectUrl.isEmpty()) {
-                    Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
-                    intent.putExtra("url", redirectUrl);
-                    intent.putExtra("token", usertoken1);
-                    intent.putExtra("userid", userid1);
-                    intent.putExtra("appId", appId);
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "跳转第三方: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String redirectUrl = (String) map.get("redirectUrl");
+                        int appLyId = (int) map.get("appId");
+                        String appId = String.valueOf(appLyId);
+                        if (!redirectUrl.isEmpty()) {
+                            Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                            intent.putExtra("url", redirectUrl);
+                            intent.putExtra("token", usertoken1);
+                            intent.putExtra("userid", userid1);
+                            intent.putExtra("appId", appId);
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -597,13 +642,21 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("NewNotifiction", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                gotoSet();
+                try {
+                    gotoSet();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }); //可能不用
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                gotoSet();
+                try {
+                    gotoSet();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -611,20 +664,26 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("showNewsParams", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "跳转咨询页面: " + data);
-                Map map = JSONObject.parseObject(data, Map.class);
-                String link = (String) map.get("link");
-                String code = (String) map.get("code");
-                String token = (String) map.get("token");
-                String from = (String) map.get("from");
-                if (!data.isEmpty()) {
-                    Intent intent = new Intent(MainActivity.this, NewsActivity.class);
-                    intent.putExtra("url", link);
-                    intent.putExtra("token", token1);
-                    intent.putExtra("from", from);
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "跳转咨询页面: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String link = (String) map.get("link");
+                        String code = (String) map.get("code");
+                        String token = (String) map.get("token");
+                        String from = (String) map.get("from");
+                        if (!data.isEmpty()) {
+                            Intent intent = new Intent(MainActivity.this, NewsActivity.class);
+                            intent.putExtra("url", link);
+                            intent.putExtra("token", token1);
+                            intent.putExtra("from", from);
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -633,19 +692,25 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("CashierDeskGo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "跳转支付页面: " + data);
-                Map map = JSONObject.parseObject(data, Map.class);
-                String userId = (String) map.get("userId");
-                String orderNo = (String) map.get("orderNo");
-                String outTradeNo = (String) map.get("outTradeNo");
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "跳转支付页面: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String userId = (String) map.get("userId");
+                        String orderNo = (String) map.get("orderNo");
+                        String outTradeNo = (String) map.get("outTradeNo");
 
-                pageReload = true;
-                Intent intent = new Intent(MainActivity.this, IntentOpenActivity.class);
-                intent.putExtra("userId", userId);
-                intent.putExtra("orderNo", orderNo);
-                intent.putExtra("outTradeNo", outTradeNo);
-                intent.putExtra("token", usertoken1);
-                startActivity(intent);
+                        pageReload = true;
+                        Intent intent = new Intent(MainActivity.this, IntentOpenActivity.class);
+                        intent.putExtra("userId", userId);
+                        intent.putExtra("orderNo", orderNo);
+                        intent.putExtra("outTradeNo", outTradeNo);
+                        intent.putExtra("token", usertoken1);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -653,12 +718,18 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "打开通讯录: " + data);
-                Map map = JSONObject.parseObject(data, Map.class);
-                String tele = (String) map.get("tele");
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "打开通讯录: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String tele = (String) map.get("tele");
+                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -666,11 +737,17 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("openCall", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("num");
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("num");
+                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -678,20 +755,24 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("ClearUserInfo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit = sb.edit();
-                edit.clear();
-                edit.commit();
+                try {
+                    SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit = sb.edit();
+                    edit.clear();
+                    edit.commit();
 
-                SharedPreferences sb1 = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sb1.edit();
-                edit1.clear();
-                edit1.commit();
+                    SharedPreferences sb1 = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sb1.edit();
+                    edit1.clear();
+                    edit1.commit();
 
-                SharedPreferences sb2 = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit2 = sb2.edit();
-                edit2.clear();
-                edit2.commit();
+                    SharedPreferences sb2 = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit2 = sb2.edit();
+                    edit2.clear();
+                    edit2.commit();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -699,16 +780,45 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("intentBrowser", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String Url = (String) map.get("url");
-                Gson gson = new Gson();
-                BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
-                if (!Url.isEmpty()) {
-                    Intent intent = new Intent();
-                    intent.setAction("android.intent.action.VIEW");
-                    Uri content_url = Uri.parse(browserBean.getUrl());
-                    intent.setData(content_url);
-                    startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String Url = (String) map.get("url");
+                        Gson gson = new Gson();
+                        BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
+                        if (!Url.isEmpty()) {
+                            Intent intent = new Intent();
+                            intent.setAction("android.intent.action.VIEW");
+                            Uri content_url = Uri.parse(browserBean.getUrl());
+                            intent.setData(content_url);
+                            startActivity(intent);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //提示用户升级应用弹框显示清除一次缓存  点击按钮跳转应用市场
+        mNewWeb.registerHandler("versionUpdate", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "handler: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        int type = (int) map.get("type");
+                        if (type == 0) {
+                            CleanDataUtils.clearAllCache(Objects.requireNonNull(MainActivity.this));
+                            mNewWeb.clearCache(true);
+                            mNewWeb.clearHistory();
+                        } else {
+                            MarketTools.apphomelist(MainActivity.this);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -959,7 +1069,7 @@ public class MainActivity extends AppCompatActivity {
             if (connection != null) {
                 //通道
                 channel = connection.createChannel();
-                AMQP.Queue.DeclareOk declareOk = channel.queueDeclare("app.notice.queue." + userid1, true, false, false, null);
+                // AMQP.Queue.DeclareOk declareOk = channel.queueDeclare("app.notice.queue." + "ASDFWERDFDFGDFGHFHFGHFDGHTY", true, false, false, null);  取消队列的声明
                 Consumer consumer = new DefaultConsumer(channel) {
 
                     // 获取到达的消息
@@ -974,11 +1084,29 @@ public class MainActivity extends AppCompatActivity {
                         NotificationConsune();
                     }
                 };
-                channel.basicConsume("app.notice.queue." + userid1, true, consumer);
+                channel.basicConsume("app.notice.queue." + userid1, true, "administrator", consumer);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 连接设置
+     */
+    private Connection getConnection() {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("119.3.28.24");//主机地址：192.168.1.105
+        factory.setPort(5672);// 端口号:5672
+        factory.setUsername("honeycomb");// 用户名
+        factory.setPassword("honeycomb");// 密码
+        factory.setVirtualHost("/");
+        try {
+            return factory.newConnection();
+        } catch (IOException | TimeoutException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void NotificationConsune() {
@@ -1060,24 +1188,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    /**
-     * 连接设置
-     */
-    private Connection getConnection() {
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("122.112.141.135");//主机地址：192.168.1.105
-        factory.setPort(25672);// 端口号:25672
-        factory.setUsername("honeycom");// 用户名
-        factory.setPassword("wu168@QqFn2019");// 密码
-        factory.setVirtualHost("/");
-        try {
-            return factory.newConnection();
-        } catch (IOException | TimeoutException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     /**
      * 跳转到照相机
@@ -1276,10 +1386,10 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 获取用户权限
      */
-    private void myRequetPermission() {
+    private void myRequetPermission(String[] permissionsApplication) {
         // 当API大于 23 时，才动态申请权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS_APPLICATION, VIDEO_PERMISSIONS_CODE);
+            ActivityCompat.requestPermissions(MainActivity.this, permissionsApplication, VIDEO_PERMISSIONS_CODE);
         }
 //        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
 //            ActivityCompat.requestPermissions(this, PERMISSIONS_APPLICATION, 1);
@@ -1374,7 +1484,7 @@ public class MainActivity extends AppCompatActivity {
         }
         switch (requestCode) {
             case NOT_NOTICE:
-                myRequetPermission();//由于不知道是否选择了允许所以需要再次判断
+                myRequetPermission(PERMISSIONS_APPLICATION);//由于不知道是否选择了允许所以需要再次判断
                 break;
             case REQUEST_CAPTURE: //调用系统相机返回
                 if (resultCode == RESULT_OK) {
@@ -1416,7 +1526,7 @@ public class MainActivity extends AppCompatActivity {
                     final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
                     builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
                     builder.addFormDataPart("fileNames", "");
-                    builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
+                    builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
                     builder.addFormDataPart("folderName", "headPic");
                     MultipartBody requestBody = builder.build();
                     final Request request = new Request.Builder()

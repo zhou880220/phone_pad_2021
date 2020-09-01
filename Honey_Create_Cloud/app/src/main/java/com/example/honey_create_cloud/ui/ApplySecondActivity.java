@@ -88,6 +88,7 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloader;
@@ -196,7 +197,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
                             .add("fileNames", newName)
-                            .add("bucketName", Constant.prod_bucket_Name)
+                            .add("bucketName", Constant.test_bucket_Name)
                             .add("folderName", "menu")
                             .build();
                     Request request = new Request.Builder()
@@ -458,7 +459,11 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getSystemVersion", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + SystemUtil.getSystemVersion() + "\"" + ",\"" + "model" + "\"" + ":\"" + SystemUtil.getSystemModel() + "\"" + "}");
+                try {
+                    function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + SystemUtil.getSystemVersion() + "\"" + ",\"" + "model" + "\"" + ":\"" + SystemUtil.getSystemModel() + "\"" + "}");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -482,10 +487,14 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getStoreData", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sb = getSharedPreferences(appId, MODE_PRIVATE);
-                String storeData = sb.getString("storeData", "");
-                Log.e("wangpan", storeData);
-                function.onCallBack(storeData);
+                try {
+                    SharedPreferences sb = getSharedPreferences(appId, MODE_PRIVATE);
+                    String storeData = sb.getString("storeData", "");
+                    Log.e("wangpan", storeData);
+                    function.onCallBack(storeData);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -494,12 +503,16 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                String userInfo = sb.getString("userInfo", "");
-                if (!userInfo.isEmpty()) {
-                    function.onCallBack(userInfo);
-                } else {
-                    Toast.makeText(ApplySecondActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+                try {
+                    SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    String userInfo = sb.getString("userInfo", "");
+                    if (!userInfo.isEmpty()) {
+                        function.onCallBack(userInfo);
+                    } else {
+                        Toast.makeText(ApplySecondActivity.this, "获取用户数据异常", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -509,8 +522,12 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setApplyCamera", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (!data.isEmpty()) {
-                    gotoCamera();
+                try {
+                    if (!data.isEmpty()) {
+                        gotoCamera();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -520,8 +537,12 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setApplyPhotoAlbum", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (!data.isEmpty()) {
-                    gotoPhoto();
+                try {
+                    if (!data.isEmpty()) {
+                        gotoPhoto();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -531,11 +552,15 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getMailList", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                stringBuffer = new StringBuffer();
-                String allContancts = getAllContancts(stringBuffer);
-                String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
-                function.onCallBack(substring + "]");
-                Log.e(TAG, "handler: wang" + substring + "]");
+                try {
+                    stringBuffer = new StringBuffer();
+                    String allContancts = getAllContancts(stringBuffer);
+                    String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
+                    function.onCallBack(substring + "]");
+                    Log.e(TAG, "handler: wang" + substring + "]");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -544,24 +569,28 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("openVoice", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                View centerView = LayoutInflater.from(ApplySecondActivity.this).inflate(R.layout.recorder_layout, null);
-                PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT, 290);
-                popupWindow.setTouchable(true);
-                popupWindow.setFocusable(true);
-                popupWindow.setOutsideTouchable(false);
-                popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+                try {
+                    View centerView = LayoutInflater.from(ApplySecondActivity.this).inflate(R.layout.recorder_layout, null);
+                    PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT, 290);
+                    popupWindow.setTouchable(true);
+                    popupWindow.setFocusable(true);
+                    popupWindow.setOutsideTouchable(false);
+                    popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
 
-                AudioRecorderButton mAudioRecorderButton = centerView.findViewById(R.id.id_recorder_button);
-                mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
-                    @Override
-                    public void onFinish(float seconds, String filePath) {
-                        String s = tobase64(filePath);
-                        function.onCallBack("{" + "\"" + "Success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
-                        if (popupWindow.isShowing()) {
-                            popupWindow.dismiss();
+                    AudioRecorderButton mAudioRecorderButton = centerView.findViewById(R.id.id_recorder_button);
+                    mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
+                        @Override
+                        public void onFinish(float seconds, String filePath) {
+                            String s = tobase64(filePath);
+                            function.onCallBack("{" + "\"" + "Success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
+                            if (popupWindow.isShowing()) {
+                                popupWindow.dismiss();
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -578,16 +607,20 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("getCookie", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                if (data != null) {
-                    Map map = JSONObject.parseObject(data, Map.class);
-                    Set<String> set = map.keySet();
-                    Iterator<String> iterator = set.iterator();
-                    while (iterator.hasNext()) {
-                        String key = iterator.next();
-                        String value = (String) map.get(key);
-                        String getCookieValue = (String) hashMap.get(value);
-                        function.onCallBack(getCookieValue);
+                try {
+                    if (data != null) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        Set<String> set = map.keySet();
+                        Iterator<String> iterator = set.iterator();
+                        while (iterator.hasNext()) {
+                            String key = iterator.next();
+                            String value = (String) map.get(key);
+                            String getCookieValue = (String) hashMap.get(value);
+                            function.onCallBack(getCookieValue);
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -597,36 +630,42 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("downLoadFile", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Toast.makeText(ApplySecondActivity.this, "请稍后...", Toast.LENGTH_SHORT).show();
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("url");
-                String filename = (String) map.get("filename");
-                Log.e(TAG, "新的文件名下载路径: 0" + filename);
-                if (filename != null && !filename.equals("")) {
-                    String newReplaceUrl = num.replace(num.substring(num.lastIndexOf("/") + 1), filename);
-                    Log.e(TAG, "新的文件名下载路径: 1" + newReplaceUrl);
-                    List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
-                    for (int i = 0; i < Listdata.size() - 1; i++) {
-                        String ApplyId = String.valueOf(Listdata.get(i).getAppId());
-                        if (appId.equals(ApplyId)) {
-                            char[] chars = Listdata.get(i).getAppName().toCharArray();
-                            String pinYinHeadChar = getPinYinHeadChar(chars);
-                            String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
-                            downFilePath(FileLoad, newReplaceUrl);
+                try {
+                    if (!data.isEmpty()) {
+                        Toast.makeText(ApplySecondActivity.this, "请稍后...", Toast.LENGTH_SHORT).show();
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("url");
+                        String filename = (String) map.get("filename");
+                        Log.e(TAG, "新的文件名下载路径: 0" + filename);
+                        if (filename != null && !filename.equals("")) {
+                            String newReplaceUrl = num.replace(num.substring(num.lastIndexOf("/") + 1), filename);
+                            Log.e(TAG, "新的文件名下载路径: 1" + newReplaceUrl);
+                            List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
+                            for (int i = 0; i < Listdata.size() - 1; i++) {
+                                String ApplyId = String.valueOf(Listdata.get(i).getAppId());
+                                if (appId.equals(ApplyId)) {
+                                    char[] chars = Listdata.get(i).getAppName().toCharArray();
+                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                                    downFilePath(FileLoad, newReplaceUrl);
+                                }
+                            }
+                        } else {
+                            Log.e(TAG, "新的文件名下载路径:2 " + num);
+                            List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
+                            for (int i = 0; i < Listdata.size() - 1; i++) {
+                                String ApplyId = String.valueOf(Listdata.get(i).getAppId());
+                                if (appId.equals(ApplyId)) {
+                                    char[] chars = Listdata.get(i).getAppName().toCharArray();
+                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                                    downFilePath(FileLoad, num);
+                                }
+                            }
                         }
                     }
-                } else {
-                    Log.e(TAG, "新的文件名下载路径:2 " + num);
-                    List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
-                    for (int i = 0; i < Listdata.size() - 1; i++) {
-                        String ApplyId = String.valueOf(Listdata.get(i).getAppId());
-                        if (appId.equals(ApplyId)) {
-                            char[] chars = Listdata.get(i).getAppName().toCharArray();
-                            String pinYinHeadChar = getPinYinHeadChar(chars);
-                            String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
-                            downFilePath(FileLoad, num);
-                        }
-                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -640,7 +679,11 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("cancelAuthorization", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                finish();
+                try {
+                    finish();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -649,50 +692,56 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                //微信初始化
-                wxApi = WXAPIFactory.createWXAPI(ApplySecondActivity.this, Constant.APP_ID);
-                wxApi.registerApp(Constant.APP_ID);
-                //QQ初始化
-                mTencent = Tencent.createInstance(Constant.QQ_APP_ID, ApplySecondActivity.this);
+                try {
+                    //微信初始化
+                    if (!data.isEmpty()) {
+                        wxApi = WXAPIFactory.createWXAPI(ApplySecondActivity.this, Constant.APP_ID);
+                        wxApi.registerApp(Constant.APP_ID);
+                        //QQ初始化
+                        mTencent = Tencent.createInstance(Constant.QQ_APP_ID, ApplySecondActivity.this);
 
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("obj");
-                Map mapType = JSONObject.parseObject(num, Map.class);
-                int type = (int) mapType.get("type");
-                String value = String.valueOf(mapType.get("data"));
-                Gson gson = new Gson();
-                ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
-                if (type == 1) {
-                    boolean wxAppInstalled = isWxAppInstalled(ApplySecondActivity.this);
-                    if (wxAppInstalled == true) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                wechatShare(0, shareSdkBean); //好友
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("obj");
+                        Map mapType = JSONObject.parseObject(num, Map.class);
+                        int type = (int) mapType.get("type");
+                        String value = String.valueOf(mapType.get("data"));
+                        Gson gson = new Gson();
+                        ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
+                        if (type == 1) {
+                            boolean wxAppInstalled = isWxAppInstalled(ApplySecondActivity.this);
+                            if (wxAppInstalled == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(0, shareSdkBean); //好友
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(ApplySecondActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                             }
-                        }).start();
-                    } else {
-                        Toast.makeText(ApplySecondActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
-                    }
-                } else if (type == 2) {
-                    boolean wxAppInstalled1 = isWxAppInstalled(ApplySecondActivity.this);
-                    if (wxAppInstalled1 == true) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                wechatShare(1, shareSdkBean); //朋友圈
+                        } else if (type == 2) {
+                            boolean wxAppInstalled1 = isWxAppInstalled(ApplySecondActivity.this);
+                            if (wxAppInstalled1 == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(1, shareSdkBean); //朋友圈
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(ApplySecondActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                             }
-                        }).start();
-                    } else {
-                        Toast.makeText(ApplySecondActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                        } else if (type == 3) {
+                            boolean qqClientAvailable = isQQClientAvailable(ApplySecondActivity.this);
+                            if (qqClientAvailable == true) {
+                                qqFriend(shareSdkBean);
+                            } else {
+                                Toast.makeText(ApplySecondActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                            }
+                        }
                     }
-                } else if (type == 3) {
-                    boolean qqClientAvailable = isQQClientAvailable(ApplySecondActivity.this);
-                    if (qqClientAvailable == true) {
-                        qqFriend(shareSdkBean);
-                    } else {
-                        Toast.makeText(ApplySecondActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
-                    }
+                } catch (JsonSyntaxException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -702,12 +751,16 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("goLogin", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.login_url);
-                edit1.commit();
-                Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
-                startActivity(intent);
+                try {
+                    SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sp1.edit();
+                    edit1.putString("apply_url", Constant.login_url);
+                    edit1.commit();
+                    Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -716,12 +769,16 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("backHome", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
-                edit1.commit();
-                Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
-                startActivity(intent);
+                try {
+                    SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sp1.edit();
+                    edit1.putString("apply_url", Constant.text_url);
+                    edit1.commit();
+                    Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -730,16 +787,22 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("intentBrowser", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String Url = (String) map.get("url");
-                Gson gson = new Gson();
-                BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
-                if (!Url.isEmpty()) {
-                    Intent intent = new Intent();
-                    intent.setAction("android.intent.action.VIEW");
-                    Uri content_url = Uri.parse(browserBean.getUrl());
-                    intent.setData(content_url);
-                    startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String Url = (String) map.get("url");
+                        Gson gson = new Gson();
+                        BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
+                        if (!Url.isEmpty()) {
+                            Intent intent = new Intent();
+                            intent.setAction("android.intent.action.VIEW");
+                            Uri content_url = Uri.parse(browserBean.getUrl());
+                            intent.setData(content_url);
+                            startActivity(intent);
+                        }
+                    }
+                } catch (JsonSyntaxException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -749,11 +812,17 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("openCall", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("num");
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("num");
+                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -762,16 +831,21 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("purchaseOfEntry", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("obj");
-                Log.e(TAG, "handler: " + num);
-                if (!num.isEmpty()) {
-                    Intent intent = new Intent(ApplySecondActivity.this, IntentOpenActivity.class);
-                    intent.putExtra("PurchaseOfEntry", num);
-                    intent.putExtra("appId", appId);
-                    intent.putExtra("token", token);
-                    startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("obj");
+                        Log.e(TAG, "handler: " + num);
+                        if (!num.isEmpty()) {
+                            Intent intent = new Intent(ApplySecondActivity.this, IntentOpenActivity.class);
+                            intent.putExtra("PurchaseOfEntry", num);
+                            intent.putExtra("appId", appId);
+                            intent.putExtra("token", token);
+                            startActivity(intent);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -781,23 +855,29 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setCookie", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Map map = JSONObject.parseObject(data, Map.class);
-                String num = (String) map.get("str");
-                String cookieKey = "key";
-                String cookieValue = "value";
-                ArrayList<Object> list = new ArrayList<>();
-                List objects = JSONObject.parseObject(num, List.class);
-                if (objects != null && objects.size() > 0) {
-                    for (Object o : objects) {
-                        if (o != null) {
-                            Map JsonMap = JSONObject.parseObject(o.toString(), Map.class);
-                            String key = (String) JsonMap.get(cookieKey);
-                            String value = (String) JsonMap.get(cookieValue);
-                            hashMap.put(key, value);
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("str");
+                        String cookieKey = "key";
+                        String cookieValue = "value";
+                        ArrayList<Object> list = new ArrayList<>();
+                        List objects = JSONObject.parseObject(num, List.class);
+                        if (objects != null && objects.size() > 0) {
+                            for (Object o : objects) {
+                                if (o != null) {
+                                    Map JsonMap = JSONObject.parseObject(o.toString(), Map.class);
+                                    String key = (String) JsonMap.get(cookieKey);
+                                    String value = (String) JsonMap.get(cookieValue);
+                                    hashMap.put(key, value);
+                                }
+                            }
                         }
+                        Log.e(TAG, "setCookie: " + num);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                Log.e(TAG, "setCookie: " + num);
             }
         });
         /**
@@ -806,8 +886,12 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("startIntentZing", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Intent intent = new Intent(ApplySecondActivity.this, CaptureActivity.class);
-                startActivityForResult(intent, REQUEST_CODE_SCAN);
+                try {
+                    Intent intent = new Intent(ApplySecondActivity.this, CaptureActivity.class);
+                    startActivityForResult(intent, REQUEST_CODE_SCAN);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         /**
@@ -816,19 +900,29 @@ public class ApplySecondActivity extends AppCompatActivity {
         mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                Log.e(TAG, "打开通讯录: " + data);
-                Map map = JSONObject.parseObject(data, Map.class);
-                String tele = (String) map.get("tele");
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "打开通讯录: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String tele = (String) map.get("tele");
+                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
-                gotoSet();
+                try {
+                    gotoSet();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -1968,7 +2062,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
-        builder.addFormDataPart("bucketName", Constant.prod_bucket_Name);
+        builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
         builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()

@@ -17,6 +17,7 @@ public class WebViewSetting {
         webSettings.setLoadWithOverviewMode(true);
 
         webSettings.setSupportZoom(false);
+        webSettings.setTextZoom(100);
         webSettings.setDisplayZoomControls(false);
         webSettings.setBuiltInZoomControls(true);
         webSettings.setAllowFileAccess(true); //设置可以访问文件
