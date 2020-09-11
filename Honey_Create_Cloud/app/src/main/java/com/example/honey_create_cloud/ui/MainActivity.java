@@ -603,7 +603,7 @@ public class MainActivity extends AppCompatActivity {
                                 new Thread(() -> basicConsume(myHandler)).start();
                             }
                         }
-                    }
+                    }else{}
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -1251,10 +1251,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void notificationChange(String userId, String openStatus) {
         OkHttpClient client = new OkHttpClient();
-        String post = "{" +
-                "userId:'" + userId + '\'' +
-                ", openStatus:'" + openStatus + '\'' +
-                '}';
+//        String post = "{" +
+//                "userId:'" + userId + '\'' +
+//                ", openStatus:'" + openStatus + '\'' +
+//                '}';
         String post1 = "{\n" +
                 "    \"userId\":\"" + userId + "\",\n" +
                 "    \"openStatus\":" + openStatus + "\n" +

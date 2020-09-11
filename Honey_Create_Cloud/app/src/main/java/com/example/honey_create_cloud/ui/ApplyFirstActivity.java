@@ -327,7 +327,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         try {
             if (!url.isEmpty()) {
                 webView(url);
-            }
+            }else{}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -2501,6 +2501,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 String[] acceptTypes = fileChooserParams.getAcceptTypes();
                 uploadMessageAboveL = filePathCallback;
+                Log.e(TAG, "onShowFileChooser:这个是什么鬼 "+acceptTypes[0] );
                 if (acceptTypes[0].equals("*/*")) {
                     openFileChooserActivity(); //文件系统管理
                 } else if (acceptTypes[0].equals("image/*")) {
@@ -2508,7 +2509,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 } else if (acceptTypes[0].equals("video/*")) {
                     openVideoChooserActivity();//打开系统拍摄/选取视频
                 }
-
                 return true;
             }
         });

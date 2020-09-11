@@ -19,7 +19,7 @@ public class Constant {
     public static final String PRODUCTION_INTERFACE_URL = "https://ulogin.zhizaoyun.com/gateway/";
 
     /**
-     * 演示环境前缀
+     * 调试环境前缀
      * 页面前缀 ：https://mobileclientthird.zhizaoyun.com/
      * 接口前缀 ：https://mobileclientthird.zhizaoyun.com/gateway/
      */
