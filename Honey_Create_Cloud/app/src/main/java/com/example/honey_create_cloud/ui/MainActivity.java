@@ -264,6 +264,18 @@ public class MainActivity extends AppCompatActivity {
         }
         mTextPolicyReminder.setText(generateSp(PolicyAndReminder));
         mTextPolicyReminder.setMovementMethod(LinkMovementMethod.getInstance());
+        showClearCache();
+    }
+
+    private void showClearCache() {
+        SharedPreferences spCache = getSharedPreferences("ClearCache",MODE_PRIVATE);
+        boolean firstCache = spCache.getBoolean("ClearCache", true);
+        if (firstCache == true){
+            SharedPreferences.Editor edit = spCache.edit();
+            edit.putBoolean("ClearCache",false);
+            edit.commit();
+        }else{
+        }
     }
 
     /**
