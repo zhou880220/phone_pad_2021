@@ -15,20 +15,23 @@ public class MWebChromeClient extends WebChromeClient {
     private ProgressBar progressBar;
     private OnCloseListener onCloseListener;
     private View mWebError;
-
+    private View mLoadingPage;
 
     public void setOnCloseListener(OnCloseListener onCloseListener) {
         this.onCloseListener = onCloseListener;
-    }
-
-    public MWebChromeClient(Context context) {
-        this.context = context;
     }
 
     public MWebChromeClient(Context context, ProgressBar progressBar, View mWebError) {
         this.context = context;
         this.progressBar = progressBar;
         this.mWebError = mWebError;
+    }
+
+    public MWebChromeClient(Context context, ProgressBar progressBar, View mWebError,View mLoadingPage) {
+        this.context = context;
+        this.progressBar = progressBar;
+        this.mWebError = mWebError;
+        this.mLoadingPage = mLoadingPage;
     }
 
     @Override

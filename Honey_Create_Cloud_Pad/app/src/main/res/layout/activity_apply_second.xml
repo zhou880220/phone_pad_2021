@@ -12,8 +12,8 @@
         android:layout_height="3dp"
         android:progressDrawable="@drawable/progressbar" />
 
-    <WebView
-        android:id="@+id/new_Web"
+    <com.github.lzyzsd.jsbridge.BridgeWebView
+        android:id="@+id/new_Web2"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
@@ -140,7 +140,8 @@
         android:id="@+id/loading_page"
         layout="@layout/activity_loding"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 
 
 </RelativeLayout>

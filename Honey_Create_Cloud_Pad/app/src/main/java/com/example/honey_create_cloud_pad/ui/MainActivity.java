@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -19,6 +20,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -38,10 +40,12 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import com.alibaba.fastjson.JSONObject;
 import com.example.honey_create_cloud_pad.BuildConfig;
 import com.example.honey_create_cloud_pad.Constant;
 import com.example.honey_create_cloud_pad.MyHandlerCallBack;
 import com.example.honey_create_cloud_pad.R;
+import com.example.honey_create_cloud_pad.bean.BrowserBean;
 import com.example.honey_create_cloud_pad.bean.HeadPic;
 import com.example.honey_create_cloud_pad.bean.PictureUpload;
 import com.example.honey_create_cloud_pad.file.CleanDataUtils;
@@ -49,6 +53,7 @@ import com.example.honey_create_cloud_pad.util.FileUtil;
 import com.example.honey_create_cloud_pad.view.AnimationView;
 import com.example.honey_create_cloud_pad.webclient.MWebChromeClient;
 import com.example.honey_create_cloud_pad.webclient.MWebViewClient;
+import com.example.honey_create_cloud_pad.webclient.MyWebViewClient;
 import com.example.honey_create_cloud_pad.webclient.WebViewSetting;
 import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
@@ -60,6 +65,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import butterknife.ButterKnife;
@@ -87,6 +93,12 @@ public class MainActivity extends AppCompatActivity {
     View mLoadingPage;
     @InjectView(R.id.web_error)
     View mWebError;
+
+    private static final String[] PERMISSIONS_APPLICATION = { //应用中心授权
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA,
+            Manifest.permission.CALL_PHONE};
+
     private android.webkit.ValueCallback<Uri[]> mUploadCallbackAboveL;
     private android.webkit.ValueCallback<Uri> mUploadCallbackBelow;
     private Uri imageUri;
@@ -184,19 +196,26 @@ public class MainActivity extends AppCompatActivity {
     private MWebChromeClient myChromeWebClient;
     private String backUrl;
     private int back;
+    private String myOrder;
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
         iniVersionName();
+        Uri uri = getIntent().getData();
+        if (uri != null) {
+            String id = uri.getQueryParameter("thirdId");
+            if (id != null) {
+                Intent intent = new Intent(this, NewsActivity.class);
+                intent.putExtra("url", id);
+                startActivity(intent);
+            }
+        }
         myRequetPermission();
-        webView();
+        webView(Constant.text_url);
     }
 
 
@@ -204,22 +223,77 @@ public class MainActivity extends AppCompatActivity {
      * 初始化webview js交互
      */
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    private void webView() {
+    private void webView(String url) {
         if (Build.VERSION.SDK_INT >= 19) {
             mNewWeb.getSettings().setLoadsImagesAutomatically(true);
         } else {
             mNewWeb.getSettings().setLoadsImagesAutomatically(false);
         }
         WebSettings webSettings = mNewWeb.getSettings();
+        String userAgentString = webSettings.getUserAgentString();
+        webSettings.setUserAgentString(userAgentString + "; application-center");
+
         WebViewSetting.initweb(webSettings);
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
         mNewWeb.setWebChromeClient(myChromeWebClient);
-        mNewWeb.loadUrl(Constant.text_url);
+        MyWebViewClient myWebViewClient = new MyWebViewClient(mNewWeb, mWebError);
+        myWebViewClient.setOnCityClickListener(new MyWebViewClient.OnCityChangeListener() {
+            @Override
+            public void onCityClick(String name) {  //动态监听页面加载链接
+                myOrder = name;
+                Log.e(TAG, "onCityClick: " + name);
+//                if (name.equals(Constant.login_url)) {
+//                    mTextPolicyReminder.setVisibility(View.VISIBLE);
+//                    mCloseLoginPage.setVisibility(View.VISIBLE);
+//                    mTextPolicyReminderBack.setVisibility(View.VISIBLE);
+//                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+//                } else if (name.equals(Constant.register_url)) {
+//                    mTextPolicyReminder.setVisibility(View.VISIBLE);
+//                    mCloseLoginPage.setVisibility(View.VISIBLE);
+//                    mTextPolicyReminderBack.setVisibility(View.GONE);
+//                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+//                } else if (name.contains("/about")) {
+//                    mTextPolicyReminder.setVisibility(View.VISIBLE);
+//                    mCloseLoginPage.setVisibility(View.GONE);
+//                    mTextPolicyReminderBack.setVisibility(View.VISIBLE);
+//                } else {
+//                    pageReload = true;
+//                    mTextPolicyReminder.setVisibility(View.GONE);
+//                    mCloseLoginPage.setVisibility(View.GONE);
+//                    mTextPolicyReminderBack.setVisibility(View.GONE);
+//                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);  //SOFT_INPUT_ADJUST_RESIZE
+//                }
+            }
+        });
+        mNewWeb.setWebViewClient(myWebViewClient);
+        mNewWeb.loadUrl(url);
 
         //js交互接口定义
         mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
+
+        //回退监听
+        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+                        SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                        String userInfo = sb.getString("userInfo", "");
+                        if (myOrder.contains("/home")) { //首页拦截物理返回键  直接关闭应用
+                            finish();
+                        } else if (myOrder.contains("/information")) { //确保从该页面返回的是首页
+                            webView(Constant.text_url);
+                        } else {
+                            mNewWeb.goBack();
+                        }
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
 
         //有方法名的都需要注册Handler后使用  获取版本号
         mNewWeb.registerHandler("getVersionName", new BridgeHandler() {
@@ -270,8 +344,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "replace---" + replace1);
                     token1 = s[0];
                     userid = s[1];
-                    Log.i(TAG, "token1---" + token1);
-                    Log.i(TAG, "userid---" + userid);
                     gotoCamera();
                 }else{
 
@@ -293,8 +365,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "replace---" + replace1);
                     token1 = s[0];
                     userid = s[1];
-                    Log.i(TAG, "token1---" + token1);
-                    Log.i(TAG, "userid---" + userid);
                     gotoPhoto();
                 }else{
 
@@ -310,7 +380,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 boolean enabled = isNotificationEnabled(MainActivity.this);
-
                 Log.i("enabled_first", enabled + "");
                 if (enabled == true) {
                     function.onCallBack("1");
@@ -320,17 +389,294 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //回退监听
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
+        //存储用户登录页面传递的信息
+        mNewWeb.registerHandler("setUserInfo", new BridgeHandler() {
             @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        mNewWeb.goBack();
-                        return true;
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    Log.e(TAG, "获取用户登录信息: " + data);
+                    if (!data.isEmpty()) {
+                        SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                        SharedPreferences.Editor edit = sb.edit();
+                        edit.putString("userInfo", data);
+                        edit.commit();
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                return false;
+            }
+        });
+
+        //向页面传递用户登录基本信息
+        mNewWeb.registerHandler("getUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    String userInfo = sb.getString("userInfo", "");
+                    Log.e("wangpan", userInfo);
+                    if (!userInfo.isEmpty()) {
+                        function.onCallBack(sb.getString("userInfo", ""));
+                    } else {
+
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //获取用户登录token userID
+        mNewWeb.registerHandler("getToken", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String usertoken = (String) map.get("token");
+                        String userID = (String) map.get("userID");
+                        Log.e(TAG, "用户登录信息: " + usertoken + "---" + userID);
+                        if (!usertoken.isEmpty()) {
+                            usertoken1 = usertoken;
+                            userid1 = userID;
+
+                            SharedPreferences sb = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+                            SharedPreferences.Editor edit = sb.edit();
+                            edit.putString("NotifyUserId", usertoken1);
+                            edit.commit();
+
+                            //获取userId用于通知
+                            String notifyUserId = sb.getString("NotifyUserId", "");
+//                deleteUserQueue(); //删除队列
+                            if (!TextUtils.isEmpty(notifyUserId)) {
+                                notificationChange(userid1, "0");
+//                                new Thread(() -> basicConsume(myHandler)).start();
+                            }
+                        }
+                    }else{}
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //用户点击跳转打开第三方应用
+        mNewWeb.registerHandler("showApplyParams", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "跳转第三方: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String redirectUrl = (String) map.get("redirectUrl");
+                        int appLyId = (int) map.get("appId");
+                        String appId = String.valueOf(appLyId);
+                        if (!redirectUrl.isEmpty()) {
+                            Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                            intent.putExtra("url", redirectUrl);
+                            intent.putExtra("token", usertoken1);
+                            intent.putExtra("userid", userid1);
+                            intent.putExtra("appId", appId);
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //一下两个功能一样   跳转到系统通知页面
+        mNewWeb.registerHandler("NewNotifiction", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    gotoSet();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }); //可能不用
+        mNewWeb.registerHandler("openNotification", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    gotoSet();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //用户点击跳转打开咨询页面
+        mNewWeb.registerHandler("showNewsParams", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        Log.e(TAG, "跳转咨询页面: " + data);
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String link = (String) map.get("link");
+                        String code = (String) map.get("code");
+                        String token = (String) map.get("token");
+                        String from = (String) map.get("from");
+                        if (!data.isEmpty()) {
+                            Intent intent = new Intent(MainActivity.this, NewsActivity.class);
+                            intent.putExtra("url", link);
+                            intent.putExtra("token", token1);
+                            intent.putExtra("from", from);
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //用户在订单页面点击支付跳转到支付页面
+//        mNewWeb.registerHandler("CashierDeskGo", new BridgeHandler() {
+//            @Override
+//            public void handler(String data, CallBackFunction function) {
+//                try {
+//                    if (!data.isEmpty()) {
+//                        Log.e(TAG, "跳转支付页面: " + data);
+//                        Map map = JSONObject.parseObject(data, Map.class);
+//                        String userId = (String) map.get("userId");
+//                        String orderNo = (String) map.get("orderNo");
+//                        String outTradeNo = (String) map.get("outTradeNo");
+//
+//                        pageReload = true;
+//                        Intent intent = new Intent(MainActivity.this, IntentOpenActivity.class);
+//                        intent.putExtra("userId", userId);
+//                        intent.putExtra("orderNo", orderNo);
+//                        intent.putExtra("outTradeNo", outTradeNo);
+//                        intent.putExtra("token", usertoken1);
+//                        startActivity(intent);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+
+        //用户点击跳转系统手机拨打电话界面  该接口用户自己页面拨打电话
+//        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
+//            @Override
+//            public void handler(String data, CallBackFunction function) {
+//                try {
+//                    if (!data.isEmpty()) {
+//                        Log.e(TAG, "打开通讯录: " + data);
+//                        Map map = JSONObject.parseObject(data, Map.class);
+//                        String tele = (String) map.get("tele");
+//                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        startActivity(intent);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+
+        //用户点击跳转系统手机拨打电话界面  该接口用于第三方拨打电话
+        mNewWeb.registerHandler("openCall", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("num");
+                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + num));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //用户退出登录 清除基本存储信息
+        mNewWeb.registerHandler("ClearUserInfo", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit = sb.edit();
+                    edit.clear();
+                    edit.commit();
+
+                    SharedPreferences sb1 = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
+                    SharedPreferences.Editor edit1 = sb1.edit();
+                    edit1.clear();
+                    edit1.commit();
+
+                    SharedPreferences sb2 = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+                    SharedPreferences.Editor edit2 = sb2.edit();
+                    edit2.clear();
+                    edit2.commit();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //用户点击跳转手机系统浏览器界面
+        mNewWeb.registerHandler("intentBrowser", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String Url = (String) map.get("url");
+                        Gson gson = new Gson();
+                        BrowserBean browserBean = gson.fromJson(Url, BrowserBean.class);
+                        if (!Url.isEmpty()) {
+                            Intent intent = new Intent();
+                            intent.setAction("android.intent.action.VIEW");
+                            Uri content_url = Uri.parse(browserBean.getUrl());
+                            intent.setData(content_url);
+                            startActivity(intent);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+    }
+
+    private void notificationChange(String userId, String openStatus) {
+        OkHttpClient client = new OkHttpClient();
+//        String post = "{" +
+//                "userId:'" + userId + '\'' +
+//                ", openStatus:'" + openStatus + '\'' +
+//                '}';
+        String post1 = "{\n" +
+                "    \"userId\":\"" + userId + "\",\n" +
+                "    \"openStatus\":" + openStatus + "\n" +
+                "}";
+
+        MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+        RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, post1);
+        final Request request = new Request.Builder()
+                .url(Constant.NOTICE_OPEN_SWITCH)
+                .put(requestBody)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String string = response.body().string();
             }
         });
     }
@@ -413,6 +759,14 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onRestart() {
+        SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+        String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
+        if (!TextUtils.isEmpty(apply_url)) {
+            webView(apply_url);
+        }
+        SharedPreferences.Editor edit = sp1.edit();
+        edit.clear();
+        edit.commit();
         mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
@@ -420,18 +774,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         super.onRestart();
-    }
-
-    /**
-     * webview 监听
-     *
-     * @param mNewWeb
-     */
-    private void wvClientSetting(BridgeWebView mNewWeb) {
-        mWebViewClient = new MWebViewClient(mNewWeb, this, mWebError);
-        mNewWeb.setWebViewClient(mWebViewClient);
-        MWebChromeClient mWebChromeClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
-        mNewWeb.setWebChromeClient(mWebChromeClient);
     }
 
     /**
@@ -473,7 +815,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void myRequetPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, 1);
+            ActivityCompat.requestPermissions(this, PERMISSIONS_APPLICATION, 1);
         } else {
             mLodingTime();
         }

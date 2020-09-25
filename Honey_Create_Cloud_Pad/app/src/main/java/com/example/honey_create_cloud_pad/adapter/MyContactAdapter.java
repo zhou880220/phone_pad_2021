@@ -7,14 +7,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.honey_create_cloud_pad.R;
-import com.example.honey_create_cloud_pad.bean.ProductListBean;
 import com.example.honey_create_cloud_pad.bean.RecentlyApps;
 import com.example.honey_create_cloud_pad.ui.ApplyFirstActivity;
 import com.example.honey_create_cloud_pad.ui.ApplySecondActivity;
@@ -51,7 +49,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
         }
     }
 
-    public MyContactAdapter(List<RecentlyApps.DataBean> mContactList, Context context,String userid, String token,String url) {
+    public MyContactAdapter(List<RecentlyApps.DataBean> mContactList, Context context, String userid, String token, String url) {
         this.mContactList = mContactList;
         this.context = context;
         this.userid = userid;
@@ -82,27 +80,28 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                 if (onClosePopupListener != null) {
                     onClosePopupListener.onClosePopupClick("关闭");
                 }
-                if (position == 0){
+                if (position == 0) {
                     Intent intent = new Intent(context, ApplyFirstActivity.class);
-                    intent.putExtra("userid",userid);
-                    intent.putExtra("token",token);
-                    intent.putExtra("url",url);
+                    intent.putExtra("userid", userid);
+                    intent.putExtra("token", token);
+                    intent.putExtra("url", url);
+                    intent.putExtra("appId", mContactList.get(0).getAppId() + "");
                     context.startActivity(intent);
-                }else if(position == 1){
+                } else if (position == 1) {
                     Intent intent = new Intent(context, ApplySecondActivity.class);
-                    intent.putExtra("userid",userid);
-                    intent.putExtra("token",token);
-                    intent.putExtra("url",url);
+                    intent.putExtra("userid", userid);
+                    intent.putExtra("token", token);
+                    intent.putExtra("url", url);
+                    intent.putExtra("appId", mContactList.get(1).getAppId() + "");
                     context.startActivity(intent);
-                }else if(position == 2){
+                } else if (position == 2) {
                     Intent intent = new Intent(context, ApplyThirdActivity.class);
-                    intent.putExtra("userid",userid);
-                    intent.putExtra("token",token);
-                    intent.putExtra("url",url);
+                    intent.putExtra("userid", userid);
+                    intent.putExtra("token", token);
+                    intent.putExtra("url", url);
+                    intent.putExtra("appId", mContactList.get(2).getAppId() + "");
                     context.startActivity(intent);
                 }
-
-                Toast.makeText(view.getContext(), dataBean.getAppName(), Toast.LENGTH_SHORT).show();
             }
         });
         return viewHolder;
@@ -110,7 +109,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (mContactList.get(position).getLogoUrl() != null){
+        if (mContactList.get(position).getLogoUrl() != null) {
             Glide.with(context).load(mContactList.get(position).getLogoUrl()).into(holder.imageView);
         }
     }
@@ -120,7 +119,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
         return mContactList.size();
     }
 
-    public interface OnClosePopupListener{
+    public interface OnClosePopupListener {
         void onClosePopupClick(String name);
     }
 }

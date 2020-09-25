@@ -5,4 +5,10 @@
     <color name="colorAccent">#2F83FF</color>
 
     <color name="colorError">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="text_color_false">#000000</color>
+    <color name="black">#000000</color>
+    <color name="text_backcolor_true">#2F83FF</color>
+    <color name="blue">#5cabfa</color>
+    <color name="titleBar">#2393fc</color>
 </resources>

@@ -6,33 +6,34 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
-import android.util.Log;
 import android.view.View;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import androidx.annotation.RequiresApi;
 
-public class MWebViewClient extends WebViewClient {
-    private WebView webView;
+import com.github.lzyzsd.jsbridge.BridgeWebView;
+import com.github.lzyzsd.jsbridge.BridgeWebViewClient;
+
+/**
+ * Created by wangpan on 2020/4/29
+ */
+public class MyWebViewClient extends BridgeWebViewClient {
+    private BridgeWebView webView;
     private Context context;
     private View web_error;
+    private String TAG = "TAG";
+
     private OnCityChangeListener onCityChangeListener;//定义对象
 
     public void setOnCityClickListener(OnCityChangeListener listener) {
         this.onCityChangeListener = listener;
     }
 
-    public MWebViewClient(WebView webView) {
-        this.webView = webView;
-    }
-
-    public MWebViewClient(WebView webView, Context context, View web_error) {
-        this.webView = webView;
-        this.context = context;
+    public MyWebViewClient(BridgeWebView webView, View web_error) {
+        super(webView);
         this.web_error = web_error;
     }
 
@@ -57,37 +58,18 @@ public class MWebViewClient extends WebViewClient {
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
         super.onPageStarted(view, url, favicon);
+
     }
 
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
-        if (!webView.getSettings().getLoadsImagesAutomatically()) {
-            webView.getSettings().setLoadsImagesAutomatically(true);
-        }
-    }
-
-    @Override
-    public void onLoadResource(WebView view, String url) {
-        super.onLoadResource(view, url);
-        if (onCityChangeListener != null) {
-            onCityChangeListener.onCityClick(view.getUrl());
-        }
-        Log.i("url---", view.getUrl());
     }
 
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
         super.onReceivedSslError(view, handler, error);
-    }
-
-    @Override
-    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-        super.onReceivedError(view, errorCode, description, failingUrl);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return;
-        }
-        ChangErrorView();
+//        handler.proceed();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -100,8 +82,16 @@ public class MWebViewClient extends WebViewClient {
     }
 
     private void ChangErrorView() {
-        webView.setVisibility(View.GONE);
+//        webView.setVisibility(View.GONE);
         web_error.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onLoadResource(WebView view, String url) {
+        if (onCityChangeListener != null) {
+            onCityChangeListener.onCityClick(view.getUrl());
+        }
+        super.onLoadResource(view, url);
     }
 
     public interface OnCityChangeListener {

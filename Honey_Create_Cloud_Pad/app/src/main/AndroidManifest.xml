@@ -1,13 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.honey_create_cloud_pad">
 
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- 网络权限 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /><!-- 读写权限 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- 相机权限 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" /><!-- 获取语音 -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.CALL_PHONE" /> <!-- 拨打电话 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> <!-- 获取用户信息 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /><!-- 支付需要 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name=" com.huawei.android.launcher.permission. CHANGE_BADGE" /><!-- 华为角标 -->
 
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- 安卓8.0系统安装app 未知来源权限 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_ADDED" />
+    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_CHANGED" />
+    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_INSTALL" />
+    <uses-permission android:name="android.permission.BROADCAST_PACKAGE_REPLACED" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEM" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_logo"
@@ -16,36 +37,60 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+
+        <activity android:name=".ui.ReminderActivity"></activity>
         <activity
-            android:name=".ui.ApplyThirdActivity"
-            android:launchMode="singleInstance"
-            android:screenOrientation="landscape"></activity>
-        <activity
-            android:name=".ui.ApplySecondActivity"
-            android:launchMode="singleInstance"
-            android:screenOrientation="landscape"></activity>
-        <activity
-            android:name=".ui.NewsActivity"
-            android:launchMode="singleInstance"
-            android:screenOrientation="landscape"></activity>
-        <activity
-            android:name=".ui.ApplyFirstActivity"
-            android:launchMode="singleInstance"
-            android:screenOrientation="landscape"></activity>
-        <activity
-            android:name=".ui.MainActivity"
-            android:launchMode="singleInstance"
-            android:screenOrientation="landscape"
-            android:theme="@style/AppThemeTwo">
+            android:name=".ui.StartPageActivity"
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.ApplyThirdActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/AppThemeTwo"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ui.ApplySecondActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/AppThemeTwo"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ui.NewsActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/AppThemeTwo"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ui.ApplyFirstActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/AppThemeTwo"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".ui.MainActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/AppThemeTwo"
+            android:windowSoftInputMode="adjustNothing|adjustPan|adjustResize"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
 
-        <activity android:name=".ui.ClipImageActivity"
-            android:screenOrientation="portrait"></activity>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <data
+                    android:host="zzy"
+                    android:path="/home"
+                    android:port="8080"
+                    android:scheme="test"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.ClipImageActivity"
+            android:screenOrientation="portrait" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
