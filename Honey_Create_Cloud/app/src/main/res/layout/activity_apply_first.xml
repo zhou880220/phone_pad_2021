@@ -15,7 +15,8 @@
             android:layout_width="50dp"
             android:layout_height="match_parent"
             android:padding="18dp"
-            android:src="@drawable/apply_back" />
+            android:src="@drawable/apply_back"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/apply_title_text1"

@@ -2437,7 +2437,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
                         mApplyBackImage1.setVisibility(View.GONE);
                     } else {
-                        mApplyBackImage1.setVisibility(View.VISIBLE);
+                        mApplyBackImage1.setVisibility(View.GONE);
                         if (ContextCompat.checkSelfPermission(ApplyFirstActivity.this, Manifest.permission.RECORD_AUDIO)
                                 != PackageManager.PERMISSION_GRANTED) {
                             //申请READ_EXTERNAL_STORAGE权限

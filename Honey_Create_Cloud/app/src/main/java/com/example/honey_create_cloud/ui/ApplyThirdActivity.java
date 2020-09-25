@@ -2342,7 +2342,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
                         mApplyBackImage3.setVisibility(View.GONE);
                     } else {
-                        mApplyBackImage3.setVisibility(View.VISIBLE);
+                        mApplyBackImage3.setVisibility(View.GONE);
                     }
                 } catch (Exception e) {
                     mApplyBackImage3.setVisibility(View.VISIBLE);

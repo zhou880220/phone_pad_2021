@@ -2345,7 +2345,7 @@ public class ApplySecondActivity extends AppCompatActivity {
                     if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
                         mApplyBackImage2.setVisibility(View.GONE);
                     } else {
-                        mApplyBackImage2.setVisibility(View.VISIBLE);
+                        mApplyBackImage2.setVisibility(View.GONE);
                     }
                 } catch (Exception e) {
                     mApplyBackImage2.setVisibility(View.VISIBLE);
