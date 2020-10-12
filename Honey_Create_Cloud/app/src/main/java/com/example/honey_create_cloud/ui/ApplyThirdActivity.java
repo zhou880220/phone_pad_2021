@@ -634,39 +634,39 @@ public class ApplyThirdActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 try {
-                    if (!data.isEmpty()){
-                    Toast.makeText(ApplyThirdActivity.this, "请稍后...", Toast.LENGTH_SHORT).show();
-                    Map map = JSONObject.parseObject(data, Map.class);
-                    String num = (String) map.get("url");
-                    String filename = (String) map.get("filename");
-                    Log.e(TAG, "新的文件名下载路径: 0" + filename);
-                    if (filename != null && !filename.equals("")) {
-                        String newReplaceUrl = num.replace(num.substring(num.lastIndexOf("/") + 1), filename);
-                        Log.e(TAG, "新的文件名下载路径: 1" + newReplaceUrl);
-                        List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
-                        for (int i = 0; i < Listdata.size() - 1; i++) {
-                            String ApplyId = String.valueOf(Listdata.get(i).getAppId());
-                            if (appId.equals(ApplyId)) {
-                                char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                String pinYinHeadChar = getPinYinHeadChar(chars);
-                                String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
-                                downFilePath(FileLoad, newReplaceUrl);
+                    if (!data.isEmpty()) {
+                        Toast.makeText(ApplyThirdActivity.this, "请稍后...", Toast.LENGTH_SHORT).show();
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("url");
+                        String filename = (String) map.get("filename");
+                        Log.e(TAG, "新的文件名下载路径: 0" + filename);
+                        if (filename != null && !filename.equals("")) {
+                            String newReplaceUrl = num.replace(num.substring(num.lastIndexOf("/") + 1), filename);
+                            Log.e(TAG, "新的文件名下载路径: 1" + newReplaceUrl);
+                            List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
+                            for (int i = 0; i < Listdata.size() - 1; i++) {
+                                String ApplyId = String.valueOf(Listdata.get(i).getAppId());
+                                if (appId.equals(ApplyId)) {
+                                    char[] chars = Listdata.get(i).getAppName().toCharArray();
+                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                                    downFilePath(FileLoad, newReplaceUrl);
+                                }
                             }
-                        }
-                    } else {
-                        Log.e(TAG, "新的文件名下载路径:2 " + num);
-                        List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
-                        for (int i = 0; i < Listdata.size() - 1; i++) {
-                            String ApplyId = String.valueOf(Listdata.get(i).getAppId());
-                            if (appId.equals(ApplyId)) {
-                                char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                String pinYinHeadChar = getPinYinHeadChar(chars);
-                                String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
-                                downFilePath(FileLoad, num);
+                        } else {
+                            Log.e(TAG, "新的文件名下载路径:2 " + num);
+                            List<RecentlyApps.DataBean> Listdata = recentlyApps.getData();
+                            for (int i = 0; i < Listdata.size() - 1; i++) {
+                                String ApplyId = String.valueOf(Listdata.get(i).getAppId());
+                                if (appId.equals(ApplyId)) {
+                                    char[] chars = Listdata.get(i).getAppName().toCharArray();
+                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                                    downFilePath(FileLoad, num);
+                                }
                             }
                         }
                     }
-                }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -696,53 +696,53 @@ public class ApplyThirdActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 try {
-                    if (!data.isEmpty()){
-                    //微信初始化
-                    wxApi = WXAPIFactory.createWXAPI(ApplyThirdActivity.this, Constant.APP_ID);
-                    wxApi.registerApp(Constant.APP_ID);
-                    //QQ初始化
-                    mTencent = Tencent.createInstance(Constant.QQ_APP_ID, ApplyThirdActivity.this);
+                    if (!data.isEmpty()) {
+                        //微信初始化
+                        wxApi = WXAPIFactory.createWXAPI(ApplyThirdActivity.this, Constant.APP_ID);
+                        wxApi.registerApp(Constant.APP_ID);
+                        //QQ初始化
+                        mTencent = Tencent.createInstance(Constant.QQ_APP_ID, ApplyThirdActivity.this);
 
-                    Map map = JSONObject.parseObject(data, Map.class);
-                    String num = (String) map.get("obj");
-                    Map mapType = JSONObject.parseObject(num, Map.class);
-                    int type = (int) mapType.get("type");
-                    String value = String.valueOf(mapType.get("data"));
-                    Gson gson = new Gson();
-                    ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
-                    if (type == 1) {
-                        boolean wxAppInstalled = isWxAppInstalled(ApplyThirdActivity.this);
-                        if (wxAppInstalled == true) {
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    wechatShare(0, shareSdkBean); //好友
-                                }
-                            }).start();
-                        } else {
-                            Toast.makeText(ApplyThirdActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
-                        }
-                    } else if (type == 2) {
-                        boolean wxAppInstalled1 = isWxAppInstalled(ApplyThirdActivity.this);
-                        if (wxAppInstalled1 == true) {
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    wechatShare(1, shareSdkBean); //朋友圈
-                                }
-                            }).start();
-                        } else {
-                            Toast.makeText(ApplyThirdActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
-                        }
-                    } else if (type == 3) {
-                        boolean qqClientAvailable = isQQClientAvailable(ApplyThirdActivity.this);
-                        if (qqClientAvailable == true) {
-                            qqFriend(shareSdkBean);
-                        } else {
-                            Toast.makeText(ApplyThirdActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                        Map map = JSONObject.parseObject(data, Map.class);
+                        String num = (String) map.get("obj");
+                        Map mapType = JSONObject.parseObject(num, Map.class);
+                        int type = (int) mapType.get("type");
+                        String value = String.valueOf(mapType.get("data"));
+                        Gson gson = new Gson();
+                        ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
+                        if (type == 1) {
+                            boolean wxAppInstalled = isWxAppInstalled(ApplyThirdActivity.this);
+                            if (wxAppInstalled == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(0, shareSdkBean); //好友
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(ApplyThirdActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                            }
+                        } else if (type == 2) {
+                            boolean wxAppInstalled1 = isWxAppInstalled(ApplyThirdActivity.this);
+                            if (wxAppInstalled1 == true) {
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(1, shareSdkBean); //朋友圈
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(ApplyThirdActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                            }
+                        } else if (type == 3) {
+                            boolean qqClientAvailable = isQQClientAvailable(ApplyThirdActivity.this);
+                            if (qqClientAvailable == true) {
+                                qqFriend(shareSdkBean);
+                            } else {
+                                Toast.makeText(ApplyThirdActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
-                }
                 } catch (JsonSyntaxException e) {
                     e.printStackTrace();
                 }
@@ -2342,7 +2342,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
                         mApplyBackImage3.setVisibility(View.GONE);
                     } else {
-                        mApplyBackImage3.setVisibility(View.GONE);
+                        mApplyBackImage3.setVisibility(View.VISIBLE);
                     }
                 } catch (Exception e) {
                     mApplyBackImage3.setVisibility(View.VISIBLE);

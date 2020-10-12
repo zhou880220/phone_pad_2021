@@ -268,13 +268,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showClearCache() {
-        SharedPreferences spCache = getSharedPreferences("ClearCache",MODE_PRIVATE);
+        SharedPreferences spCache = getSharedPreferences("ClearCache", MODE_PRIVATE);
         boolean firstCache = spCache.getBoolean("ClearCache", true);
-        if (firstCache == true){
+        if (firstCache == true) {
             SharedPreferences.Editor edit = spCache.edit();
-            edit.putBoolean("ClearCache",false);
+            edit.putBoolean("ClearCache", false);
             edit.commit();
-        }else{
+        } else {
         }
     }
 
@@ -609,13 +609,19 @@ public class MainActivity extends AppCompatActivity {
 
                             //获取userId用于通知
                             String notifyUserId = sb.getString("NotifyUserId", "");
-//                deleteUserQueue(); //删除队列
-                            if (!TextUtils.isEmpty(notifyUserId)) {
-                                notificationChange(userid1, "0");
-                                new Thread(() -> basicConsume(myHandler)).start();
+                            //deleteUserQueue(); //删除队列
+                            //用于判断手机是否大于7.0  大于的话开启用户通知 否则不开起通知
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                if (!TextUtils.isEmpty(notifyUserId)) {
+                                    notificationChange(userid1, "0");
+                                    new Thread(() -> basicConsume(myHandler)).start();
+                                }
+                            } else {
+                                Log.e(TAG, "通知不开启，小于7.0");
                             }
                         }
-                    }else{}
+                    } else {
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -919,6 +925,7 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void getToken(String usertoken, String userid) {
+
             if (!usertoken.isEmpty()) {
                 usertoken1 = usertoken;
                 userid1 = userid;
@@ -930,10 +937,15 @@ public class MainActivity extends AppCompatActivity {
 
                 //获取userId用于通知
                 String notifyUserId = sb.getString("NotifyUserId", "");
-//                deleteUserQueue(); //删除队列
-                if (!TextUtils.isEmpty(notifyUserId)) {
-                    notificationChange(userid1, "0");
-                    new Thread(() -> basicConsume(myHandler)).start();
+                //deleteUserQueue(); //删除队列
+                //用于判断手机是否大于7.0  大于的话开启用户通知 否则不开起通知
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    if (!TextUtils.isEmpty(notifyUserId)) {
+                        notificationChange(userid1, "0");
+                        new Thread(() -> basicConsume(myHandler)).start();
+                    }
+                } else {
+                    Log.e(TAG, "通知不开启，小于7.0");
                 }
             }
         }
@@ -1350,15 +1362,23 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sb = getSharedPreferences("NotificationUserId", MODE_PRIVATE);
         String notifyUserId = sb.getString("NotifyUserId", "");
 
-        if (!TextUtils.isEmpty(notifyUserId)) {
-            new Thread(() -> basicConsume(myHandler)).start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (!TextUtils.isEmpty(notifyUserId)) {
+                new Thread(() -> basicConsume(myHandler)).start();
+            }
+        } else {
+            Log.e(TAG, "通知不开启，小于7.0");
         }
         super.onRestart();
     }
 
     @Override
     protected void onStop() {
-        new Thread(() -> basicConsume(myHandler)).start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            new Thread(() -> basicConsume(myHandler)).start();
+        } else {
+            Log.e(TAG, "通知不开启，小于7.0");
+        }
         super.onStop();
     }
 

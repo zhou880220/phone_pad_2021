@@ -2437,7 +2437,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
                         mApplyBackImage1.setVisibility(View.GONE);
                     } else {
-                        mApplyBackImage1.setVisibility(View.GONE);
+                        mApplyBackImage1.setVisibility(View.VISIBLE);
                         if (ContextCompat.checkSelfPermission(ApplyFirstActivity.this, Manifest.permission.RECORD_AUDIO)
                                 != PackageManager.PERMISSION_GRANTED) {
                             //申请READ_EXTERNAL_STORAGE权限
@@ -2501,7 +2501,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 String[] acceptTypes = fileChooserParams.getAcceptTypes();
                 uploadMessageAboveL = filePathCallback;
-                Log.e(TAG, "onShowFileChooser:这个是什么鬼 "+acceptTypes[0] );
+                Log.e(TAG, "onShowFileChooser:这个是什么鬼 " + acceptTypes[0]);
                 if (acceptTypes[0].equals("*/*")) {
                     openFileChooserActivity(); //文件系统管理
                 } else if (acceptTypes[0].equals("image/*")) {

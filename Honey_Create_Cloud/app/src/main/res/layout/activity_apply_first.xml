@@ -15,8 +15,7 @@
             android:layout_width="50dp"
             android:layout_height="match_parent"
             android:padding="18dp"
-            android:src="@drawable/apply_back"
-            android:visibility="gone"/>
+            android:src="@drawable/apply_back" />
 
         <TextView
             android:id="@+id/apply_title_text1"
@@ -29,11 +28,12 @@
         <LinearLayout
             android:layout_width="87dp"
             android:layout_height="32dp"
-            android:orientation="horizontal"
             android:layout_alignParentRight="true"
+            android:layout_centerInParent="true"
             android:layout_marginRight="7dp"
             android:background="@drawable/title_back_iamge"
-            android:layout_centerInParent="true">
+            android:orientation="horizontal">
+
             <ImageView
                 android:id="@+id/apply_menu_image1"
                 android:layout_width="43dp"
@@ -41,11 +41,13 @@
                 android:layout_gravity="center"
                 android:padding="10dp"
                 android:src="@mipmap/yingyong" />
+
             <View
                 android:layout_width="0.5dp"
                 android:layout_height="18.5dp"
                 android:layout_gravity="center"
-                android:background="#CCCCCC"/>
+                android:background="#CCCCCC" />
+
             <ImageView
                 android:id="@+id/apply_menu_home1"
                 android:layout_width="43dp"
@@ -175,7 +177,7 @@
         android:onClick="onClick"
         android:padding="16dp"
         android:src="@drawable/floating"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
     <RelativeLayout
         android:id="@+id/glide_gif"
