@@ -29,6 +29,7 @@ public class StartPageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start_page);
+        MyApplication.Install(this);//初始化推送
         showAlterpPolicy();
     }
 

@@ -80,7 +80,7 @@ public class MWebChromeClient extends WebChromeClient {
             //进度跳显示
             progressBar.setVisibility(View.VISIBLE);
             progressBar.setProgress(newProgress);
-            Log.e("wangpan", newProgress + "");
+            //Log.e("wangpan", newProgress + "");
         }
 
         if (onCloseListener != null) {

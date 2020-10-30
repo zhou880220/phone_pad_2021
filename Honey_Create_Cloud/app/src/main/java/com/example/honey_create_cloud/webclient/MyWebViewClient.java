@@ -2,6 +2,7 @@ package com.example.honey_create_cloud.webclient;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
@@ -55,7 +56,7 @@ public class MyWebViewClient extends BridgeWebViewClient {
                 // ToastUtils.showShort("暂无应用打开此链接");
             }
         }
-        return super.shouldOverrideUrlLoading(view, url);
+        return super.shouldOverrideUrlLoading(view, url); //return 不可更改 否则页面接口会失效 母鸡啊(;≡(▔﹏▔)≡;)
     }
 
     @Override

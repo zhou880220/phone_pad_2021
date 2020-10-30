@@ -308,6 +308,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_FINE_LOCATION};
 
     private static final int ADDRESS_PERMISSIONS_CODE = 1;
+    private String zxIdTouTiao;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -321,13 +322,33 @@ public class ApplyFirstActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
+        zxIdTouTiao = intent.getStringExtra("zxIdTouTiao");
+        if (zxIdTouTiao != null) {
+            Map map = JSONObject.parseObject(zxIdTouTiao, Map.class);
+            String num = (String) map.get("str");
+            String cookieKey = "key";
+            String cookieValue = "value";
+            ArrayList<Object> list = new ArrayList<>();
+            List objects = JSONObject.parseObject(num, List.class);
+            if (objects != null && objects.size() > 0) {
+                for (Object o : objects) {
+                    if (o != null) {
+                        Map JsonMap = JSONObject.parseObject(o.toString(), Map.class);
+                        String key = (String) JsonMap.get(cookieKey);
+                        String value = (String) JsonMap.get(cookieValue);
+                        hashMap.put(key, value);
+                    }
+                }
+            }
+        }
         intentOkhttp();
         intentAppNameOkhttp();
         initviewTitle();
         try {
             if (!url.isEmpty()) {
                 webView(url);
-            }else{}
+            } else {
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -342,6 +363,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mNewWeb != null && mNewWeb.canGoBack()) {
+                    Log.e(TAG, "onClick: 可以返回" );
                     if (goBackUrl.contains("systemIndex")) { //电子看板
                         finish();
                     } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
@@ -349,6 +371,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     } else if (goBackUrl.contains("index.html")) {  //图纸通
                         finish();
                     } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                        finish();
+                    } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                        finish();
+                    } else if (goBackUrl.contains("app/home")) { //自主控制
                         finish();
                     } else if (mWebError.getVisibility() == View.VISIBLE) {
                         finish();
@@ -445,30 +471,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.loadUrl(url);
         //js交互接口定义
         mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        if (goBackUrl.contains("systemIndex")) { //电子看板
-                            finish();
-                        } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                            finish();
-                        } else if (goBackUrl.contains("index.html")) {  //图纸通
-                            finish();
-                        } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
-                            finish();
-                        } else if (mWebError.getVisibility() == View.VISIBLE) {
-                            finish();
-                        } else {
-                            mNewWeb.goBack();
-                        }
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
         wvClientSetting(mNewWeb);
 
         /**
@@ -484,6 +486,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         });
+
+
         /**
          * 获取手机唯一标识符
          */
@@ -629,6 +633,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             public void handler(String data, CallBackFunction function) {
                 try {
                     if (data != null) {
+                        Log.e(TAG, "getCookie: " + data);
                         Map map = JSONObject.parseObject(data, Map.class);
                         Set<String> set = map.keySet();
                         Iterator<String> iterator = set.iterator();
@@ -636,6 +641,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                             String key = iterator.next();
                             String value = (String) map.get(key);
                             String getCookieValue = (String) hashMap.get(value);
+                            Log.e(TAG, "getCookie: " + getCookieValue);
                             function.onCallBack(getCookieValue);
                         }
                     }
@@ -763,7 +769,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
             }
         });
         /**
@@ -772,6 +777,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("goLogin", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "用户登录异常回跳登录页: ");
                 try {
                     SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                     SharedPreferences.Editor edit1 = sp1.edit();
@@ -875,6 +881,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("setCookie", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "setCookie: " + data);
                 try {
                     if (!data.isEmpty()) {
                         Map map = JSONObject.parseObject(data, Map.class);
@@ -2684,6 +2691,33 @@ public class ApplyFirstActivity extends AppCompatActivity {
         boolean bIsWXAppInstalled = false;
         bIsWXAppInstalled = wxApi.isWXAppInstalled();
         return bIsWXAppInstalled;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mNewWeb != null && mNewWeb.canGoBack()) {
+            Log.e(TAG, "onClick: 可以返回" );
+            if (goBackUrl.contains("systemIndex")) { //电子看板
+                finish();
+            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                finish();
+            } else if (goBackUrl.contains("index.html")) {  //图纸通
+                finish();
+            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                finish();
+            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                finish();
+            } else if (goBackUrl.contains("app/home")) { //自主控制
+                finish();
+            } else if (mWebError.getVisibility() == View.VISIBLE) {
+                finish();
+            } else {
+                mNewWeb.goBack();
+            }
+        } else {
+            finish();
+        }
+        return true;
     }
 
     @Override

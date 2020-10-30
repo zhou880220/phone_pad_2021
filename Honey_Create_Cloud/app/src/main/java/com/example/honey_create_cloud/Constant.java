@@ -38,12 +38,14 @@ public class Constant {
     public static final String QQ_APP_ID = "1110555495";
     //以下为页面前缀
     public static final String locahost_url = TEST_PAGE_URL + "cashierDesk"; //路径前缀  "http://172.16.23.116:3001/"
-    public static final String text_url = TEST_PAGE_URL + "home"; //用户首页
+    public static final String text_url = TEST_PAGE_URL + "home"; //用户首页 //"http://172.16.23.253:3001/"
+//    public static final String text_url = "http://172.16.23.253:3001/"; //用户首页 //"http://172.16.23.253:3001/"
     public static final String login_url = TEST_PAGE_URL + "login"; //登录页
     public static final String apply_url = TEST_PAGE_URL + "apply"; //用户中心
     public static final String register_url = TEST_PAGE_URL + "register"; //用户注册
     public static final String APP_NOTICE_LIST = TEST_PAGE_URL + "appNoticeList"; //消息页
     public static final String MyOrderList = TEST_PAGE_URL + "myOrder";//订单列表
+    public static final String MyNews = TEST_PAGE_URL + "news"; //咨询页面
     public static final String test_shoppingCart = TEST_PAGE_URL + "shoppingCart"; //支付页面订单列表
     //以下为接口前缀      TEST_INTERFACE_URL = "https://njtesthoneycomb.zhizaoyun.com/gateway/";
     public static final String Apply_Details = TEST_INTERFACE_URL + "api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
@@ -57,4 +59,7 @@ public class Constant {
     public static final String TOKEN_IS_OK = TEST_INTERFACE_URL + "api-u/users/current?access_token=";//token是否有效
     public static final String DELETE_QUEUE = TEST_INTERFACE_URL + "api-n/notification-anon/queue/delete?userId=";//用户登录删除队列
     public static final String GETAPPLY_URL = TEST_INTERFACE_URL + "api-apps/operation/apps-anon/appName?appId="; //获取当前三方应用首页链接
+    public static final String GETRabbitMQAddress = TEST_INTERFACE_URL+"api-apps/menu/apps-anon/rabbitMqInfo";//获取RabbitMq推送服务地址
+    public static final String userPushRelation = TEST_INTERFACE_URL+"api-msg/userPushRelation";//保存用户推送关系
+    public static final String userPushRelationUpdate = TEST_INTERFACE_URL+"api-msg/userPushRelation/update";//保存用户推送关系
 }

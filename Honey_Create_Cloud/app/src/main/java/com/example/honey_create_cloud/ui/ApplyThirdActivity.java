@@ -332,6 +332,10 @@ public class ApplyThirdActivity extends AppCompatActivity {
                         finish();
                     } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
                         finish();
+                    } else if (goBackUrl.contains("app/home")) { //自主控制
+                        finish();
+                    } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                        finish();
                     } else if (mWebError.getVisibility() == View.VISIBLE) {
                         finish();
                     } else {
@@ -430,30 +434,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         mNewWeb.loadUrl(url);
         //js交互接口定义
         mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        if (goBackUrl.contains("systemIndex")) {
-                            finish();
-                        } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                            finish();
-                        } else if (goBackUrl.contains("index.html")) {  //图纸通
-                            finish();
-                        } else if (goBackUrl.contains("yyzx_dianji/")) { //点击功率
-                            finish();
-                        } else if (mWebError.getVisibility() == View.VISIBLE) {
-                            finish();
-                        } else {
-                            mNewWeb.goBack();
-                        }
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
         wvClientSetting(mNewWeb);
 
         /**
@@ -2574,6 +2554,33 @@ public class ApplyThirdActivity extends AppCompatActivity {
         boolean bIsWXAppInstalled = false;
         bIsWXAppInstalled = wxApi.isWXAppInstalled();
         return bIsWXAppInstalled;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mNewWeb != null && mNewWeb.canGoBack()) {
+            Log.e(TAG, "onClick: 可以返回" );
+            if (goBackUrl.contains("systemIndex")) { //电子看板
+                finish();
+            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                finish();
+            } else if (goBackUrl.contains("index.html")) {  //图纸通
+                finish();
+            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                finish();
+            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                finish();
+            } else if (goBackUrl.contains("app/home")) { //自主控制
+                finish();
+            } else if (mWebError.getVisibility() == View.VISIBLE) {
+                finish();
+            } else {
+                mNewWeb.goBack();
+            }
+        } else {
+            finish();
+        }
+        return true;
     }
 
 
