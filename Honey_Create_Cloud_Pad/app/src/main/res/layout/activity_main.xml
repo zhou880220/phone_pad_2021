@@ -5,6 +5,12 @@
     android:layout_height="match_parent"
     tools:context=".ui.MainActivity">
 
+    <com.github.lzyzsd.jsbridge.BridgeWebView
+        android:id="@+id/new_Web"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </com.github.lzyzsd.jsbridge.BridgeWebView>
+
     <ProgressBar
         android:id="@+id/newwebprogressbar"
         style="?android:attr/progressBarStyleHorizontal"
@@ -12,12 +18,6 @@
         android:layout_height="3dp"
         android:progressDrawable="@drawable/progressbar" />
 
-    <com.github.lzyzsd.jsbridge.BridgeWebView
-        android:id="@+id/new_Web"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-    </com.github.lzyzsd.jsbridge.BridgeWebView>
 
     <include
         android:id="@+id/web_error"
@@ -26,11 +26,11 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <include
-        android:id="@+id/loading_page"
-        layout="@layout/activity_loding"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
+<!--    <include-->
+<!--        android:id="@+id/loading_page"-->
+<!--        layout="@layout/activity_loding"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:visibility="gone"/>-->
 
 </RelativeLayout>

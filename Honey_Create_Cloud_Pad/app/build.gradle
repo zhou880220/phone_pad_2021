@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.example.honey_create_cloud_pad"
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -17,6 +17,10 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
@@ -70,4 +74,8 @@ dependencies {
     implementation 'com.github.open-android:pinyin4j:2.5.0'
     //下载框架
     implementation 'com.liulishuo.filedownloader:library:1.7.4'
+    //rabbitmq
+    implementation 'com.rabbitmq:amqp-client:5.7.0'
+    //角标
+    implementation "me.leolin:ShortcutBadger:1.1.22@aar"
 }

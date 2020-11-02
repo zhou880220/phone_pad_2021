@@ -11,4 +11,7 @@
     <color name="text_backcolor_true">#2F83FF</color>
     <color name="blue">#5cabfa</color>
     <color name="titleBar">#2393fc</color>
+
+    <color name="text_color_true">#FFFFFF</color>
+    <color name="notice_tip">#5cabfa</color>
 </resources>

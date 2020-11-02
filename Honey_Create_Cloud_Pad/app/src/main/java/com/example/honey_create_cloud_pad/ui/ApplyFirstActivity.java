@@ -47,6 +47,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,6 +62,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud_pad.BuildConfig;
 import com.example.honey_create_cloud_pad.Constant;
 import com.example.honey_create_cloud_pad.R;
@@ -69,7 +72,9 @@ import com.example.honey_create_cloud_pad.bean.BrowserBean;
 import com.example.honey_create_cloud_pad.bean.PictureUpload;
 import com.example.honey_create_cloud_pad.bean.RecentlyApps;
 import com.example.honey_create_cloud_pad.bean.TakePhoneBean;
+import com.example.honey_create_cloud_pad.bean.TitleName;
 import com.example.honey_create_cloud_pad.recorder.AudioRecorderButton;
+import com.example.honey_create_cloud_pad.util.BaseUtil;
 import com.example.honey_create_cloud_pad.util.FileUtil;
 import com.example.honey_create_cloud_pad.util.SystemUtil;
 import com.example.honey_create_cloud_pad.view.AnimationView;
@@ -83,6 +88,7 @@ import com.google.gson.Gson;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloader;
+import com.xj.library.base.APP;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 
 import net.sourceforge.pinyin4j.PinyinHelper;
@@ -131,7 +137,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     BridgeWebView mNewWeb;
     @InjectView(R.id.error_iv)
     View mWebError;
-    @InjectView(R.id.loading_page)
+    @InjectView(R.id.glide_gif)
     View mLoadingPage;
     @InjectView(R.id.reload_tv)
     TextView mReloadTv;
@@ -153,6 +159,16 @@ public class ApplyFirstActivity extends AppCompatActivity {
     LinearLayout mLlCourseNone;
     @InjectView(R.id.fab_more)
     ImageView mFabMore;
+    @InjectView(R.id.dimiss_popup)
+    RelativeLayout mDimissPopup;
+    @InjectView(R.id.apply_back_image1)
+    ImageView mApplyBackImage1;
+    @InjectView(R.id.apply_title_text1)
+    TextView mApplyTitleText1;
+    @InjectView(R.id.apply_menu_image1)
+    ImageView mApplyMenuImage1;
+    @InjectView(R.id.apply_menu_home1)
+    ImageView mApplyMenuHome1;
 
     private Handler handler = new Handler(new Handler.Callback() {
         @Override
@@ -164,7 +180,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
                             .add("fileNames", newName)
-                            .add("bucketName", Constant.test_bucket_Name)
+                            .add("bucketName", Constant.bucket_Name)
                             .add("folderName", "menu")
                             .build();
                     Request request = new Request.Builder()
@@ -191,6 +207,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
+                                    mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + imageUrl + "\")", new ValueCallback<String>() {
+                                        @Override
+                                        public void onReceiveValue(String value) {
+
+                                        }
+                                    });
                                     mNewWeb.callHandler("AlreadyPhoto", imageUrl, new CallBackFunction() {
                                         @Override
                                         public void onCallBack(String data) {
@@ -205,7 +227,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 case TITLENAME: {
                     String titlename = (String) msg.obj;
                     if (titlename != null) {
-//                        mApplyTitleText1.setText(titlename);
+                        mApplyTitleText1.setText(titlename);
                     }
                     break;
                 }
@@ -258,10 +280,105 @@ public class ApplyFirstActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
-        webView(url);
+        try {
+            if (!url.isEmpty()) {
+                webView(url);
+            }else{}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        initviewTitle();
         Log.e(TAG, "onCreate: " + url + "----" + token + "-----" + userid + "-----" + appId);
         mLodingTime();
         intentOkhttp();
+        intentAppNameOkhttp();
+    }
+
+    private void initviewTitle() {
+        mApplyBackImage1.setOnClickListener(new View.OnClickListener() {  //返回
+            @Override
+            public void onClick(View v) {
+                if (mNewWeb != null && mNewWeb.canGoBack()) {
+                    if (goBackUrl.contains("systemIndex")) { //电子看板
+                        finish();
+                    } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                        finish();
+                    } else if (goBackUrl.contains("index.html")) {  //图纸通
+                        finish();
+                    } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                        finish();
+                    } else if (mWebError.getVisibility() == View.VISIBLE) {
+                        finish();
+                    } else {
+                        mNewWeb.goBack();
+                    }
+                } else {
+                    finish();
+                }
+            }
+        });
+
+        mApplyMenuImage1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backgroundAlpha(ApplyFirstActivity.this, 0.5f);//0.0-welcome1.0
+                View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.windowpopup, null);
+                final PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                popupWindow.setTouchable(true);
+                popupWindow.setFocusable(true);
+                popupWindow.setOutsideTouchable(false);
+                popupWindow.setAnimationStyle(R.style.pop_animation);
+                popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+                mGridPopup = centerView.findViewById(R.id.grid_popup);
+                RelativeLayout mRelativeLayout = centerView.findViewById(R.id.go_apply_home);
+                Button mDismissPopupButton = centerView.findViewById(R.id.dismiss_popup_button);
+                pagerView();
+                adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
+                    @Override
+                    public void onClosePopupClick(String name) {
+                        if (name.equals("关闭") && popupWindow.isShowing()) {
+                            popupWindow.dismiss();
+                        }
+                    }
+                });
+                popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+
+                    @Override
+                    public void onDismiss() {
+                        backgroundAlpha(ApplyFirstActivity.this, 1f);
+                    }
+                });
+                mDismissPopupButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        backgroundAlpha(ApplyFirstActivity.this, 1f);
+                        popupWindow.dismiss();
+                    }
+                });
+                mRelativeLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        SharedPreferences sp = ApplyFirstActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                        SharedPreferences.Editor edit = sp.edit();
+                        edit.putString("apply_url", Constant.apply_url);
+                        edit.commit();
+                        finish();
+                    }
+                });
+            }
+        });
+
+        mApplyMenuHome1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences sp1 = ApplyFirstActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit1 = sp1.edit();
+                edit1.putString("apply_url", Constant.text_url);
+                edit1.commit();
+                finish();
+            }
+        });
     }
 
     /**
@@ -278,28 +395,33 @@ public class ApplyFirstActivity extends AppCompatActivity {
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
         webSettings.setUserAgentString(userAgentString + "; application-center");
-        WebViewSetting.initweb(webSettings);
+        if (webSettings != null) {
+            WebViewSetting.initweb(webSettings);
+        }
         mNewWeb.loadUrl(url);
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (mNewWeb != null && mNewWeb.canGoBack()) {
-                    if (goBackUrl.contains("systemIndex")) { //电子看板
-                        finish();
-                    } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                        finish();
-                    } else if (goBackUrl.contains("index.html")) {  //图纸通
-                        finish();
-                    } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
-                        finish();
-                    } else if (mWebError.getVisibility() == View.VISIBLE) {
-                        finish();
-                    } else {
-                        mNewWeb.goBack();
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+                        if (goBackUrl.contains("systemIndex")) { //电子看板
+                            finish();
+                        } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                            finish();
+                        } else if (goBackUrl.contains("index.html")) {  //图纸通
+                            finish();
+                        } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                            finish();
+                        } else if (mWebError.getVisibility() == View.VISIBLE) {
+                            finish();
+                        } else {
+                            mNewWeb.goBack();
+                        }
+                        return true;
                     }
-                    return true;
                 }
-                return false;
+                 return false;
+
             }
         });
         wvClientSetting(mNewWeb);
@@ -434,7 +556,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
                         @Override
                         public void onFinish(float seconds, String filePath) {
-                            String s = tobase64(filePath);
+                            String s = BaseUtil.tobase64(filePath);
                             function.onCallBack("{" + "\"" + "success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
                             if (popupWindow.isShowing()) {
                                 popupWindow.dismiss();
@@ -500,7 +622,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                                 Log.e(TAG, "新的文件名下载路径: " + appId + ApplyId);
                                 if (appId.equals(ApplyId)) {
                                     char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String pinYinHeadChar = BaseUtil.getPinYinHeadChar(chars);
                                     String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
                                     downFilePath(FileLoad, newReplaceUrl);
                                 }
@@ -512,7 +634,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                                 String ApplyId = String.valueOf(Listdata.get(i).getAppId());
                                 if (appId.equals(ApplyId)) {
                                     char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String pinYinHeadChar = BaseUtil.getPinYinHeadChar(chars);
                                     String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
                                     downFilePath(FileLoad, num);
                                 }
@@ -891,52 +1013,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         return subUrl == null ? url.substring(url.lastIndexOf("/") + 1) : subUrl;
     }
 
-    public static String getPinYinHeadChar(char[] chars) {
-        StringBuffer sb = new StringBuffer();
-        HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
-        defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
-        defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
-        for (int i = 0; i < chars.length; i++) {
-            if (chars[i] > 128) {
-                try {
-                    sb.append(PinyinHelper.toHanyuPinyinStringArray(chars[i], defaultFormat)[0]);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                sb.append(chars[i]);
-            }
-        }
-        return sb.toString();
-    }
-
-    public String tobase64(String url) {
-        try {
-            File file = new File(url);
-            // 下载网络文件
-            int bytesum = 0;
-            int byteread = 0;
-            InputStream inStream = new FileInputStream(file);
-            int size = inStream.available();
-            byte[] buffer = new byte[size];
-            while ((byteread = inStream.read(buffer)) != -1) {
-                inStream.read(buffer);
-                inStream.close();
-                byte[] bytes = Base64.encodeBase64(buffer);
-//                byte[] bytes = new byte[]{};
-                String str = new String(bytes);
-                if (str != null) {
-                    str = str.replaceAll(System.getProperty("line.separator"), "");
-                    str = str.replaceAll("=", "");
-                    str = str.replaceAll(" ", "");
-                }
-                return str;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     /**
      * 获取通讯录中的联系人及号码
@@ -1037,6 +1113,39 @@ public class ApplyFirstActivity extends AppCompatActivity {
     }
 
     /**
+     * 获取当前应用链接
+     */
+    private void intentAppNameOkhttp() {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request builder = new Request.Builder()
+                .url(Constant.GETAPPLY_URL + appId)
+                .get()
+                .build();
+        okHttpClient.newCall(builder).enqueue(new Callback() {
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.code() == 200) {
+                    String string = response.body().string();
+                    Gson gson = new Gson();
+                    TitleName titleName = gson.fromJson(string, TitleName.class);
+                    Message message = new Message();
+                    message.what = TITLENAME;
+                    message.obj = titleName.getData();
+                    handler.sendMessage(message);
+                } else {
+
+                }
+            }
+        });
+    }
+
+    /**
      * 获取悬浮窗接口信息
      */
     private void intentOkhttp() {
@@ -1077,43 +1186,91 @@ public class ApplyFirstActivity extends AppCompatActivity {
     @OnClick({R.id.tv_publish, R.id.tv_myPublish, R.id.tv_relation, R.id.fab_more})
     public void onClick(View v) {
         switch (v.getId()) {
-            default:
-                break;
             case R.id.tv_publish:
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
-                Intent intent = new Intent(ApplyFirstActivity.this, MainActivity.class);
-                startActivity(intent);
-
-
+//                Intent intent = new Intent(ApplyFirstActivity.this, MainActivity.class);
+//                startActivity(intent);
+                SharedPreferences sp1 = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit1 = sp1.edit();
+                edit1.putString("apply_url", Constant.text_url);
+                edit1.commit();
+                finish();
                 break;
             case R.id.tv_myPublish:
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapplychange);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
+                SharedPreferences sp = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit = sp.edit();
+                edit.putString("apply_url", Constant.apply_url);
+                edit.commit();
+                finish();
                 break;
             case R.id.tv_relation:
+//                mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
+//                mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
+//                mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);
+//                mGridPopup.setVisibility(View.VISIBLE);
+//                pagerView();
+//                adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
+//                    @Override
+//                    public void onClosePopupClick(String name) {
+//                        if (name.equals("关闭")) {
+//                            mGridPopup.setVisibility(View.GONE);
+//                        }
+//                    }
+//                });
+                backgroundAlpha(this, 0.5f);//0.0-welcome1.0
+                View centerView = LayoutInflater.from(ApplyFirstActivity.this).inflate(R.layout.windowpopup, null);
+                final PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                        940);
+                popupWindow.setTouchable(true);
+                popupWindow.setFocusable(true);
+                popupWindow.setOutsideTouchable(false);
+                popupWindow.setAnimationStyle(R.style.pop_animation);
+                popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+                mGridPopup = centerView.findViewById(R.id.grid_popup);
+                Button mDismissPopupButton = centerView.findViewById(R.id.dismiss_popup_button);
+                pagerView();
+
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);
-                mGridPopup.setVisibility(View.VISIBLE);
-                pagerView();
+                switchPopup();
                 adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
                     @Override
                     public void onClosePopupClick(String name) {
-                        if (name.equals("关闭")) {
-                            mGridPopup.setVisibility(View.GONE);
+                        if (name.equals("关闭") && popupWindow.isShowing()) {
+                            popupWindow.dismiss();
                         }
                     }
                 });
+                popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
 
+                    @Override
+                    public void onDismiss() {
+                        backgroundAlpha(ApplyFirstActivity.this, 1f);
+                    }
+                });
+                mDismissPopupButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        backgroundAlpha(ApplyFirstActivity.this, 1f);
+                        popupWindow.dismiss();
+                    }
+                });
                 break;
             case R.id.fab_more:
-
+                switchPopup();
+                break;
+            case R.id.dimiss_popup:
+                mDimissPopup.setVisibility(View.GONE);
+                switchPopup();
                 break;
         }
-        switchPopup();
+//        switchPopup();
     }
 
     /**
@@ -1127,6 +1284,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
 //            objectAnimator.start();
 
             mLlPopup.setVisibility(View.VISIBLE);
+            mDimissPopup.setVisibility(View.VISIBLE);
             ScaleAnimation scaleAnimation = new ScaleAnimation(0f, 1.0f, 1.0f, 1.0f,
                     Animation.RELATIVE_TO_SELF, 1f, Animation.RELATIVE_TO_SELF, 0.5f);
             scaleAnimation.setDuration(300);
@@ -1150,6 +1308,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             scaleAnimation.setDuration(300);
             mLlPopup.startAnimation(scaleAnimation);
             mLlPopup.setVisibility(View.GONE);
+            mDimissPopup.setVisibility(View.GONE);
 
             if (mLlCourseNone.getVisibility() == View.VISIBLE) {
                 float fY = mFabMore.getY();
@@ -1178,14 +1337,21 @@ public class ApplyFirstActivity extends AppCompatActivity {
      * 初始页加载
      */
     private void mLodingTime() {
-        final AnimationView hideAnimation = new AnimationView();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideAnimation.getHideAnimation(mLoadingPage, 500);
-                mLoadingPage.setVisibility(View.GONE);
-            }
-        }, 3000);
+//        final AnimationView hideAnimation = new AnimationView();
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                hideAnimation.getHideAnimation(mLoadingPage, 500);
+//                mLoadingPage.setVisibility(View.GONE);
+//            }
+//        }, 3000);
+        ImageView imageView = findViewById(R.id.image_view);
+        int res = R.drawable.loding_gif;
+        Glide.with(this).
+                load(res).placeholder(res).
+                error(res).
+                diskCacheStrategy(DiskCacheStrategy.NONE).
+                into(imageView);
     }
 
     /**
@@ -1548,6 +1714,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     if (data != null) {
                         String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
+                        mNewWeb.evaluateJavascript("window.sdk.getCodeUrl(\"" + stringExtra + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+
+                            }
+                        });
                         /**
                          * 一下注释掉的功能延期开放
                          */
@@ -1569,6 +1741,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     mNewWeb.post(new Runnable() {
                         @Override
                         public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                }
+                            });
                             mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                                 @Override
                                 public void onCallBack(String data) {
@@ -1587,6 +1764,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
                         gotoClipActivity(uri);
                     } else {
+                        mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+                            }
+                        });
                         mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                             @Override
                             public void onCallBack(String data) {
@@ -1599,6 +1781,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     mNewWeb.post(new Runnable() {
                         @Override
                         public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                }
+                            });
                             mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                                 @Override
                                 public void onCallBack(String data) {
@@ -1621,6 +1808,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     Log.e(TAG, "onActivityResult: " + cropImagePath);
                     takePhoneUrl(cropImagePath);
                 } else {
+                    mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                        }
+                    });
                     mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                         @Override
                         public void onCallBack(String data) {
@@ -1746,7 +1938,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
-        builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
+        builder.addFormDataPart("bucketName", Constant.bucket_Name);
         builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
@@ -1879,5 +2071,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
     public boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        mLlPopup.setVisibility(View.GONE);
+//        returnActivityA = false;
     }
 }
