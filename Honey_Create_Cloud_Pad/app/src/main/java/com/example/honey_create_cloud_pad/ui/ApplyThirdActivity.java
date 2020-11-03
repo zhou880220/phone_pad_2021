@@ -165,7 +165,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
                             .add("fileNames", newName)
-                            .add("bucketName", Constant.test_bucket_Name)
+                            .add("bucketName", Constant.bucket_Name)
                             .add("folderName", "menu")
                             .build();
                     Request request = new Request.Builder()
@@ -1735,7 +1735,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
-        builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
+        builder.addFormDataPart("bucketName", Constant.bucket_Name);
         builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
