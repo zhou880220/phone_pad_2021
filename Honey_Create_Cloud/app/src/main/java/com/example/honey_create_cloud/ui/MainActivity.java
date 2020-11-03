@@ -273,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getRabbitMQAddressOkhttp();//获取RabbitMq推送服务地址
+//        getRabbitMQAddressOkhttp();//获取RabbitMq推送服务地址
 
 
         createNotificationChannel();//Mq通知栏
@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
                 jsonObject.put("appName",appName);
                 String s = jsonObject.toJSONString();
                 Log.e(TAG, "onNewIntent: "+s);
-                webView("http://172.16.23.253:3001/appNoticeList");
+                webView(Constant.APP_NOTICE_LIST);
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -315,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 2000);//2秒后执行Runnable中的run方法
+                }, 3000);//2秒后执行Runnable中的run方法
             }
         }
         mTextPolicyReminder.setText(generateSp(PolicyAndReminder));
@@ -335,7 +335,7 @@ public class MainActivity extends AppCompatActivity {
 //                edit.putString("小米推送消息",xiaomiMessage);
 //                edit.commit();
                 Log.e(TAG, "xiaomipush:2 "+xiaomiMessage );
-                webView("http://172.16.23.253:3001/appNoticeList");
+                webView(Constant.APP_NOTICE_LIST);
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -348,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 2000);//2秒后执行Runnable中的run方法
+                }, 3000);//2秒后执行Runnable中的run方法
             }
         }
     }
@@ -813,7 +813,6 @@ public class MainActivity extends AppCompatActivity {
             public void handler(String data, CallBackFunction function) {
                 try {
                     if (!data.isEmpty()) {
-
                         Map map = JSONObject.parseObject(data, Map.class);
                         String usertoken = (String) map.get("token");
                         String userID = (String) map.get("userID");
@@ -826,22 +825,26 @@ public class MainActivity extends AppCompatActivity {
                                 PushTokenRelation("2", huaWeiToken, "2");
                                 getHuaweiToken();
                             }
-                            if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) {
+                            if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) { //oK8vlaSJEtJwgL+Izrxq/7/PKCkfBXzKGScemsWX2wpLGCxl4Ky6T20zScPgox8K
                                 //注册小米单推服务
                                 MiPushClient.setAlias(MainActivity.this, userid1, null);
+                                PushTokenRelation("3", userid1, "3");
                             }
                             if (android.os.Build.BRAND.toLowerCase().contains("vivo")) {
+                                String vivoRegId = PushClient.getInstance(MainActivity.this).getRegId();
+                                Log.e(TAG, "vivoRegId: "+vivoRegId);
+                                PushTokenRelation("3", vivoRegId, "5");
                                 //注册Vivo单推服务
-                                PushClient.getInstance(MainActivity.this).bindAlias(userid1, new IPushActionListener() {
-                                    @Override
-                                    public void onStateChanged(int state) {
-                                        if (state != 0) {
-                                            Log.e(TAG, "设置别名异常[ " + state + "]");
-                                        } else {
-                                            Log.e(TAG, "设置别名成功");
-                                        }
-                                    }
-                                });
+//                                PushClient.getInstance(MainActivity.this).bindAlias(userid1, new IPushActionListener() {
+//                                    @Override
+//                                    public void onStateChanged(int state) {
+//                                        if (state != 0) {
+//                                            Log.e(TAG, "设置别名异常[ " + state + "]");
+//                                        } else {
+//                                            Log.e(TAG, "设置别名成功");
+//                                        }
+//                                    }
+//                                });
                             }
                             if (android.os.Build.BRAND.toLowerCase().contains("oppo")) {
                                 PushTokenRelation("2", oppoToken, "4");
@@ -860,7 +863,7 @@ public class MainActivity extends AppCompatActivity {
                                 Log.e(TAG, "通知开启，大于7.0");
                                 if (!TextUtils.isEmpty(notifyUserId)) {
                                     notificationChange(userid1, "0");
-                                    new Thread(() -> basicConsume(myHandler)).start();
+//                                    new Thread(() -> basicConsume(myHandler)).start();
                                 }
                             } else {
                                 Log.e(TAG, "通知不开启，小于7.0");
@@ -888,7 +891,7 @@ public class MainActivity extends AppCompatActivity {
                         String appId = String.valueOf(appLyId);
                         if (!redirectUrl.isEmpty()) {
                             Log.e(TAG, "跳转第三方:2 " + redirectUrl);
-                            if (zxIdTouTiao == null) {
+                            if (zxIdTouTiao == null || zxIdTouTiao.isEmpty()) {
                                 Log.e(TAG, "跳转第三方:3 " + redirectUrl);
                                 Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
                                 intent.putExtra("url", redirectUrl);
@@ -905,6 +908,7 @@ public class MainActivity extends AppCompatActivity {
                                 intent.putExtra("appId", appId);
                                 intent.putExtra("zxIdTouTiao", zxIdTouTiao);
                                 startActivity(intent);
+                                zxIdTouTiao = "";
                             }
                         }
                     }
@@ -1032,10 +1036,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
 
+
                 try {
+                    if (Build.BRAND.toLowerCase().contains("oppo")){
+                        PushTokenRelation("4", userid1, "4");
+                    }
                     if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) {
                         //用户退出登录注销小米个推账户
                         MiPushClient.unsetAlias(MainActivity.this, userid1, null);
+                        PushTokenRelation("4", userid1, "3");
                     }
                     if (android.os.Build.BRAND.toLowerCase().contains("vivo")) {
                         //用户退出登录注销Vivo个推账户
@@ -1043,6 +1052,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onStateChanged(int state) {
                                 if (state != 0) {
+                                    PushTokenRelation("4", userid1, "5");
                                     Log.e(TAG, "取消别名异常" + state);
                                 } else {
                                     Log.e(TAG, "取消别名成功");
@@ -1051,6 +1061,7 @@ public class MainActivity extends AppCompatActivity {
                         });
                     }
                     if (android.os.Build.BRAND.toLowerCase().contains("huawei")) {
+                        PushTokenRelation("4", userid1, "2");
                         //用户退出登录注销华为个推账户
                         HmsMessaging.getInstance(MainActivity.this)
                                 .unsubscribe(userid1)
@@ -1143,21 +1154,12 @@ public class MainActivity extends AppCompatActivity {
      */
     private void PushTokenRelation(String PushFuncType, String UserPushToken, String accessEquipmentType) {
         Log.e(TAG, "PushTokenRelation: " + UserPushToken);
-//        FormBody HuaweiPushBody = new FormBody.Builder()
-//                .add("accessEquipment", "2")
-//                .add("equipmentType", "2")
-//                .add("equipmentIdCode", imei)
-//                .add("status", "0")
-//                .add("token", huaWeiToken)
-//                .add("userId", "")
-//                .build();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             imei = getId();
         } else {
             imei = SystemUtil.getUniqueIdentificationCode(MainActivity.this);
         }
 
-//        imei = SystemUtil.getIMEI(MainActivity.this);
 
         if (PushFuncType.equals("1")) {
             String PushHuaweiBody = "{" +
@@ -1186,13 +1188,13 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     String string = response.body().string();
-                    Log.e(TAG, "HuaweiPushRequest:3 " + string);
+                    Log.e(TAG, "HuaweiPushRequest:1 " + string);
                 }
             });
         } else if (PushFuncType.equals("2")) {
             Log.e(TAG, "PushTokenRelation:userid1: " + userid1);
             String PushHuaweiBody = "{" +
-                    "accessEquipment:'" + "2" + '\'' +
+                    "accessEquipment:'" + accessEquipmentType + '\'' +
                     ", equipmentType:'" + "3" + '\'' +
                     ", equipmentIdCode:'" + imei + '\'' +
                     ", status:'" + "0" + '\'' +
@@ -1218,9 +1220,71 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     String string = response.body().string();
+                    Log.e(TAG, "HuaweiPushRequest:2 " + string);
+                }
+            });
+        }else if (PushFuncType.equals("3")){ //vivo,小米只需单推服务调用后台接口 需一次性的将所有信息提交到后台
+            Log.e(TAG, "PushTokenRelation:userid1: " + userid1);
+            String PushHuaweiBody = "{" +
+                    "accessEquipment:'" + accessEquipmentType + '\'' +
+                    ", equipmentType:'" + "3" + '\'' +
+                    ", equipmentIdCode:'" + imei + '\'' +
+                    ", status:'" + "0" + '\'' +
+                    ", token:'" + UserPushToken + '\'' +
+                    ", userId:'" + userid1 + '\'' +
+                    '}';
+
+            MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+            RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
+
+            OkHttpClient HuaweiPushClient = new OkHttpClient();
+            Request HuaweiRequest = new Request.Builder()
+                    .url(Constant.userPushRelation)
+                    .post(requestBody)
+                    .build();
+            HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String string = response.body().string();
+                    Log.e(TAG, "HuaweiPushRequest:3 " + string);
+                }
+            });
+        }else if (PushFuncType.equals("4")){
+            String PushHuaweiBody = "{" +
+                    "accessEquipment:'" + accessEquipmentType + '\'' +
+                    ", equipmentType:'" + "3" + '\'' +
+                    ", equipmentIdCode:'" + imei + '\'' +
+                    ", status:'" + "0" + '\'' +
+                    ", token:'" + "" + '\'' +
+                    ", userId:'" + userid1 + '\'' +
+                    '}';
+
+            MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+            RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
+
+            OkHttpClient HuaweiPushClient = new OkHttpClient();
+            Request HuaweiRequest = new Request.Builder()
+                    .url(Constant.userPushRelationUpdate)
+                    .post(requestBody)
+                    .build();
+            HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String string = response.body().string();
                     Log.e(TAG, "HuaweiPushRequest:4 " + string);
                 }
             });
+
         }
     }
 
@@ -1326,7 +1390,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "通知开启，大于7.0");
                     if (!TextUtils.isEmpty(notifyUserId)) {
                         notificationChange(userid1, "0");
-                        new Thread(() -> basicConsume(myHandler)).start();
+//                        new Thread(() -> basicConsume(myHandler)).start();
                     }
                 } else {
                     Log.e(TAG, "通知不开启，小于7.0");
@@ -1753,7 +1817,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             Log.e(TAG, "通知开启，大于7.0");
             if (!TextUtils.isEmpty(notifyUserId)) {
-                new Thread(() -> basicConsume(myHandler)).start();
+//                new Thread(() -> basicConsume(myHandler)).start();
             }
         } else {
             Log.e(TAG, "通知不开启，小于7.0");
@@ -1765,7 +1829,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             Log.e(TAG, "通知开启，大于7.0");
-            new Thread(() -> basicConsume(myHandler)).start();
+//            new Thread(() -> basicConsume(myHandler)).start();
         } else {
             Log.e(TAG, "通知不开启，小于7.0");
         }
@@ -2031,7 +2095,7 @@ public class MainActivity extends AppCompatActivity {
                 jsonObject.put("appName",appName);
                 String s = jsonObject.toJSONString();
                 Log.e(TAG, "onNewIntent: "+s);
-                webView("http://172.16.23.253:3001/appNoticeList");
+                webView(Constant.APP_NOTICE_LIST);
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -2044,7 +2108,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 2000);//2秒后执行Runnable中的run方法
+                }, 3000);//2秒后执行Runnable中的run方法
             }
         }
 
@@ -2055,7 +2119,7 @@ public class MainActivity extends AppCompatActivity {
             if (app_notice_list.equals("咨询")) { //跳转到咨询页面
                 webView(Constant.MyNews);
             } else if (app_notice_list.equals("消息")) {
-                webView("http://172.16.23.253:3001/appNoticeList");
+                webView(Constant.APP_NOTICE_LIST);
                 Log.e(TAG, "xiaomiMessage: "+xiaomiMessage );
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
@@ -2069,7 +2133,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 2000);//2秒后执行Runnable中的run方法
+                }, 3000);//2秒后执行Runnable中的run方法
             }
         }
     }

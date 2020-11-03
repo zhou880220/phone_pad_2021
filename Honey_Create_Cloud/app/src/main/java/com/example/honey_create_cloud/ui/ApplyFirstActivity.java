@@ -337,6 +337,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         String key = (String) JsonMap.get(cookieKey);
                         String value = (String) JsonMap.get(cookieValue);
                         hashMap.put(key, value);
+                        zxIdTouTiao = "";
                     }
                 }
             }

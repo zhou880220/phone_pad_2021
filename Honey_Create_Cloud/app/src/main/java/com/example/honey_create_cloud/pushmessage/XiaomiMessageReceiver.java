@@ -3,12 +3,10 @@ package com.example.honey_create_cloud.pushmessage;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.alibaba.fastjson.JSONObject;
 import com.example.honey_create_cloud.MyApplication;
 import com.example.honey_create_cloud.R;
 import com.example.honey_create_cloud.ui.MainActivity;
@@ -19,9 +17,9 @@ import com.xiaomi.mipush.sdk.MiPushMessage;
 import com.xiaomi.mipush.sdk.PushMessageReceiver;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 1、PushMessageReceiver 是个抽象类，该类继承了 BroadcastReceiver。<br/>
@@ -62,9 +60,15 @@ public class XiaomiMessageReceiver extends PushMessageReceiver {
     private String mStartTime;
     private String mEndTime;
     private String mUserAccount;
+    private List<String> xiaoMiRegId = new ArrayList<>();
+    private XiaoMiOnClosePopupListener xiaoMiOnClosePopupListener;
 
+    public void setXiaoMiOnClosePopupListener(XiaoMiOnClosePopupListener xiaoMiOnClosePopupListener){
+        this.xiaoMiOnClosePopupListener = xiaoMiOnClosePopupListener;
+    }
     /**
      * 小米消息透传
+     *
      * @param context
      * @param message
      */
@@ -74,18 +78,18 @@ public class XiaomiMessageReceiver extends PushMessageReceiver {
 //                "onReceivePassThroughMessage is called. " + message.toString());
         String log = context.getString(R.string.recv_passthrough_message, message.getContent());
         MainActivity.logList.add(0, getSimpleDate() + " " + log);
-        Log.e("小米推送透传1", "onReceivePassThroughMessage: "+log);
+        Log.e("小米推送透传1", "onReceivePassThroughMessage: " + log);
         if (!TextUtils.isEmpty(message.getTopic())) { //群推透传
             mTopic = message.getTopic();
-            Log.e("小米推送透传2", "onReceivePassThroughMessage: "+mTopic );
-            Log.e("小米推送透传2", "onReceivePassThroughMessage: "+message.getContent() ); //获取群推透传信息
+            Log.e("小米推送透传2", "onReceivePassThroughMessage: " + mTopic);
+            Log.e("小米推送透传2", "onReceivePassThroughMessage: " + message.getContent()); //获取群推透传信息
         } else if (!TextUtils.isEmpty(message.getAlias())) { //单推透传
             mAlias = message.getAlias();
-            Log.e("小米推送透传3", "onReceivePassThroughMessage: "+mAlias );
-            Log.e("小米推送透传3", "onReceivePassThroughMessage: "+message.getContent() ); //获取个推透传信息
+            Log.e("小米推送透传3", "onReceivePassThroughMessage: " + mAlias);
+            Log.e("小米推送透传3", "onReceivePassThroughMessage: " + message.getContent()); //获取个推透传信息
         } else if (!TextUtils.isEmpty(message.getUserAccount())) {
             mUserAccount = message.getUserAccount();
-            Log.e("小米推送透传4", "onReceivePassThroughMessage: "+mUserAccount );
+            Log.e("小米推送透传4", "onReceivePassThroughMessage: " + mUserAccount);
         }
 
         Message msg = Message.obtain();
@@ -95,6 +99,7 @@ public class XiaomiMessageReceiver extends PushMessageReceiver {
 
     /**
      * 小米用户点击通知传递消息
+     *
      * @param context
      * @param message
      */
@@ -107,31 +112,31 @@ public class XiaomiMessageReceiver extends PushMessageReceiver {
 //        Map map = JSONObject.parseObject(message.getContent(), Map.class);
 //        String appid = (String) map.get("appid");
 
-            if (!TextUtils.isEmpty(message.getTopic())) {
-                mTopic = message.getTopic();
-                Log.e("小米推送传递消息1", "onNotificationMessageClicked: " + mTopic);  //群推
-                Log.e("小米推送传递消息1", "onNotificationMessageClicked: " + message.getContent());  //获取群推信息
-                Intent intent = new Intent(context, MainActivity.class);
-                intent.putExtra("APP_NOTICE_LIST", "消息");
-                intent.putExtra("pushContentMessage", message.getContent());
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                context.startActivity(intent);
-            } else if (!TextUtils.isEmpty(message.getAlias())) {
-                mAlias = message.getAlias();
-                Intent intent = new Intent(context, MainActivity.class);
-                intent.putExtra("APP_NOTICE_LIST", "消息");
-                intent.putExtra("pushContentMessage", message.getContent());
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                context.startActivity(intent);
-                Log.e("小米推送传递消息2", "onNotificationMessageClicked: " + mAlias);//个推
-                Log.e("小米推送传递消息2", "onNotificationMessageClicked: " + message.getContent());//获取个推消息
-            } else if (!TextUtils.isEmpty(message.getUserAccount())) {
-                mUserAccount = message.getUserAccount();
+        if (!TextUtils.isEmpty(message.getTopic())) {
+            mTopic = message.getTopic();
+            Log.e("小米推送传递消息1", "onNotificationMessageClicked: " + mTopic);  //群推
+            Log.e("小米推送传递消息1", "onNotificationMessageClicked: " + message.getContent());  //获取群推信息
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.putExtra("APP_NOTICE_LIST", "消息");
+            intent.putExtra("pushContentMessage", message.getContent());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            context.startActivity(intent);
+        } else if (!TextUtils.isEmpty(message.getAlias())) {
+            mAlias = message.getAlias();
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.putExtra("APP_NOTICE_LIST", "消息");
+            intent.putExtra("pushContentMessage", message.getContent());
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            context.startActivity(intent);
+            Log.e("小米推送传递消息2", "onNotificationMessageClicked: " + mAlias);//个推
+            Log.e("小米推送传递消息2", "onNotificationMessageClicked: " + message.getContent());//获取个推消息
+        } else if (!TextUtils.isEmpty(message.getUserAccount())) {
+            mUserAccount = message.getUserAccount();
 //            Intent intent = new Intent(context,MainActivity.class);
 //            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
 //            context.startActivity(intent);
-                Log.e("小米推送传递消息3", "onNotificationMessageClicked: " + mUserAccount);
-            }
+            Log.e("小米推送传递消息3", "onNotificationMessageClicked: " + mUserAccount);
+        }
 
 
         Message msg = Message.obtain();
@@ -146,6 +151,7 @@ public class XiaomiMessageReceiver extends PushMessageReceiver {
     /**
      * 小米消息到达获取的信息 以及在前台但不提示（在MIUI上，如果没有收到onNotificationMessageArrived回调，
      * 是因为使用的MIUI版本还不支持该特性，需要升级到MIUI7之后。非MIUI手机都可以收到这个回调）
+     *
      * @param context
      * @param message
      */
@@ -171,6 +177,7 @@ public class XiaomiMessageReceiver extends PushMessageReceiver {
 
     /**
      * 小米注册回调
+     *
      * @param context
      * @param message
      */
@@ -209,4 +216,8 @@ public class XiaomiMessageReceiver extends PushMessageReceiver {
         return new SimpleDateFormat("MM-dd hh:mm:ss").format(new Date());
     }
 
+
+    public interface XiaoMiOnClosePopupListener {
+        void XiaoMiOnClosePopupClick(String name);
+    }
 }
