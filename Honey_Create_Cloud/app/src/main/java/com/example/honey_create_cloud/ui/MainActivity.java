@@ -293,15 +293,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
             if (open != null) {
-                Log.e(TAG, "huaweiUrl: "+uri);
+                Log.e(TAG, "huaweiUrl: " + uri);
                 //test://zzy:8080/home?open=message&appid=2&appName=精益生产电子看板  用户华为通知跳转
                 String huaWei = uri.getQueryParameter("appid");
                 String appName = uri.getQueryParameter("appName");
-                JSONObject jsonObject  = new JSONObject();
-                jsonObject.put("appid",huaWei);
-                jsonObject.put("appName",appName);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("appid", huaWei);
+                jsonObject.put("appName", appName);
                 String s = jsonObject.toJSONString();
-                Log.e(TAG, "onNewIntent: "+s);
+                Log.e(TAG, "onNewIntent: " + s);
                 webView(Constant.APP_NOTICE_LIST);
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
@@ -334,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
 //                SharedPreferences.Editor edit = xiaomiPref.edit();
 //                edit.putString("小米推送消息",xiaomiMessage);
 //                edit.commit();
-                Log.e(TAG, "xiaomipush:2 "+xiaomiMessage );
+                Log.e(TAG, "xiaomipush:2 " + xiaomiMessage);
                 webView(Constant.APP_NOTICE_LIST);
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
@@ -828,12 +828,12 @@ public class MainActivity extends AppCompatActivity {
                             if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) { //oK8vlaSJEtJwgL+Izrxq/7/PKCkfBXzKGScemsWX2wpLGCxl4Ky6T20zScPgox8K
                                 //注册小米单推服务
                                 MiPushClient.setAlias(MainActivity.this, userid1, null);
-                                PushTokenRelation("3", userid1, "3");
+                                PushTokenRelation("4", userid1, "3");
                             }
                             if (android.os.Build.BRAND.toLowerCase().contains("vivo")) {
                                 String vivoRegId = PushClient.getInstance(MainActivity.this).getRegId();
-                                Log.e(TAG, "vivoRegId: "+vivoRegId);
-                                PushTokenRelation("3", vivoRegId, "5");
+                                Log.e(TAG, "vivoRegId: " + vivoRegId);
+                                PushTokenRelation("4", vivoRegId, "5");
                                 //注册Vivo单推服务
 //                                PushClient.getInstance(MainActivity.this).bindAlias(userid1, new IPushActionListener() {
 //                                    @Override
@@ -1038,13 +1038,13 @@ public class MainActivity extends AppCompatActivity {
 
 
                 try {
-                    if (Build.BRAND.toLowerCase().contains("oppo")){
-                        PushTokenRelation("4", userid1, "4");
+                    if (Build.BRAND.toLowerCase().contains("oppo")) {
+                        PushTokenRelation("3", userid1, "4");
                     }
                     if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) {
                         //用户退出登录注销小米个推账户
                         MiPushClient.unsetAlias(MainActivity.this, userid1, null);
-                        PushTokenRelation("4", userid1, "3");
+                        PushTokenRelation("3", userid1, "3");
                     }
                     if (android.os.Build.BRAND.toLowerCase().contains("vivo")) {
                         //用户退出登录注销Vivo个推账户
@@ -1052,7 +1052,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onStateChanged(int state) {
                                 if (state != 0) {
-                                    PushTokenRelation("4", userid1, "5");
+                                    PushTokenRelation("3", userid1, "5");
                                     Log.e(TAG, "取消别名异常" + state);
                                 } else {
                                     Log.e(TAG, "取消别名成功");
@@ -1061,7 +1061,7 @@ public class MainActivity extends AppCompatActivity {
                         });
                     }
                     if (android.os.Build.BRAND.toLowerCase().contains("huawei")) {
-                        PushTokenRelation("4", userid1, "2");
+                        PushTokenRelation("3", userid1, "2");
                         //用户退出登录注销华为个推账户
                         HmsMessaging.getInstance(MainActivity.this)
                                 .unsubscribe(userid1)
@@ -1159,7 +1159,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             imei = SystemUtil.getUniqueIdentificationCode(MainActivity.this);
         }
-
+        Log.e(TAG, "PushTokenRelation: " + PushFuncType + "_" + UserPushToken + "_" + accessEquipmentType);
 
         if (PushFuncType.equals("1")) {
             String PushHuaweiBody = "{" +
@@ -1201,14 +1201,13 @@ public class MainActivity extends AppCompatActivity {
                     ", token:'" + UserPushToken + '\'' +
                     ", userId:'" + userid1 + '\'' +
                     '}';
-
+            Log.e(TAG, "PushTokenRelation: " + accessEquipmentType + "" + imei + "" + UserPushToken + "" + userid1 + "");
             MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
             RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
 
             OkHttpClient HuaweiPushClient = new OkHttpClient();
             Request HuaweiRequest = new Request.Builder()
-                    .url(Constant.userPushRelationUpdate)
-                    .addHeader("Authorization", "Bearer " + usertoken1)
+                    .url(Constant.userFirstUpdate)
                     .post(requestBody)
                     .build();
             HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
@@ -1223,38 +1222,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "HuaweiPushRequest:2 " + string);
                 }
             });
-        }else if (PushFuncType.equals("3")){ //vivo,小米只需单推服务调用后台接口 需一次性的将所有信息提交到后台
-            Log.e(TAG, "PushTokenRelation:userid1: " + userid1);
-            String PushHuaweiBody = "{" +
-                    "accessEquipment:'" + accessEquipmentType + '\'' +
-                    ", equipmentType:'" + "3" + '\'' +
-                    ", equipmentIdCode:'" + imei + '\'' +
-                    ", status:'" + "0" + '\'' +
-                    ", token:'" + UserPushToken + '\'' +
-                    ", userId:'" + userid1 + '\'' +
-                    '}';
-
-            MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
-            RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
-
-            OkHttpClient HuaweiPushClient = new OkHttpClient();
-            Request HuaweiRequest = new Request.Builder()
-                    .url(Constant.userPushRelation)
-                    .post(requestBody)
-                    .build();
-            HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String string = response.body().string();
-                    Log.e(TAG, "HuaweiPushRequest:3 " + string);
-                }
-            });
-        }else if (PushFuncType.equals("4")){
+        } else if (PushFuncType.equals("3")) {
             String PushHuaweiBody = "{" +
                     "accessEquipment:'" + accessEquipmentType + '\'' +
                     ", equipmentType:'" + "3" + '\'' +
@@ -1270,6 +1238,36 @@ public class MainActivity extends AppCompatActivity {
             OkHttpClient HuaweiPushClient = new OkHttpClient();
             Request HuaweiRequest = new Request.Builder()
                     .url(Constant.userPushRelationUpdate)
+                    .post(requestBody)
+                    .build();
+            HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String string = response.body().string();
+                    Log.e(TAG, "HuaweiPushRequest:3 " + string);
+                }
+            });
+        } else if (PushFuncType.equals("4")) {
+            String PushHuaweiBody = "{" +
+                    "accessEquipment:'" + accessEquipmentType + '\'' +
+                    ", equipmentType:'" + "3" + '\'' +
+                    ", equipmentIdCode:'" + imei + '\'' +
+                    ", status:'" + "0" + '\'' +
+                    ", token:'" + UserPushToken + '\'' +
+                    ", userId:'" + userid1 + '\'' +
+                    '}';
+
+            MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+            RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
+
+            OkHttpClient HuaweiPushClient = new OkHttpClient();
+            Request HuaweiRequest = new Request.Builder()
+                    .url(Constant.userPushRelation)
                     .post(requestBody)
                     .build();
             HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
@@ -2086,15 +2084,15 @@ public class MainActivity extends AppCompatActivity {
             }
             String open = uri.getQueryParameter("open");
             if (open.equals("message")) {
-                Log.e(TAG, "huaweiUrl: "+uri);
+                Log.e(TAG, "huaweiUrl: " + uri);
                 //test://zzy:8080/home?open=message&appid=2&appName=精益生产电子看板  用户华为通知跳转
                 String huaWei = uri.getQueryParameter("appid");
                 String appName = uri.getQueryParameter("appName");
-                JSONObject jsonObject  = new JSONObject();
-                jsonObject.put("appid",huaWei);
-                jsonObject.put("appName",appName);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("appid", huaWei);
+                jsonObject.put("appName", appName);
                 String s = jsonObject.toJSONString();
-                Log.e(TAG, "onNewIntent: "+s);
+                Log.e(TAG, "onNewIntent: " + s);
                 webView(Constant.APP_NOTICE_LIST);
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
@@ -2120,7 +2118,7 @@ public class MainActivity extends AppCompatActivity {
                 webView(Constant.MyNews);
             } else if (app_notice_list.equals("消息")) {
                 webView(Constant.APP_NOTICE_LIST);
-                Log.e(TAG, "xiaomiMessage: "+xiaomiMessage );
+                Log.e(TAG, "xiaomiMessage: " + xiaomiMessage);
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override

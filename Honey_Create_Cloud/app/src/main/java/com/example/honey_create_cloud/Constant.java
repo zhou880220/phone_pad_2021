@@ -60,6 +60,7 @@ public class Constant {
     public static final String DELETE_QUEUE = TEST_INTERFACE_URL + "api-n/notification-anon/queue/delete?userId=";//用户登录删除队列
     public static final String GETAPPLY_URL = TEST_INTERFACE_URL + "api-apps/operation/apps-anon/appName?appId="; //获取当前三方应用首页链接
     public static final String GETRabbitMQAddress = TEST_INTERFACE_URL+"api-apps/menu/apps-anon/rabbitMqInfo";//获取RabbitMq推送服务地址
-    public static final String userPushRelation = TEST_INTERFACE_URL+"api-msg/userPushRelation";//保存用户推送关系
-    public static final String userPushRelationUpdate = TEST_INTERFACE_URL+"api-msg/userPushRelation/update";//保存用户推送关系
+    public static final String userPushRelation = TEST_INTERFACE_URL+"api-msg/userPushRelation";//第一次打开应用保存
+    public static final String userFirstUpdate = TEST_INTERFACE_URL+"api-msg/userPushRelation/firstUpdate";//用户第一次登录
+    public static final String userPushRelationUpdate = TEST_INTERFACE_URL+"api-msg/userPushRelation/updateInfo";//用户退出
 }

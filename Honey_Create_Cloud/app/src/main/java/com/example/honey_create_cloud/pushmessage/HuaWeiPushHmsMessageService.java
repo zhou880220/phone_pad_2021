@@ -1,6 +1,8 @@
 package com.example.honey_create_cloud.pushmessage;
 
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -51,10 +53,11 @@ public class HuaWeiPushHmsMessageService extends HmsMessageService {
             Log.e("huawei", "Received remoteMessage entity is null!");
             return;
         }
-        Log.i("huawei", "getCollapseKey: " + remoteMessage.getCollapseKey()
+        Log.e("huawei", "getCollapseKey: " + remoteMessage.getCollapseKey()
                 + "\n getData: " + remoteMessage.getData()
                 + "\n getFrom: " + remoteMessage.getFrom()
                 + "\n getTo: " + remoteMessage.getTo()
+                + "\n getDataOfMap: " + remoteMessage.getDataOfMap().get("Badge")
                 + "\n getMessageId: " + remoteMessage.getMessageId()
                 + "\n getOriginalUrgency: " + remoteMessage.getOriginalUrgency()
                 + "\n getUrgency: " + remoteMessage.getUrgency()
@@ -63,10 +66,25 @@ public class HuaWeiPushHmsMessageService extends HmsMessageService {
                 + "\n getTtl: " + remoteMessage.getTtl());
 
 
+        try {
+            String badge = remoteMessage.getDataOfMap().get("badge");
+            int i = Integer.parseInt(badge);
+            Log.e("huawei", "getBadgeNumber: "+i );
+            Bundle extra = new Bundle();
+            extra.putString("package", "com.example.honey_create_cloud");
+            extra.putString("class", "com.example.honey_create_cloud.StartPageActivity");
+            extra.putInt("badgenumber", i);
+            getApplicationContext().getContentResolver().call(Uri.parse("content://com.huawei.android.launcher.settings/badge/"), "change_badge", null, extra);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
+
         RemoteMessage.Notification notification = remoteMessage.getNotification();
         if (notification != null) {
-            Log.i("huawei", "\n getImageUrl: " + notification.getImageUrl()
+            Log.e("huawei", "\n getImageUrl: " + notification.getImageUrl()
                     + "\n getTitle: " + notification.getTitle()
+                    + "\n getTitle: " + notification.getBadgeNumber()
                     + "\n getTitleLocalizationKey: " + notification.getTitleLocalizationKey()
                     + "\n getTitleLocalizationArgs: " + Arrays.toString(notification.getTitleLocalizationArgs())
                     + "\n getBody: " + notification.getBody()
@@ -82,5 +100,4 @@ public class HuaWeiPushHmsMessageService extends HmsMessageService {
                     + "\n getNotifyId: " + notification.getNotifyId());
         }
     }
-
 }
