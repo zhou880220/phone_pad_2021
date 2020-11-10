@@ -324,7 +324,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mNewWeb != null && mNewWeb.canGoBack()) {
-                    if (goBackUrl.contains("systemIndex")) { //电子看板
+                    if (goBackUrl.contains("eboard_mobile/systemIndex")) { //电子看板
                         finish();
                     } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
                         finish();
@@ -2560,7 +2560,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (mNewWeb != null && mNewWeb.canGoBack()) {
             Log.e(TAG, "onClick: 可以返回" );
-            if (goBackUrl.contains("systemIndex")) { //电子看板
+            if (goBackUrl.contains("eboard_mobile/systemIndex")) { //电子看板
                 finish();
             } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
                 finish();
