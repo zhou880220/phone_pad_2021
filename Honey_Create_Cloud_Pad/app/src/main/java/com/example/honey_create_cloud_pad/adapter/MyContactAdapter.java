@@ -2,11 +2,13 @@ package com.example.honey_create_cloud_pad.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,12 +42,14 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
         View contactView;//存储解析到的view
         ImageView imageView;
         LinearLayout recyclerWidth;
+        TextView appNameView;
 
         public ViewHolder(View view) {
             super(view);
             contactView = view;
             imageView = view.findViewById(R.id.imgUrl);
             recyclerWidth = view.findViewById(R.id.recycler_width);
+            appNameView = view.findViewById(R.id.appName);
         }
     }
 
@@ -80,25 +84,26 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                 if (onClosePopupListener != null) {
                     onClosePopupListener.onClosePopupClick("关闭");
                 }
+                Log.i("_TAG", "onClick: "+position + " url："+url);
                 if (position == 0) {
                     Intent intent = new Intent(context, ApplyFirstActivity.class);
                     intent.putExtra("userid", userid);
                     intent.putExtra("token", token);
-                    intent.putExtra("url", url);
+                    intent.putExtra("url", mContactList.get(0).getAppInterfaceUrl());
                     intent.putExtra("appId", mContactList.get(0).getAppId() + "");
                     context.startActivity(intent);
                 } else if (position == 1) {
                     Intent intent = new Intent(context, ApplySecondActivity.class);
                     intent.putExtra("userid", userid);
                     intent.putExtra("token", token);
-                    intent.putExtra("url", url);
+                    intent.putExtra("url", mContactList.get(1).getAppInterfaceUrl());
                     intent.putExtra("appId", mContactList.get(1).getAppId() + "");
                     context.startActivity(intent);
                 } else if (position == 2) {
                     Intent intent = new Intent(context, ApplyThirdActivity.class);
                     intent.putExtra("userid", userid);
                     intent.putExtra("token", token);
-                    intent.putExtra("url", url);
+                    intent.putExtra("url", mContactList.get(2).getAppInterfaceUrl());
                     intent.putExtra("appId", mContactList.get(2).getAppId() + "");
                     context.startActivity(intent);
                 }
@@ -111,6 +116,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if (mContactList.get(position).getLogoUrl() != null) {
             Glide.with(context).load(mContactList.get(position).getLogoUrl()).into(holder.imageView);
+            holder.appNameView.setText(mContactList.get(position).getAppName());
         }
     }
 

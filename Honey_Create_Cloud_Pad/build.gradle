@@ -4,13 +4,15 @@ buildscript {
     repositories {
         google()
         jcenter()
-        
+        maven {url 'https://developer.huawei.com/repo/'} //华为推送
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.3'
-        
+        // TinkerPatch 插件
+        classpath "com.tinkerpatch.sdk:tinkerpatch-gradle-plugin:1.2.14.7"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
+        classpath 'com.huawei.agconnect:agcp:1.3.1.300' //华为推送
     }
 }
 
@@ -18,7 +20,10 @@ allprojects {
     repositories {
         google()
         jcenter()
-        
+        flatDir {
+            dirs 'libs'
+        }
+        maven {url 'https://developer.huawei.com/repo/'}
     }
 }
 

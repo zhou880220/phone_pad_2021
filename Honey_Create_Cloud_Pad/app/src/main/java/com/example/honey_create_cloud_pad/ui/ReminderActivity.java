@@ -14,15 +14,15 @@ import android.widget.TextView;
 import com.example.honey_create_cloud_pad.R;
 import com.example.honey_create_cloud_pad.webclient.WebViewSetting;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 
 public class ReminderActivity extends AppCompatActivity implements View.OnClickListener{
-    @InjectView(R.id.Reminder_web)
+    @BindView(R.id.Reminder_web)
     WebView mWebView;
-    @InjectView(R.id.back_image)
+    @BindView(R.id.back_image)
     ImageView mBackImage;
-    @InjectView(R.id.title_text)
+    @BindView(R.id.title_text)
     TextView mTitleText;
 
 
@@ -30,7 +30,7 @@ public class ReminderActivity extends AppCompatActivity implements View.OnClickL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reminder);
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
         Intent intent = getIntent();
         String type = intent.getStringExtra("type");
         if (type.equals("1")) {

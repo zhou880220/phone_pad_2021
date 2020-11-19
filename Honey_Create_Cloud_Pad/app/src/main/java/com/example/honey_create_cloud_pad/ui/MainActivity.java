@@ -28,6 +28,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -38,6 +39,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -52,17 +54,24 @@ import androidx.core.content.FileProvider;
 import com.alibaba.fastjson.JSONObject;
 import com.example.honey_create_cloud_pad.BuildConfig;
 import com.example.honey_create_cloud_pad.Constant;
+import com.example.honey_create_cloud_pad.MyApplication;
 import com.example.honey_create_cloud_pad.MyHandlerCallBack;
 import com.example.honey_create_cloud_pad.R;
 import com.example.honey_create_cloud_pad.bean.BrowserBean;
 import com.example.honey_create_cloud_pad.bean.HeadPic;
 import com.example.honey_create_cloud_pad.bean.NotificationBean;
 import com.example.honey_create_cloud_pad.bean.PictureUpload;
+import com.example.honey_create_cloud_pad.bean.RabbitMQBean;
 import com.example.honey_create_cloud_pad.bean.TokenIsOkBean;
 import com.example.honey_create_cloud_pad.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud_pad.file.CleanDataUtils;
+import com.example.honey_create_cloud_pad.pushmessage.HuaWeiPushHmsMessageService;
+import com.example.honey_create_cloud_pad.util.BaseUtil;
 import com.example.honey_create_cloud_pad.util.FileUtil;
 import com.example.honey_create_cloud_pad.util.MarketTools;
+import com.example.honey_create_cloud_pad.util.NetworkUtils;
+import com.example.honey_create_cloud_pad.util.SPUtils;
+import com.example.honey_create_cloud_pad.util.SystemUtil;
 import com.example.honey_create_cloud_pad.view.AnimationView;
 import com.example.honey_create_cloud_pad.webclient.MWebChromeClient;
 import com.example.honey_create_cloud_pad.webclient.MWebViewClient;
@@ -72,6 +81,12 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.huawei.agconnect.config.AGConnectServicesConfig;
+import com.huawei.hmf.tasks.OnCompleteListener;
+import com.huawei.hmf.tasks.Task;
+import com.huawei.hms.aaid.HmsInstanceId;
+import com.huawei.hms.common.ApiException;
+import com.huawei.hms.push.HmsMessaging;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -79,22 +94,28 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.vivo.push.IPushActionListener;
+import com.vivo.push.PushClient;
+import com.xiaomi.mipush.sdk.MiPushClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.Unbinder;
 import me.leolin.shortcutbadger.ShortcutBadger;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -108,14 +129,16 @@ import static com.example.honey_create_cloud_pad.ui.ClipImageActivity.REQ_CLIP_A
 
 public class MainActivity extends AppCompatActivity {
 
-    @InjectView(R.id.newwebprogressbar)
+    @BindView(R.id.newwebprogressbar)
     ProgressBar mNewwebprogressbar;
-    @InjectView(R.id.new_Web)
+    @BindView(R.id.new_Web_2)
     BridgeWebView mNewWeb;
 //    @InjectView(R.id.loading_page)
 //    View mLoadingPage;
-    @InjectView(R.id.web_error)
+    @BindView(R.id.web_error)
     View mWebError;
+    @BindView(R.id.tv_fresh)
+    TextView tvFresh;
 
     private static final String[] PERMISSIONS_APPLICATION = { //应用中心授权
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -162,10 +185,10 @@ public class MainActivity extends AppCompatActivity {
                 newName = (String) msg.obj;
                 Log.i(TAG, "newName---" + newName);
                 OkHttpClient client1 = new OkHttpClient();
-                final FormBody formBody = new FormBody.Builder()
-                        .add("userId", userid)
-                        .add("url", newName)
-                        .build();
+//                final FormBody formBody = new FormBody.Builder()
+//                        .add("userId", userid)
+//                        .add("url", newName)
+//                        .build();
                 String post = "{" +
                         "userId:'" + userid + '\'' +
                         ", url:'" + newName + '\'' +
@@ -196,18 +219,33 @@ public class MainActivity extends AppCompatActivity {
                         if (headPic.getCode() == 200) {
                             final String msg1 = headPic.getMsg();
                             final String tete = "mytest";
-                            Log.i(TAG, "msg1---" + msg1);
+                            Log.i(TAG, "msg1---" + headPic.getData());
+//                            mNewWeb.post(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    mNewWeb.evaluateJavascript("window.sdk.doublePad2(\"" + tete + "\")", new ValueCallback<String>() {
+//                                        @Override
+//                                        public void onReceiveValue(String value) {
+//                                            Log.i(TAG, "msg1-back2--");
+//                                        }
+//                                    });
+//                                }
+//                            });
+
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    mNewWeb.evaluateJavascript("window.sdk.double(\"" + tete + "\")", new ValueCallback<String>() {
+                                    mNewWeb.callHandler("doublePad2", null, new CallBackFunction() {
                                         @Override
-                                        public void onReceiveValue(String value) {
-
+                                        public void onCallBack(String data) {
+                                            Log.i(TAG, "msg1-back--doublePad2");
                                         }
                                     });
+
                                 }
                             });
+                        }else {
+
                         }
                     }
                 });
@@ -215,6 +253,10 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
     });
+
+    //小米推送信息
+    public static List<String> logList = new CopyOnWriteArrayList<String>();
+
     private String usertoken1;
     private String userid1;
     private MWebChromeClient myChromeWebClient;
@@ -230,6 +272,14 @@ public class MainActivity extends AppCompatActivity {
     private String description = "通知的功能";
     NotificationManager notificationManager;
     private boolean ChaceSize = true;
+    private RabbitMQBean rabbitMQBean;
+    private HashMap<String, String> hashMap = new HashMap<String, String>();
+    private String zxIdTouTiao;
+    private HuaWeiPushHmsMessageService huaWeiPushHmsMessageOnClick;
+    private String imei = "";
+    private String huaWeiToken;
+    private String oppoToken;
+    private Unbinder unbinder;
 
     @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -237,22 +287,262 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        createNotificationChannel();
-        ButterKnife.inject(this);
-        //固定为横屏
-        MainActivity.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        iniVersionName();
-        Uri uri = getIntent().getData();
-        if (uri != null) {
-            String id = uri.getQueryParameter("thirdId");
-            if (id != null) {
-                Intent intent = new Intent(this, NewsActivity.class);
-                intent.putExtra("url", id);
-                startActivity(intent);
+        unbinder = ButterKnife.bind(this);
+        myRequetPermission(PERMISSIONS_APPLICATION);
+
+        boolean hasNet = checkNet();
+
+        initClick();
+        if (!hasNet) {
+            getRabbitMQAddressOkhttp();//获取RabbitMq推送服务地址
+            createNotificationChannel();
+//        initPush(); //平台群推注册
+
+//        initScreen();
+            iniVersionName();
+            Uri uri = getIntent().getData();
+            if (uri != null) {
+                String id = uri.getQueryParameter("thirdId");
+                String open = uri.getQueryParameter("open");
+                if (id != null) {
+                    Intent intent = new Intent(this, NewsActivity.class);
+                    intent.putExtra("url", id);
+                    startActivity(intent);
+                }
+
+                if (open != null) {
+                    Log.e(TAG, "huaweiUrl: "+uri);
+                    //test://zzy:8080/home?open=message&appid=2&appName=精益生产电子看板  用户华为通知跳转
+                    String huaWei = uri.getQueryParameter("appid");
+                    String appName = uri.getQueryParameter("appName");
+                    JSONObject jsonObject  = new JSONObject();
+                    jsonObject.put("appid",huaWei);
+                    jsonObject.put("appName",appName);
+                    String s = jsonObject.toJSONString();
+                    Log.e(TAG, "onNewIntent: "+s);
+                    webView(Constant.APP_NOTICE_LIST);
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            //要执行的操作
+                            mNewWeb.callHandler("PushMessageIntent", s, new CallBackFunction() {
+                                @Override
+                                public void onCallBack(String data) {
+
+                                }
+                            });
+                        }
+                    }, 3000);//2秒后执行Runnable中的run方法
+                }
+            }
+            Log.i(TAG, "onCreate: 1");
+
+            String content_url = (String)SPUtils.getInstance().get("context_url", "");
+            Log.i(TAG, "onCreate: 2"+content_url);
+            webView(content_url);//Constant.text_url);
+            Intent intent1 = getIntent();
+            String app_notice_list = intent1.getStringExtra("APP_NOTICE_LIST");
+            Log.e(TAG, "onCreate: " + app_notice_list);
+            if (app_notice_list != null) {
+                if (app_notice_list.equals("咨询")) { // 跳转到咨询页面
+                    webView(Constant.MyNews);
+                } else if (app_notice_list.equals("消息")) { //跳转到消息页面
+                    String xiaomiMessage = intent1.getStringExtra("pushContentMessage");
+//                SharedPreferences xiaomiPref = getSharedPreferences("xiaomiPushMessage",MODE_PRIVATE);
+//                SharedPreferences.Editor edit = xiaomiPref.edit();
+//                edit.putString("小米推送消息",xiaomiMessage);
+//                edit.commit();
+                    Log.e(TAG, "xiaomipush:2 "+xiaomiMessage );
+                    webView(Constant.APP_NOTICE_LIST);
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            //要执行的操作
+                            mNewWeb.callHandler("PushMessageIntent", xiaomiMessage, new CallBackFunction() {
+                                @Override
+                                public void onCallBack(String data) {
+
+                                }
+                            });
+                        }
+                    }, 3000);//2秒后执行Runnable中的run方法
+                }
             }
         }
-        myRequetPermission(PERMISSIONS_APPLICATION);
-        webView(Constant.text_url);
+    }
+
+    private void initClick(){
+        tvFresh.setOnClickListener(v->{
+            if (NetworkUtils.isConnected()) {
+                this.recreate();
+            }else {
+                showAlertDialog("温馨提示","请确保您的设备已联网！");
+            }
+
+        });
+    }
+
+    public void showAlertDialog(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                checkNet();
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private boolean checkNet() {
+        Log.i("pad_start", "checkNet: "+NetworkUtils.isConnected());
+        boolean flag = false;
+        if (!NetworkUtils.isConnected()) {
+            mWebError.setVisibility(View.VISIBLE);
+            flag = true;
+        }else {
+            if (mWebError.getVisibility() == View.VISIBLE) {
+                mWebError.setVisibility(View.GONE);
+            }
+            flag =false;
+        }
+        return flag;
+    }
+
+
+
+    //全屏显示
+    private void initScreen() {
+        if (Build.VERSION.SDK_INT >= 19) {
+            View decorView = getWindow().getDecorView();
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        } else {
+            View decorView = getWindow().getDecorView();
+            int option = View.SYSTEM_UI_FLAG_FULLSCREEN;
+            decorView.setSystemUiVisibility(option);
+        }
+    }
+
+    /**
+     * 平台群推注册
+     */
+    private void initPush() {
+        if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) {
+            //初始化小米推送服务
+            MyApplication.setMainActivity(this);
+            //注册小米群推服务
+            MiPushClient.subscribe(this, "ALL", null);
+        }
+        if (android.os.Build.BRAND.toLowerCase().contains("vivo")) {
+            //注册Vivo群推服务
+            PushClient.getInstance(this).setTopic("ALL", new IPushActionListener() {
+                @Override
+                public void onStateChanged(int state) {
+                    if (state != 0) {
+                        Log.e(TAG, "设置群推标签异常" + state);
+                    } else {
+                        Log.e(TAG, "设置群推标签成功");
+                    }
+                }
+            });
+        }
+        //注册huawei群推服务
+        if (android.os.Build.BRAND.toLowerCase().contains("huawei")) {
+            SharedPreferences huaWeiPushPref = getSharedPreferences("HuaWeiPushToken", MODE_PRIVATE);
+            //从其它页面回调，并加载要回调的页面
+            huaWeiToken = huaWeiPushPref.getString("huaWeiToken", "");
+            if (!huaWeiToken.isEmpty()) {
+                Log.e(TAG, "HuaweiPushRequest: 1" + huaWeiToken);
+                PushTokenRelation("1", huaWeiToken, "2");
+            } else {
+                Log.e(TAG, "HuaweiPushRequest: 2" + "没有token");
+            }
+
+            HmsMessaging.getInstance(MainActivity.this)
+                    .subscribe("ALL")
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                Log.e(TAG, "subscribe Complete");
+                            } else {
+                                Log.e(TAG, "subscribe failed: ret=" + task.getException().getMessage());
+                            }
+                        }
+                    });
+        }
+
+        if (android.os.Build.BRAND.toLowerCase().contains("oppo")) {
+            SharedPreferences oppoPushPref = getSharedPreferences("OppoPushToken", MODE_PRIVATE);
+            oppoToken = oppoPushPref.getString("OppoToken", "");
+            if (!oppoToken.isEmpty()) {
+                Log.e(TAG, "oppoPushRequest: 1" + oppoToken);
+                PushTokenRelation("1", oppoToken, "4");
+            } else {
+                Log.e(TAG, "oppoPushRequest: 2" + "没有token");
+            }
+        }
+    }
+
+    /**
+     * 用户登录获取华为手机Token
+     */
+    private void getHuaweiToken() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    // read from agconnect-services.json
+                    String appId = AGConnectServicesConfig.fromContext(MainActivity.this).getString("client/app_id");
+                    String token = HmsInstanceId.getInstance(MainActivity.this).getToken(appId, "HCM");
+                    Log.i(TAG, "get token:" + token);
+                    if (!TextUtils.isEmpty(token)) {
+                        sendRegTokenToServer(token);
+                    }
+                } catch (ApiException e) {
+                    Log.e(TAG, "get token failed, " + e);
+                }
+            }
+        }.start();
+    }
+
+    private void sendRegTokenToServer(String token) {
+        Log.i(TAG, "sending token to server. token:" + token);
+    }
+
+    /**
+     * 获取RabbitMQ服务地址
+     */
+    private void getRabbitMQAddressOkhttp() {
+        OkHttpClient client = new OkHttpClient();
+        Request builder = new Request.Builder()
+                .url(Constant.GETRabbitMQAddress)
+                .get()
+                .build();
+        client.newCall(builder).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String string = response.body().string();
+                Gson gson = new Gson();
+                rabbitMQBean = gson.fromJson(string, RabbitMQBean.class);
+                Log.e(TAG, "getRabbitMQAddressOkhttp: " + string);
+            }
+        });
     }
 
 
@@ -261,6 +551,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void webView(String url) {
+        Log.i(TAG, "webView url: "+ url +" mNewWeb: "+mNewWeb);
         if (Build.VERSION.SDK_INT >= 19) {
             mNewWeb.getSettings().setLoadsImagesAutomatically(true);
         } else {
@@ -268,9 +559,11 @@ public class MainActivity extends AppCompatActivity {
         }
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
-        webSettings.setUserAgentString(userAgentString + "; application-center");
+        webSettings.setUserAgentString(userAgentString + "; application-center-pad");
 
-        WebViewSetting.initweb(webSettings);
+        if (webSettings != null) {
+            WebViewSetting.initweb(webSettings);
+        }
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewwebprogressbar, mWebError);
@@ -280,8 +573,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {  //动态监听页面加载链接
                 myOrder = name;
-                Log.e(TAG, "onCityClick: " + name);
-//                if (name.equals(Constant.login_url)) {
+                if (name != null) {
+//                    if (name.equals(Constant.login_url)) {
 //                    mTextPolicyReminder.setVisibility(View.VISIBLE);
 //                    mCloseLoginPage.setVisibility(View.VISIBLE);
 //                    mTextPolicyReminderBack.setVisibility(View.VISIBLE);
@@ -302,13 +595,15 @@ public class MainActivity extends AppCompatActivity {
 //                    mTextPolicyReminderBack.setVisibility(View.GONE);
 //                    getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);  //SOFT_INPUT_ADJUST_RESIZE
 //                }
+                }
             }
         });
         mNewWeb.setWebViewClient(myWebViewClient);
         mNewWeb.loadUrl(url);
+//        mNewWeb.loadUrl("file:///android_asset/lll.html");
 
         //js交互接口定义
-        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
+//        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
 
         //回退监听
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
@@ -339,6 +634,23 @@ public class MainActivity extends AppCompatActivity {
                 if (!mVersionName.isEmpty()) {
 //                    mEditText.setText("通过调用Native方法接收数据：\n" + data);
                     function.onCallBack("版本号V" + mVersionName);
+                }
+            }
+        });
+
+        /**
+         * 存储用户信息
+         */
+        mNewWeb.registerHandler("setCookie", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    if (!data.isEmpty()) {
+                        zxIdTouTiao = data;
+                        Log.e(TAG, "setCookie: " + data);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -508,27 +820,51 @@ public class MainActivity extends AppCompatActivity {
                         Map map = JSONObject.parseObject(data, Map.class);
                         String usertoken = (String) map.get("token");
                         String userID = (String) map.get("userID");
+                        SPUtils.getInstance().put("token", usertoken);
                         Log.e(TAG, "用户登录信息: " + usertoken + "---" + userID);
                         if (!usertoken.isEmpty()) {
                             usertoken1 = usertoken;
                             userid1 = userID;
+                            if (android.os.Build.BRAND.toLowerCase().contains("huawei")) {
+//                                PushTokenRelation("2", huaWeiToken, "2");
+//                                getHuaweiToken();
+                            }
+                            if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) {
+                                //注册小米单推服务
+                                MiPushClient.setAlias(MainActivity.this, userid1, null);
+                            }
+                            if (android.os.Build.BRAND.toLowerCase().contains("vivo")) {
+                                //注册Vivo单推服务
+                                PushClient.getInstance(MainActivity.this).bindAlias(userid1, new IPushActionListener() {
+                                    @Override
+                                    public void onStateChanged(int state) {
+                                        if (state != 0) {
+                                            Log.e(TAG, "设置别名异常[ " + state + "]");
+                                        } else {
+                                            Log.e(TAG, "设置别名成功");
+                                        }
+                                    }
+                                });
+                            }
+                            if (android.os.Build.BRAND.toLowerCase().contains("oppo")) {
+                                PushTokenRelation("2", oppoToken, "4");
+                            }
 
                             SharedPreferences sb = MainActivity.this.getSharedPreferences("NotificationUserId", MODE_PRIVATE);
                             SharedPreferences.Editor edit = sb.edit();
                             edit.putString("NotifyUserId", usertoken1);
                             edit.commit();
 
+
+
                             //获取userId用于通知
                             String notifyUserId = sb.getString("NotifyUserId", "");
 //                deleteUserQueue(); //删除队列
-
                             //用于判断手机是否大于7.0  大于的话开启用户通知 否则不开起通知
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                                 if (!TextUtils.isEmpty(notifyUserId)) {
                                     notificationChange(userid1, "0");
-                                    new Thread(() ->{
-                                        basicConsume(myHandler);
-                                    }).start();
+                                    new Thread(() ->{ basicConsume(myHandler); }).start();
                                 }
                             } else {
                                 Log.e(TAG, "通知不开启，小于7.0");
@@ -553,14 +889,26 @@ public class MainActivity extends AppCompatActivity {
                         int appLyId = (int) map.get("appId");
                         String appId = String.valueOf(appLyId);
                         if (!redirectUrl.isEmpty()) {
-                            Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
-                            intent.putExtra("url", redirectUrl);
-                            intent.putExtra("token", usertoken1);
-                            intent.putExtra("userid", userid1);
-                            intent.putExtra("appId", appId);
-                            startActivity(intent);
-                        } else {
-                            Toast.makeText(MainActivity.this, "暂无数据", Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "跳转第三方:2 " + redirectUrl);
+                            if (zxIdTouTiao == null || zxIdTouTiao.isEmpty()) {
+                                Log.e(TAG, "跳转第三方:3 " + redirectUrl);
+                                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                intent.putExtra("url", redirectUrl);
+                                intent.putExtra("token", usertoken1);
+                                intent.putExtra("userid", userid1);
+                                intent.putExtra("appId", appId);
+                                startActivity(intent);
+                            } else {
+                                Log.e(TAG, "跳转第三方:4" + redirectUrl);
+                                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                intent.putExtra("url", redirectUrl);
+                                intent.putExtra("token", usertoken1);
+                                intent.putExtra("userid", userid1);
+                                intent.putExtra("appId", appId);
+                                intent.putExtra("zxIdTouTiao", zxIdTouTiao);
+                                startActivity(intent);
+                                zxIdTouTiao = "";
+                            }
                         }
                     }
                 } catch (Exception e) {
@@ -687,6 +1035,48 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 try {
+                    Log.i(TAG, "handler: logout");
+                    ChaceSize = true;
+                    //刷新缓存信息
+//                    iniVersionName();
+                    if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) {
+                        //用户退出登录注销小米个推账户
+                        MiPushClient.unsetAlias(MainActivity.this, userid1, null);
+                    }
+                    if (android.os.Build.BRAND.toLowerCase().contains("vivo")) {
+                        //用户退出登录注销Vivo个推账户
+                        PushClient.getInstance(MainActivity.this).unBindAlias(userid1, new IPushActionListener() {
+                            @Override
+                            public void onStateChanged(int state) {
+                                if (state != 0) {
+                                    Log.e(TAG, "取消别名异常" + state);
+                                } else {
+                                    Log.e(TAG, "取消别名成功");
+                                }
+                            }
+                        });
+                    }
+                    if (android.os.Build.BRAND.toLowerCase().contains("huawei")) {
+                        PushTokenRelation("4", userid1, "2");
+                        //用户退出登录注销华为个推账户
+                        HmsMessaging.getInstance(MainActivity.this)
+                                .unsubscribe(userid1)
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(Task<Void> task) {
+                                        if (task.isSuccessful()) {
+                                            Log.e(TAG, "unsubscribe Complete");
+                                        } else {
+                                            Log.e(TAG, "unsubscribe failed: ret=" + task.getException().getMessage());
+                                        }
+                                    }
+                                });
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                try {
                     SharedPreferences sb = MainActivity.this.getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                     SharedPreferences.Editor edit = sb.edit();
                     edit.clear();
@@ -701,6 +1091,8 @@ public class MainActivity extends AppCompatActivity {
                     SharedPreferences.Editor edit2 = sb2.edit();
                     edit2.clear();
                     edit2.commit();
+
+//                    BaseUtil.restartActivity(MainActivity.this);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -756,6 +1148,88 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+
+    /**
+     * accessEquipment 接入设备 (1：iphone；2：huawei；3：mi；4：oppo；5：vivo)
+     */
+    private void PushTokenRelation(String PushFuncType, String UserPushToken, String accessEquipmentType) {
+        Log.e(TAG, "PushTokenRelation: " + UserPushToken);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            imei = getId();
+        } else {
+            imei = SystemUtil.getUniqueIdentificationCode(MainActivity.this);
+        }
+
+//        imei = SystemUtil.getIMEI(MainActivity.this);
+
+        if (PushFuncType.equals("1")) {
+            String PushHuaweiBody = "{" +
+                    "accessEquipment:'" + accessEquipmentType + '\'' +
+                    ", equipmentType:'" + "3" + '\'' +
+                    ", equipmentIdCode:'" + imei + '\'' +
+                    ", status:'" + "0" + '\'' +
+                    ", token:'" + UserPushToken + '\'' +
+                    ", userId:'" + "" + '\'' +
+                    '}';
+
+            MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+            RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
+
+            OkHttpClient HuaweiPushClient = new OkHttpClient();
+            Request HuaweiRequest = new Request.Builder()
+                    .url(Constant.userPushRelation)
+                    .post(requestBody)
+                    .build();
+            HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String string = response.body().string();
+                    Log.e(TAG, "HuaweiPushRequest:3 " + string);
+                }
+            });
+        } else if (PushFuncType.equals("2")) {
+            Log.e(TAG, "PushTokenRelation:userid1: " + userid1);
+            String PushHuaweiBody = "{" +
+                    "accessEquipment:'" + accessEquipmentType + '\'' +
+                    ", equipmentType:'" + "3" + '\'' +
+                    ", equipmentIdCode:'" + imei + '\'' +
+                    ", status:'" + "0" + '\'' +
+                    ", token:'" + UserPushToken + '\'' +
+                    ", userId:'" + userid1 + '\'' +
+                    '}';
+
+            MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
+            RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
+
+            OkHttpClient HuaweiPushClient = new OkHttpClient();
+            Request HuaweiRequest = new Request.Builder()
+                    .url(Constant.userPushRelationUpdate)
+                    .addHeader("Authorization", "Bearer " + usertoken1)
+                    .post(requestBody)
+                    .build();
+            HuaweiPushClient.newCall(HuaweiRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String string = response.body().string();
+                    Log.e(TAG, "HuaweiPushRequest:4 " + string);
+                }
+            });
+        }
+    }
+
+
+
     private void notificationChange(String userId, String openStatus) {
         OkHttpClient client = new OkHttpClient();
 //        String post = "{" +
@@ -776,11 +1250,13 @@ public class MainActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "notificationChange onFailure: " + e.getMessage());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String string = response.body().string();
+                Log.i(TAG, "notificationChange onResponse: "+string);
             }
         });
     }
@@ -846,6 +1322,11 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        if (getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+//        initScreen();
         super.onResume();
     }
 
@@ -895,6 +1376,7 @@ public class MainActivity extends AppCompatActivity {
 //
 //            }
 //        });
+
         ShortcutBadger.removeCount(this);
         notificationManager.cancel(NOTIFICATION_NUMBER);
         boolean notificationEnabled = isNotificationEnabled(this);
@@ -919,6 +1401,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.e(TAG, "通知不开启，小于7.0");
         }
+
+//        initScreen();
         super.onRestart();
     }
 
@@ -960,7 +1444,7 @@ public class MainActivity extends AppCompatActivity {
             PackageInfo packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
             //获取版本号
             mVersionName = packageInfo.versionName;
-            Log.i("mVersionName_1", mVersionName);
+            Log.i(TAG, mVersionName+"   "+ totalCacheSize);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -995,7 +1479,7 @@ public class MainActivity extends AppCompatActivity {
                     for (int result : grantResults) {
                         if (result != PackageManager.PERMISSION_GRANTED) {
                             //弹出对话框引导用户去设置
-                            showDialog();
+//                            showDialog();
                             Toast.makeText(MainActivity.this, "请求权限被拒绝", Toast.LENGTH_LONG).show();
                             break;
                         } else {
@@ -1051,20 +1535,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //弹出提示框
-    private void showDialog() {
-        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("提示")
-                .setMessage("若您取消权限可能会导致某些功能无法使用！！！")
-                .setPositiveButton("设置", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        goToAppSetting();
-                    }
-                })
-                .setCancelable(false)
-                .show();
-    }
+//    private void showDialog() {
+//        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+//                .setTitle("提示")
+//                .setMessage("若您取消权限可能会导致某些功能无法使用！！！")
+//                .setPositiveButton("设置", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        dialog.dismiss();
+//                        goToAppSetting();
+//                    }
+//                })
+//                .setCancelable(false)
+//                .show();
+//    }
 
     // 跳转到当前应用的设置界面
     private void goToAppSetting() {
@@ -1377,12 +1861,15 @@ public class MainActivity extends AppCompatActivity {
                             throws IOException {
                         super.handleDelivery(consumerTag, envelope, properties, body);
                         receiveMsg = new String(body, "UTF-8");
+                        Log.i(TAG, "basicConsume: "+receiveMsg);
                         NotificationConsune();
                     }
                 };
                 channel.basicConsume("app.notice.queue." + userid1, true, "administrator", consumer);
             }
+            Log.e(TAG, "basicConsume: end");
         } catch (IOException e) {
+            Log.e(TAG, "basicConsume: "+ e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1392,15 +1879,18 @@ public class MainActivity extends AppCompatActivity {
      */
     private Connection getConnection() {
         ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(Constant.MQ_ADDRESS);//主机地址：192.168.1.105
-        factory.setPort(Constant.MQ_PORT);// 端口号:5672
-        factory.setUsername("honeycomb");// 用户名
-        factory.setPassword("honeycomb");// 密码
-        factory.setVirtualHost("/");
-        try {
-            return factory.newConnection();
-        } catch (IOException | TimeoutException e) {
-            e.printStackTrace();
+        if (rabbitMQBean != null) {
+            factory.setHost(rabbitMQBean.getData().getMqAddress());//主机地址：192.168.1.105
+            int MqPort = Integer.parseInt(rabbitMQBean.getData().getMqPort());
+            factory.setPort(MqPort);// 端口号:5672
+            factory.setUsername(rabbitMQBean.getData().getMqUser());// 用户名
+            factory.setPassword(rabbitMQBean.getData().getMqPassword());// 密码
+            factory.setVirtualHost(rabbitMQBean.getData().getMqVirtualHost());
+            try {
+                return factory.newConnection();
+            } catch (IOException | TimeoutException e) {
+                e.printStackTrace();
+            }
         }
         return null;
     }
@@ -1415,6 +1905,7 @@ public class MainActivity extends AppCompatActivity {
         client1.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "NotificationConsune onFailure: "+e.getMessage());
 
             }
 
@@ -1424,6 +1915,8 @@ public class MainActivity extends AppCompatActivity {
                 String string = response.body().string();
                 Gson gson = new Gson();
                 TokenIsOkBean tokenIsOkBean = gson.fromJson(string, TokenIsOkBean.class);
+                Log.e(TAG, "NotificationConsune onResponse: "+string);
+
                 if (tokenIsOkBean.getCode() == 200) {
                     if (receiveMsg != null) {
                         sendNotification();
@@ -1465,17 +1958,17 @@ public class MainActivity extends AppCompatActivity {
                 @RequiresApi(api = Build.VERSION_CODES.KITKAT)
                 @Override
                 public void run() {
-                    mNewWeb.evaluateJavascript("window.sdk.noticeTimes(\"" + badgeCount + "\")", new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String value) {
-
-                        }
-                    });
+//                    mNewWeb.evaluateJavascript("window.sdk.noticeTimes(\"" + badgeCount + "\")", new ValueCallback<String>() {
+//                        @Override
+//                        public void onReceiveValue(String value) {
+//                            Log.e(TAG, "sendNotification: back");
+//                        }
+//                    });
 
                     mNewWeb.callHandler("noticeTimes", badgeCount + "", new CallBackFunction() {
                         @Override
                         public void onCallBack(String data) {
-
+                            Log.e(TAG, "sendNotification: back2");
                         }
                     });
                 }
@@ -1497,5 +1990,128 @@ public class MainActivity extends AppCompatActivity {
             notificationManager = (NotificationManager)
                     getSystemService(Context.NOTIFICATION_SERVICE);
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Uri uri = getIntent().getData(); //用户华为通知跳转  浏览器跳转应用  oppo通知跳转
+        if (uri != null) {
+            String thirdId = uri.getQueryParameter("thirdId");
+            if (thirdId != null) {
+                intent = new Intent(this, NewsActivity.class);
+                intent.putExtra("url", thirdId);
+                startActivity(intent);
+            }
+            String open = uri.getQueryParameter("open");
+            if (open.equals("message")) {
+                Log.e(TAG, "huaweiUrl: "+uri);
+                //test://zzy:8080/home?open=message&appid=2&appName=精益生产电子看板  用户华为通知跳转
+                String huaWei = uri.getQueryParameter("appid");
+                String appName = uri.getQueryParameter("appName");
+                JSONObject jsonObject  = new JSONObject();
+                jsonObject.put("appid",huaWei);
+                jsonObject.put("appName",appName);
+                String s = jsonObject.toJSONString();
+                Log.e(TAG, "onNewIntent: "+s);
+                webView(Constant.APP_NOTICE_LIST);
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        //要执行的操作
+                        mNewWeb.callHandler("PushMessageIntent", s, new CallBackFunction() {
+                            @Override
+                            public void onCallBack(String data) {
+
+                            }
+                        });
+                    }
+                }, 3000);//2秒后执行Runnable中的run方法
+            }
+        }
+
+        String app_notice_list = intent.getStringExtra("APP_NOTICE_LIST");
+        String xiaomiMessage = intent.getStringExtra("pushContentMessage");
+        if (app_notice_list != null) {
+//            webView(Constant.APP_NOTICE_LIST);
+            if (app_notice_list.equals("咨询")) { //跳转到咨询页面
+                webView(Constant.MyNews);
+            } else if (app_notice_list.equals("消息")) {
+                webView(Constant.APP_NOTICE_LIST);
+                Log.e(TAG, "xiaomiMessage: "+xiaomiMessage );
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        //要执行的操作
+                        mNewWeb.callHandler("PushMessageIntent", xiaomiMessage, new CallBackFunction() {
+                            @Override
+                            public void onCallBack(String data) {
+
+                            }
+                        });
+                    }
+                }, 3000);//2秒后执行Runnable中的run方法
+            }
+        }
+    }
+
+    //获取手机唯一标识
+    private String getId() {
+        StringBuilder deviceId = new StringBuilder();
+        // 渠道标志
+        try {
+            //IMEI（imei）
+            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
+            if (!TextUtils.isEmpty(imei)) {
+                deviceId.append("imei");
+                deviceId.append(imei);
+                return deviceId.toString();
+            }
+            //序列号（sn）
+            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
+            if (!TextUtils.isEmpty(sn)) {
+                deviceId.append("sn");
+                deviceId.append(sn);
+                return deviceId.toString();
+            }
+            //如果上面都没有， 则生成一个id：随机码
+            String uuid = getUUID();
+            if (!TextUtils.isEmpty(uuid)) {
+                deviceId.append(uuid);
+                return deviceId.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            deviceId.append(getUUID());
+        }
+        return deviceId.toString();
+    }
+
+    /**
+     * 得到全局唯一UUID
+     */
+    private String uuid;
+
+    public String getUUID() {
+        SharedPreferences mShare = getSharedPreferences("uuid", MODE_PRIVATE);
+        if (mShare != null) {
+            uuid = mShare.getString("uuid", "");
+        }
+        if (TextUtils.isEmpty(uuid)) {
+            uuid = UUID.randomUUID().toString();
+            mShare.edit().putString("uuid", uuid).commit();
+        }
+        return uuid;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        MyApplication.setMainActivity(null);
+        unbinder.unbind();
+//        EventBus.getDefault().unregister(this);
     }
 }

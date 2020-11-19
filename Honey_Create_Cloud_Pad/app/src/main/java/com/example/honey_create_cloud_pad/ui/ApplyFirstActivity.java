@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -12,8 +13,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,6 +40,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
@@ -71,12 +75,17 @@ import com.example.honey_create_cloud_pad.adapter.MyContactAdapter;
 import com.example.honey_create_cloud_pad.bean.BrowserBean;
 import com.example.honey_create_cloud_pad.bean.PictureUpload;
 import com.example.honey_create_cloud_pad.bean.RecentlyApps;
+import com.example.honey_create_cloud_pad.bean.Result;
 import com.example.honey_create_cloud_pad.bean.TakePhoneBean;
 import com.example.honey_create_cloud_pad.bean.TitleName;
+import com.example.honey_create_cloud_pad.http.CallBackUtil;
+import com.example.honey_create_cloud_pad.http.OkhttpUtil;
 import com.example.honey_create_cloud_pad.recorder.AudioRecorderButton;
 import com.example.honey_create_cloud_pad.util.BaseUtil;
 import com.example.honey_create_cloud_pad.util.FileUtil;
+import com.example.honey_create_cloud_pad.util.SPUtils;
 import com.example.honey_create_cloud_pad.util.SystemUtil;
+import com.example.honey_create_cloud_pad.util.VersionUtils;
 import com.example.honey_create_cloud_pad.view.AnimationView;
 import com.example.honey_create_cloud_pad.webclient.MWebChromeClient;
 import com.example.honey_create_cloud_pad.webclient.MyWebViewClient;
@@ -90,6 +99,7 @@ import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloader;
 import com.xj.library.base.APP;
 import com.yzq.zxinglibrary.android.CaptureActivity;
+import com.yzq.zxinglibrary.encode.CodeCreator;
 
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
@@ -114,8 +124,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import butterknife.OnClick;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -131,43 +141,43 @@ import static com.example.honey_create_cloud_pad.ui.ClipImageActivity.REQ_CLIP_A
 
 public class ApplyFirstActivity extends AppCompatActivity {
 
-    @InjectView(R.id.newwebprogressbar)
+    @BindView(R.id.newwebprogressbar)
     ProgressBar mNewWebProgressbar;
-    @InjectView(R.id.new_Web1)
+    @BindView(R.id.new_Web1)
     BridgeWebView mNewWeb;
-    @InjectView(R.id.error_iv)
+    @BindView(R.id.error_iv)
     View mWebError;
-    @InjectView(R.id.glide_gif)
+    @BindView(R.id.glide_gif)
     View mLoadingPage;
-    @InjectView(R.id.reload_tv)
+    @BindView(R.id.reload_tv)
     TextView mReloadTv;
-    @InjectView(R.id.grid_popup)
-    RecyclerView mGridPopup;
-    @InjectView(R.id.tv_publish)
+//    @InjectView(R.id.grid_popup)
+//    RecyclerView mGridPopup;
+    @BindView(R.id.tv_publish)
     ImageView mTvPublish;
-    @InjectView(R.id.tv_myPublish)
+    @BindView(R.id.tv_myPublish)
     ImageView mTvMyPublish;
-    @InjectView(R.id.tv_relation)
+    @BindView(R.id.tv_relation)
     ImageView mTvRelation;
-    @InjectView(R.id.ll_popup)
+    @BindView(R.id.ll_popup)
     LinearLayout mLlPopup;
-    @InjectView(R.id.iv_collection_me)
+    @BindView(R.id.iv_collection_me)
     ImageView mIvCollectionMe;
-    @InjectView(R.id.tt_course_none)
+    @BindView(R.id.tt_course_none)
     TextView mTtCourseNone;
-    @InjectView(R.id.ll_course_none)
+    @BindView(R.id.ll_course_none)
     LinearLayout mLlCourseNone;
-    @InjectView(R.id.fab_more)
+    @BindView(R.id.fab_more)
     ImageView mFabMore;
-    @InjectView(R.id.dimiss_popup)
+    @BindView(R.id.dimiss_popup)
     RelativeLayout mDimissPopup;
-    @InjectView(R.id.apply_back_image1)
+    @BindView(R.id.apply_back_image1)
     ImageView mApplyBackImage1;
-    @InjectView(R.id.apply_title_text1)
+    @BindView(R.id.apply_title_text1)
     TextView mApplyTitleText1;
-    @InjectView(R.id.apply_menu_image1)
+    @BindView(R.id.apply_menu_image1)
     ImageView mApplyMenuImage1;
-    @InjectView(R.id.apply_menu_home1)
+    @BindView(R.id.apply_menu_home1)
     ImageView mApplyMenuHome1;
 
     private Handler handler = new Handler(new Handler.Callback() {
@@ -269,17 +279,40 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String accessToken;
     private Uri imageUriThreeApply; //用户拍照/选取相册  返回的路径
     private RecentlyApps recentlyApps;
+    private RecyclerView mGridPopup;
+    private String zxIdTouTiao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_apply);
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
+        initScreen();
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
+        zxIdTouTiao = intent.getStringExtra("zxIdTouTiao");
+        if (zxIdTouTiao != null) {
+            Map map = JSONObject.parseObject(zxIdTouTiao, Map.class);
+            String num = (String) map.get("str");
+            String cookieKey = "key";
+            String cookieValue = "value";
+            ArrayList<Object> list = new ArrayList<>();
+            List objects = JSONObject.parseObject(num, List.class);
+            if (objects != null && objects.size() > 0) {
+                for (Object o : objects) {
+                    if (o != null) {
+                        Map JsonMap = JSONObject.parseObject(o.toString(), Map.class);
+                        String key = (String) JsonMap.get(cookieKey);
+                        String value = (String) JsonMap.get(cookieValue);
+                        hashMap.put(key, value);
+                        zxIdTouTiao = "";
+                    }
+                }
+            }
+        }
         try {
             if (!url.isEmpty()) {
                 webView(url);
@@ -294,12 +327,31 @@ public class ApplyFirstActivity extends AppCompatActivity {
         intentAppNameOkhttp();
     }
 
+    //全屏显示
+    private void initScreen() {
+        if (Build.VERSION.SDK_INT >= 19) {
+            View decorView = getWindow().getDecorView();
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        } else {
+            View decorView = getWindow().getDecorView();
+            int option = View.SYSTEM_UI_FLAG_FULLSCREEN;
+            decorView.setSystemUiVisibility(option);
+        }
+    }
+
     private void initviewTitle() {
         mApplyBackImage1.setOnClickListener(new View.OnClickListener() {  //返回
             @Override
             public void onClick(View v) {
                 if (mNewWeb != null && mNewWeb.canGoBack()) {
-                    if (goBackUrl.contains("systemIndex")) { //电子看板
+                    Log.i(TAG, "onClick back: "+goBackUrl);
+                    /*if (goBackUrl.contains("systemIndex")) { //电子看板
                         finish();
                     } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
                         finish();
@@ -307,12 +359,19 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         finish();
                     } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
                         finish();
-                    } else if (mWebError.getVisibility() == View.VISIBLE) {
+                    } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                        finish();
+                    } else if (goBackUrl.contains("app/home")) { //自主控制
+                        finish();
+                    } else*/ if (mWebError.getVisibility() == View.VISIBLE) {
+                        Log.i(TAG, "onClick go error: ");
                         finish();
                     } else {
+                        Log.i(TAG, "onClick go back: ");
                         mNewWeb.goBack();
                     }
                 } else {
+                    Log.i(TAG, "onClick back 11: ");
                     finish();
                 }
             }
@@ -352,6 +411,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 mDismissPopupButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+
                         backgroundAlpha(ApplyFirstActivity.this, 1f);
                         popupWindow.dismiss();
                     }
@@ -372,10 +432,11 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mApplyMenuHome1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences sp1 = ApplyFirstActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
-                edit1.commit();
+                Log.i(TAG, "onClick: close-back");
+//                SharedPreferences sp1 = ApplyFirstActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+//                SharedPreferences.Editor edit1 = sp1.edit();
+//                edit1.putString("apply_url", Constant.text_url);
+//                edit1.commit();
                 finish();
             }
         });
@@ -386,6 +447,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
      *
      * @param url
      */
+    @SuppressLint("JavascriptInterface")
     private void webView(String url) {
         if (Build.VERSION.SDK_INT >= 19) {
             mNewWeb.getSettings().setLoadsImagesAutomatically(true);
@@ -394,11 +456,14 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
-        webSettings.setUserAgentString(userAgentString + "; application-center");
+        webSettings.setUserAgentString(userAgentString + "; application-center-pad");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
         mNewWeb.loadUrl(url);
+        //js交互接口定义
+//        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
+        wvClientSetting(mNewWeb);
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -912,6 +977,123 @@ public class ApplyFirstActivity extends AppCompatActivity {
         });
     }
 
+    class MJavaScriptInterface {
+        private Context context;
+
+        public MJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        //联系客服  打开通讯录
+        @JavascriptInterface
+        public void OpenPayIntent(String intentOpenPay) {
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+
+        //打开系统通知界面 无Bridge
+        @JavascriptInterface
+        public void openNotification() {
+            gotoSet();
+        }
+
+        //用户取消权限
+        @JavascriptInterface
+        public void cancelAuthorization() {
+//            returnActivityA = false;
+            finish();
+        }
+
+        //存储本地数据 无Bridge
+        @JavascriptInterface
+        public void setStoreData(String storeData) {
+            Log.e("wangpan", appId);
+            SharedPreferences sp = context.getSharedPreferences(appId, MODE_PRIVATE);
+            SharedPreferences.Editor edit = sp.edit();
+            edit.putString("storeData", storeData);
+            edit.commit();
+        }
+
+        //扫一扫
+        @JavascriptInterface
+        public void startIntentZing() {
+            Intent intent = new Intent(ApplyFirstActivity.this, CaptureActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_SCAN);
+        }
+
+        //启动本地浏览器
+        @JavascriptInterface
+        public void intentBrowser(String browser) {
+            Gson gson = new Gson();
+            BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
+            if (!browser.isEmpty()) {
+                Intent intent = new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse(browserBean.getUrl());
+                intent.setData(content_url);
+                startActivity(intent);
+            }
+        }
+
+        //登录异常回到首页
+        @JavascriptInterface
+        public void backHome() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.text_url);
+            edit1.commit();
+            finish();
+        }
+
+        //登陆异常到登录页
+        @JavascriptInterface
+        public void goLogin() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.login_url);
+            edit1.commit();
+            finish();
+        }
+
+        //下载文件保存到PartLib/download/
+        @JavascriptInterface
+        public void downLoadFile(String downPath) {
+            Toast.makeText(context, "请稍后...", Toast.LENGTH_SHORT).show();
+            List<RecentlyApps.DataBean> data = recentlyApps.getData();
+            for (int i = 0; i < data.size() - 1; i++) {
+                String ApplyId = String.valueOf(data.get(i).getAppId());
+                if (appId.equals(ApplyId)) {
+                    char[] chars = data.get(i).getAppName().toCharArray();
+                    String pinYinHeadChar = BaseUtil.getPinYinHeadChar(chars);
+                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                    downFilePath(FileLoad, downPath);
+                }
+            }
+        }
+
+        /**
+         * @param cookiemessage 用于存储用户临时数据
+         */
+        @JavascriptInterface
+        public void setCookie(String cookiemessage) {
+            String cookieKey = "key";
+            String cookieValue = "value";
+            ArrayList<Object> list = new ArrayList<>();
+            List objects = JSONObject.parseObject(cookiemessage, List.class);
+            if (objects != null && objects.size() > 0) {
+                for (Object o : objects) {
+                    if (o != null) {
+                        Map map = JSONObject.parseObject(o.toString(), Map.class);
+                        String key = (String) map.get(cookieKey);
+                        String value = (String) map.get(cookieValue);
+                        hashMap.put(key, value);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * 跳转系统通知
      */
@@ -1150,32 +1332,54 @@ public class ApplyFirstActivity extends AppCompatActivity {
      */
     private void intentOkhttp() {
         Log.e(TAG, "intentOkhttp: 获取信息" + userid + "---" + token);
-        OkHttpClient client = new OkHttpClient();
-        final Request request = new Request.Builder()
-                .url(Constant.Apply_Details + userid)
-                .addHeader("Authorization", "Bearer " + token)
-                .get()
-                .build();
-        client.newCall(request).enqueue(new Callback() {
+        Map<String, String> paramsMap =  new HashMap<>();
+        paramsMap.put("equipmentId", Constant.equipmentId);
+        paramsMap.put("userId", userid);
+        Map<String, String> headMap =  new HashMap<>();
+        headMap.put("Authorization", "Bearer " + token);
+        OkhttpUtil.okHttpGet(Constant.Apply_Details_POP, paramsMap, headMap, new CallBackUtil.CallBackString() {
             @Override
-            public void onFailure(Call call, IOException e) {
-
+            public void onFailure(Call call, Exception e) {
+                Log.e(TAG, "onFailure: "+e.getMessage());
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.code() == 200) {
-                    Log.i(TAG, "response_______" + response);
-                    String string = response.body().string();
-                    Gson gson = new Gson();
-                    recentlyApps = gson.fromJson(string, RecentlyApps.class);
-                    data = recentlyApps.getData();
-                    String s = recentlyApps.toString();
-                    Log.i(TAG, string);
-                    Log.i(TAG, s);
-                }
+            public void onResponse(String response) {
+                Log.e(TAG, "intentOkhttp onResponse: " + response);
+                Gson gson = new Gson();
+                recentlyApps = gson.fromJson(response, RecentlyApps.class);
+                data = recentlyApps.getData();
+//                String s = recentlyApps.toString();
+//                Log.i(TAG, s);
             }
         });
+
+//        OkHttpClient client = new OkHttpClient();
+//        final Request request = new Request.Builder()
+//                .url(Constant.Apply_Details + userid)
+//                .addHeader("Authorization", "Bearer " + token)
+//                .get()
+//                .build();
+//        client.newCall(request).enqueue(new Callback() {
+//            @Override
+//            public void onFailure(Call call, IOException e) {
+//
+//            }
+//
+//            @Override
+//            public void onResponse(Call call, Response response) throws IOException {
+//                if (response.code() == 200) {
+//                    Log.i(TAG, "response_______" + response);
+//                    String string = response.body().string();
+//                    Gson gson = new Gson();
+//                    recentlyApps = gson.fromJson(string, RecentlyApps.class);
+//                    data = recentlyApps.getData();
+//                    String s = recentlyApps.toString();
+//                    Log.i(TAG, string);
+//                    Log.i(TAG, s);
+//                }
+//            }
+//        });
     }
 
     /**
@@ -1371,9 +1575,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 boolean b = webBackForwardList.getCurrentIndex() != webBackForwardList.getSize() - 1;
                 try {
                     if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
-//                        mApplyBackImage1.setVisibility(View.GONE);
+                        mApplyBackImage1.setVisibility(View.GONE);
                     } else {
-//                        mApplyBackImage1.setVisibility(View.VISIBLE);
+                        mApplyBackImage1.setVisibility(View.VISIBLE);
                         if (ContextCompat.checkSelfPermission(ApplyFirstActivity.this, Manifest.permission.RECORD_AUDIO)
                                 != PackageManager.PERMISSION_GRANTED) {
                             //申请READ_EXTERNAL_STORAGE权限
@@ -1388,7 +1592,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         ActivityCompat.requestPermissions(ApplyFirstActivity.this, APPLY_PERMISSIONS_APPLICATION,
                                 ADDRESS_PERMISSIONS_CODE);
                     }
-//                    mApplyBackImage1.setVisibility(View.VISIBLE);
+                    mApplyBackImage1.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -1636,6 +1840,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         WindowManager.LayoutParams lp = context.getWindow().getAttributes();
         lp.alpha = bgAlpha;
         context.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN );
         context.getWindow().setAttributes(lp);
     }
 
@@ -2072,6 +2277,48 @@ public class ApplyFirstActivity extends AppCompatActivity {
     public boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mNewWeb != null && mNewWeb.canGoBack()) {
+            Log.e(TAG, "onClick: 可以返回" );
+            /*if (goBackUrl.contains("systemIndex")) { //电子看板
+                finish();
+            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                finish();
+            } else if (goBackUrl.contains("index.html")) {  //图纸通
+                finish();
+            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                finish();
+            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                finish();
+            } else if (goBackUrl.contains("app/home")) { //自主控制
+                finish();
+            } else*/ if (mWebError.getVisibility() == View.VISIBLE) {
+                finish();
+            } else {
+                mNewWeb.goBack();
+            }
+        } else {
+            finish();
+        }
+        return true;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    @Override
+    protected void onResume() {
+        initScreen();
+        super.onResume();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    @Override
+    protected void onRestart() {
+        initScreen();
+        super.onRestart();
+    }
+
 
     @Override
     public void onBackPressed() {

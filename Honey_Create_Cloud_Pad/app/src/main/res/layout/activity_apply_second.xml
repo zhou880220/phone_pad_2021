@@ -21,6 +21,8 @@
             android:id="@+id/apply_title_text2"
             android:layout_width="wrap_content"
             android:layout_height="17dp"
+            android:maxLines="1"
+            android:textSize="15sp"
             android:layout_centerInParent="true"
             android:gravity="center"
             android:textColor="@color/black" />
@@ -62,7 +64,8 @@
     <com.github.lzyzsd.jsbridge.BridgeWebView
         android:id="@+id/new_Web2"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_below="@id/popup_menu_2" />
 
     <ProgressBar
         android:id="@+id/newwebprogressbar"
@@ -193,10 +196,10 @@
         android:layout_marginRight="6dp"
         android:layout_marginBottom="50dp"
         android:alpha="0.95"
-        android:background="@drawable/add_radius"
         android:onClick="onClick"
         android:padding="16dp"
-        android:src="@mipmap/floating" />
+        android:src="@drawable/floating"
+        android:visibility="gone" />
 
     <RelativeLayout
         android:id="@+id/glide_gif"

@@ -6,7 +6,7 @@
     tools:context=".ui.MainActivity">
 
     <com.github.lzyzsd.jsbridge.BridgeWebView
-        android:id="@+id/new_Web"
+        android:id="@+id/new_Web_2"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
     </com.github.lzyzsd.jsbridge.BridgeWebView>

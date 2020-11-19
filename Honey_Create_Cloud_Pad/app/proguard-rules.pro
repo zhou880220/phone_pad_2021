@@ -20,6 +20,30 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 # 指定代码的压缩级别
--optimizationpasses 5
+#-optimizationpasses 5
 # 是否使用大小写混合
--dontusemixedcaseclassnames
+#-dontusemixedcaseclassnames
+
+#华为推送混淆
+-ignorewarnings
+-keepattributes *Annotation*
+-keepattributes Exceptions
+-keepattributes InnerClasses
+-keepattributes Signature
+-keepattributes SourceFile,LineNumberTable
+#-keep class com.hianalytics.android.**{*;}
+#-keep class com.huawei.updatesdk.**{*;}
+#-keep class com.huawei.hms.**{*;}
+
+#okhttp
+-dontwarn okhttp3.**
+-keep class com.example.honey_create_cloud_pad.http.OkhttpUtil
+
+# okhttp
+-keepattributes SourceFile,LineNumberTable
+-keep class com.parse.*{ *; }
+-dontwarn com.parse.**
+-dontwarn com.squareup.picasso.**
+-keepclasseswithmembernames class * {
+    native <methods>;
+}

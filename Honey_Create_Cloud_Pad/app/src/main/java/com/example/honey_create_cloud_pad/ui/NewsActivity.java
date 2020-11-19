@@ -26,18 +26,18 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 
 public class NewsActivity extends AppCompatActivity {
 
-    @InjectView(R.id.newwebprogressbar)
+    @BindView(R.id.newwebprogressbar)
     ProgressBar mNewWebProgressbar;
-    @InjectView(R.id.new_Web)
+    @BindView(R.id.new_Web_1)
     BridgeWebView mNewWeb;
-    @InjectView(R.id.web_error)
+    @BindView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.loading_page)
+    @BindView(R.id.loading_page)
     View mLoadingPage;
     private MWebChromeClient mWebChromeClient;
 
@@ -49,7 +49,7 @@ public class NewsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_news);
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
         Intent intent = getIntent();
         String url = intent.getStringExtra("url");
         String from = intent.getStringExtra("from");

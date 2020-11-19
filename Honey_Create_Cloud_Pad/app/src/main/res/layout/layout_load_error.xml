@@ -11,7 +11,8 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:contentDescription="@null"
-        android:src="@mipmap/no_data_error" />
+        android:src="@mipmap/no_data_error"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/reload_tv"
@@ -22,5 +23,18 @@
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:text="@string/web_error"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/reload_tv"
+        android:textSize="16sp"
+        android:id="@+id/tv_fresh"
+        android:layout_marginTop="20dp"
+        android:layout_centerInParent="true"
+        android:drawableLeft="@drawable/ic_fresh"
+        android:gravity="center"
+        android:text="重连后点此刷新"
+        ></TextView>
 
 </RelativeLayout>

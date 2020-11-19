@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 
+import com.example.honey_create_cloud_pad.MyApplication;
 import com.xj.library.base.APP;
 
 import java.util.Map;
@@ -25,7 +26,7 @@ public class SPUtils {
     public static final String FILE_NAME = "honey_sp";
 
     private SPUtils(){
-        sharedReadable = APP.getInstance()
+        sharedReadable = MyApplication.getContext()
                 .getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE);
         sharedWritable = sharedReadable.edit();
     }

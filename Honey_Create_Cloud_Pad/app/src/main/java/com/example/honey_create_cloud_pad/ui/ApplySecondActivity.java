@@ -38,6 +38,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
@@ -73,6 +74,7 @@ import com.example.honey_create_cloud_pad.bean.BrowserBean;
 import com.example.honey_create_cloud_pad.bean.PictureUpload;
 import com.example.honey_create_cloud_pad.bean.RecentlyApps;
 import com.example.honey_create_cloud_pad.bean.TakePhoneBean;
+import com.example.honey_create_cloud_pad.bean.TitleName;
 import com.example.honey_create_cloud_pad.recorder.AudioRecorderButton;
 import com.example.honey_create_cloud_pad.util.BaseUtil;
 import com.example.honey_create_cloud_pad.util.FileUtil;
@@ -113,8 +115,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+//import butterknife.InjectView;
 import butterknife.OnClick;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -129,43 +132,43 @@ import okhttp3.Response;
 import static com.example.honey_create_cloud_pad.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 
 public class ApplySecondActivity extends AppCompatActivity {
-    @InjectView(R.id.newwebprogressbar)
+    @BindView(R.id.newwebprogressbar)
     ProgressBar mNewWebProgressbar;
-    @InjectView(R.id.new_Web2)
+    @BindView(R.id.new_Web2)
     BridgeWebView mNewWeb;
-    @InjectView(R.id.web_error)
+    @BindView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.glide_gif)
+    @BindView(R.id.glide_gif)
     View mLoadingPage;
-    @InjectView(R.id.reload_tv)
+    @BindView(R.id.reload_tv)
     TextView mReloadTv;
-    @InjectView(R.id.grid_popup)
-    RecyclerView mGridPopup;
-    @InjectView(R.id.tv_publish)
+//    @InjectView(R.id.grid_popup)
+//    RecyclerView mGridPopup;
+    @BindView(R.id.tv_publish)
     ImageView mTvPublish;
-    @InjectView(R.id.tv_myPublish)
+    @BindView(R.id.tv_myPublish)
     ImageView mTvMyPublish;
-    @InjectView(R.id.tv_relation)
+    @BindView(R.id.tv_relation)
     ImageView mTvRelation;
-    @InjectView(R.id.ll_popup)
+    @BindView(R.id.ll_popup)
     LinearLayout mLlPopup;
-    @InjectView(R.id.iv_collection_me)
+    @BindView(R.id.iv_collection_me)
     ImageView mIvCollectionMe;
-    @InjectView(R.id.tt_course_none)
+    @BindView(R.id.tt_course_none)
     TextView mTtCourseNone;
-    @InjectView(R.id.ll_course_none)
+    @BindView(R.id.ll_course_none)
     LinearLayout mLlCourseNone;
-    @InjectView(R.id.fab_more)
+    @BindView(R.id.fab_more)
     ImageView mFabMore;
-    @InjectView(R.id.dimiss_popup)
+    @BindView(R.id.dimiss_popup)
     RelativeLayout mDimissPopup;
-    @InjectView(R.id.apply_back_image2)
+    @BindView(R.id.apply_back_image2)
     ImageView mApplyBackImage2;
-    @InjectView(R.id.apply_title_text2)
+    @BindView(R.id.apply_title_text2)
     TextView mApplyTitleText2;
-    @InjectView(R.id.apply_menu_image2)
+    @BindView(R.id.apply_menu_image2)
     ImageView mApplyMenuImage2;
-    @InjectView(R.id.apply_menu_home2)
+    @BindView(R.id.apply_menu_home2)
     ImageView mApplyMenuHome2;
 
     private Handler handler = new Handler(new Handler.Callback() {
@@ -260,6 +263,7 @@ public class ApplySecondActivity extends AppCompatActivity {
     private Cursor personCur;    //所有的联系人信息
     private String goBackUrl; //获取监听Url
     private String accessToken;
+    private RecyclerView mGridPopup;
 
     private Uri imageUriThreeApply; //用户拍照/选取相册  返回的路径
 
@@ -284,7 +288,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         setAndroidNativeLightStatusBar(ApplySecondActivity.this, true);//黑色字体
         setContentView(R.layout.activity_apply_second);
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
 //        ButterKnife.inject(this);
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
@@ -296,6 +300,7 @@ public class ApplySecondActivity extends AppCompatActivity {
         mLodingTime();
         intentOkhttp();
         initviewTitle();
+        intentAppNameOkhttp();
     }
 
     private void initviewTitle() {
@@ -303,7 +308,7 @@ public class ApplySecondActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mNewWeb != null && mNewWeb.canGoBack()) {
-                    if (goBackUrl.contains("systemIndex")) { //电子看板
+                    /*if (goBackUrl.contains("systemIndex")) { //电子看板
                         finish();
                     } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
                         finish();
@@ -311,7 +316,11 @@ public class ApplySecondActivity extends AppCompatActivity {
                         finish();
                     } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
                         finish();
-                    } else if (mWebError.getVisibility() == View.VISIBLE) {
+                    } else if (goBackUrl.contains("app/home")) { //自主控制
+                        finish();
+                    } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                        finish();
+                    } else*/ if (mWebError.getVisibility() == View.VISIBLE) {
                         finish();
                     } else {
                         mNewWeb.goBack();
@@ -377,12 +386,43 @@ public class ApplySecondActivity extends AppCompatActivity {
         mApplyMenuHome2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences sp1 = ApplySecondActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
-                edit1.commit();
+                Log.i(TAG, "2onClick: close");
+//                SharedPreferences sp1 = ApplySecondActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+//                SharedPreferences.Editor edit1 = sp1.edit();
+//                edit1.putString("apply_url", Constant.text_url);
+//                edit1.commit();
                 Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
                 startActivity(intent);
+            }
+        });
+    }
+
+    /**
+     * 获取当前应用链接
+     */
+    private void intentAppNameOkhttp() {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request builder = new Request.Builder()
+                .url(Constant.GETAPPLY_URL + appId)
+                .get()
+                .build();
+        okHttpClient.newCall(builder).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.code() == 200) {
+                    String string = response.body().string();
+                    Gson gson = new Gson();
+                    TitleName titleName = gson.fromJson(string, TitleName.class);
+                    Message message = new Message();
+                    message.what = TITLENAME;
+                    message.obj = titleName.getData();
+                    handler.sendMessage(message);
+                }
             }
         });
     }
@@ -400,33 +440,13 @@ public class ApplySecondActivity extends AppCompatActivity {
         }
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
-        webSettings.setUserAgentString(userAgentString + "; application-center");
+        webSettings.setUserAgentString(userAgentString + "; application-center-pad");
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
         mNewWeb.loadUrl(url);
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (mNewWeb != null && mNewWeb.canGoBack()) {
-                    if (goBackUrl.contains("systemIndex")) { //电子看板
-                        finish();
-                    } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                        finish();
-                    } else if (goBackUrl.contains("index.html")) {  //图纸通
-                        finish();
-                    } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
-                        finish();
-                    } else if (mWebError.getVisibility() == View.VISIBLE) {
-                        finish();
-                    } else {
-                        mNewWeb.goBack();
-                    }
-                    return true;
-                }
-                return false;
-            }
-        });
+        //js交互接口定义
+        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
         wvClientSetting(mNewWeb);
 
         /**
@@ -916,6 +936,125 @@ public class ApplySecondActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    class MJavaScriptInterface {
+        private Context context;
+
+        public MJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        //联系客服  打开通讯录
+        @JavascriptInterface
+        public void OpenPayIntent(String intentOpenPay) {
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+
+        //打开系统通知界面 无Bridge
+        @JavascriptInterface
+        public void openNotification() {
+            gotoSet();
+        }
+
+        //用户取消权限
+        @JavascriptInterface
+        public void cancelAuthorization() {
+//            returnActivityA = false;
+            finish();
+        }
+
+        //存储本地数据 无Bridge
+        @JavascriptInterface
+        public void setStoreData(String storeData) {
+            Log.e("wangpan", appId);
+            SharedPreferences sp = context.getSharedPreferences(appId, MODE_PRIVATE);
+            SharedPreferences.Editor edit = sp.edit();
+            edit.putString("storeData", storeData);
+            edit.commit();
+        }
+
+        //扫一扫
+        @JavascriptInterface
+        public void startIntentZing() {
+            Intent intent = new Intent(ApplySecondActivity.this, CaptureActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_SCAN);
+        }
+
+        //启动本地浏览器
+        @JavascriptInterface
+        public void intentBrowser(String browser) {
+            Gson gson = new Gson();
+            BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
+            if (!browser.isEmpty()) {
+                Intent intent = new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse(browserBean.getUrl());
+                intent.setData(content_url);
+                startActivity(intent);
+            }
+        }
+
+        //登录异常回到首页
+        @JavascriptInterface
+        public void backHome() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.text_url);
+            edit1.commit();
+            Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
+            startActivity(intent);
+        }
+
+        //登陆异常到登录页
+        @JavascriptInterface
+        public void goLogin() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.login_url);
+            edit1.commit();
+            Intent intent = new Intent(ApplySecondActivity.this, MainActivity.class);
+            startActivity(intent);
+        }
+
+        //下载文件保存到PartLib/download/
+        @JavascriptInterface
+        public void downLoadFile(String downPath) {
+            Toast.makeText(context, "请稍后...", Toast.LENGTH_SHORT).show();
+            List<RecentlyApps.DataBean> data = recentlyApps.getData();
+            for (int i = 0; i < data.size() - 1; i++) {
+                String ApplyId = String.valueOf(data.get(i).getAppId());
+                if (appId.equals(ApplyId)) {
+                    char[] chars = data.get(i).getAppName().toCharArray();
+                    String pinYinHeadChar = BaseUtil.getPinYinHeadChar(chars);
+                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                    downFilePath(FileLoad, downPath);
+                }
+            }
+        }
+
+        /**
+         * @param cookiemessage 用于存储用户临时数据
+         */
+        @JavascriptInterface
+        public void setCookie(String cookiemessage) {
+            String cookieKey = "key";
+            String cookieValue = "value";
+            ArrayList<Object> list = new ArrayList<>();
+            List objects = JSONObject.parseObject(cookiemessage, List.class);
+            if (objects != null && objects.size() > 0) {
+                for (Object o : objects) {
+                    if (o != null) {
+                        Map map = JSONObject.parseObject(o.toString(), Map.class);
+                        String key = (String) map.get(cookieKey);
+                        String value = (String) map.get(cookieValue);
+                        hashMap.put(key, value);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -2053,6 +2192,33 @@ public class ApplySecondActivity extends AppCompatActivity {
 
     public boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mNewWeb != null && mNewWeb.canGoBack()) {
+            Log.e(TAG, "onClick: 可以返回" );
+            if (goBackUrl.contains("systemIndex")) { //电子看板
+                finish();
+            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                finish();
+            } else if (goBackUrl.contains("index.html")) {  //图纸通
+                finish();
+            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                finish();
+            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                finish();
+            } else if (goBackUrl.contains("app/home")) { //自主控制
+                finish();
+            } else if (mWebError.getVisibility() == View.VISIBLE) {
+                finish();
+            } else {
+                mNewWeb.goBack();
+            }
+        } else {
+            finish();
+        }
+        return true;
     }
 
     @Override

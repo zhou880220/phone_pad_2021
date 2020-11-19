@@ -38,6 +38,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
@@ -48,6 +49,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,6 +64,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.honey_create_cloud_pad.BuildConfig;
 import com.example.honey_create_cloud_pad.Constant;
 import com.example.honey_create_cloud_pad.R;
@@ -70,7 +74,9 @@ import com.example.honey_create_cloud_pad.bean.BrowserBean;
 import com.example.honey_create_cloud_pad.bean.PictureUpload;
 import com.example.honey_create_cloud_pad.bean.RecentlyApps;
 import com.example.honey_create_cloud_pad.bean.TakePhoneBean;
+import com.example.honey_create_cloud_pad.bean.TitleName;
 import com.example.honey_create_cloud_pad.recorder.AudioRecorderButton;
+import com.example.honey_create_cloud_pad.util.BaseUtil;
 import com.example.honey_create_cloud_pad.util.FileUtil;
 import com.example.honey_create_cloud_pad.util.SystemUtil;
 import com.example.honey_create_cloud_pad.view.AnimationView;
@@ -110,8 +116,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+//import butterknife.InjectView;
 import butterknife.OnClick;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -126,34 +133,44 @@ import okhttp3.Response;
 import static com.example.honey_create_cloud_pad.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 
 public class ApplyThirdActivity extends AppCompatActivity {
-    @InjectView(R.id.newwebprogressbar)
+    @BindView(R.id.newwebprogressbar)
     ProgressBar mNewWebProgressbar;
-    @InjectView(R.id.new_Web3)
+    @BindView(R.id.new_Web3)
     BridgeWebView mNewWeb;
-    @InjectView(R.id.web_error)
+    @BindView(R.id.web_error)
     View mWebError;
-    @InjectView(R.id.loading_page)
+    @BindView(R.id.glide_gif)
     View mLoadingPage;
-    @InjectView(R.id.reload_tv)
+    @BindView(R.id.reload_tv)
     TextView mReloadTv;
-    @InjectView(R.id.grid_popup)
-    RecyclerView mGridPopup;
-    @InjectView(R.id.tv_publish)
+//    @InjectView(R.id.grid_popup)
+//    RecyclerView mGridPopup;
+    @BindView(R.id.tv_publish)
     ImageView mTvPublish;
-    @InjectView(R.id.tv_myPublish)
+    @BindView(R.id.tv_myPublish)
     ImageView mTvMyPublish;
-    @InjectView(R.id.tv_relation)
+    @BindView(R.id.tv_relation)
     ImageView mTvRelation;
-    @InjectView(R.id.ll_popup)
+    @BindView(R.id.ll_popup)
     LinearLayout mLlPopup;
-    @InjectView(R.id.iv_collection_me)
+    @BindView(R.id.iv_collection_me)
     ImageView mIvCollectionMe;
-    @InjectView(R.id.tt_course_none)
+    @BindView(R.id.tt_course_none)
     TextView mTtCourseNone;
-    @InjectView(R.id.ll_course_none)
+    @BindView(R.id.ll_course_none)
     LinearLayout mLlCourseNone;
-    @InjectView(R.id.fab_more)
+    @BindView(R.id.fab_more)
     ImageView mFabMore;
+    @BindView(R.id.dimiss_popup)
+    RelativeLayout mDimissPopup;
+    @BindView(R.id.apply_back_image3)
+    ImageView mApplyBackImage3;
+    @BindView(R.id.apply_title_text3)
+    TextView mApplyTitleText3;
+    @BindView(R.id.apply_menu_image3)
+    ImageView mApplyMenuImage3;
+    @BindView(R.id.apply_menu_home3)
+    ImageView mApplyMenuHome3;
 
     private Handler handler = new Handler(new Handler.Callback() {
         @Override
@@ -192,6 +209,12 @@ public class ApplyThirdActivity extends AppCompatActivity {
                             mNewWeb.post(new Runnable() {
                                 @Override
                                 public void run() {
+                                    mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + imageUrl + "\")", new ValueCallback<String>() {
+                                        @Override
+                                        public void onReceiveValue(String value) {
+
+                                        }
+                                    });
                                     mNewWeb.callHandler("AlreadyPhoto", imageUrl, new CallBackFunction() {
                                         @Override
                                         public void onCallBack(String data) {
@@ -206,7 +229,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 case TITLENAME: {
                     String titlename = (String) msg.obj;
                     if (titlename != null) {
-//                        mApplyTitleText1.setText(titlename);
+                        mApplyTitleText3.setText(titlename);
                     }
                     break;
                 }
@@ -215,13 +238,12 @@ public class ApplyThirdActivity extends AppCompatActivity {
         }
     });
 
-    private List<RecentlyApps.DataBean> listDatas;
+    private static final String TAG = "ApplyThirdActivity_TAG";
     private MyContactAdapter adapter;
     private boolean isShow;
     private String token;
     private String url;
     private String userid;
-    private static final String TAG = "ApplyThirdActivity_TAG";
     private List<RecentlyApps.DataBean> data;
     private MWebChromeClient mWebChromeClient;
     private String accessToken;
@@ -251,22 +273,119 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> uploadMessageAboveL;
     private final static int FILE_CHOOSER_RESULT_CODE = 10000;
     private RecentlyApps recentlyApps;
+    private RecyclerView mGridPopup;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_apply_third);
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
         Log.i("nihao", url + token + userid+"---"+appId);
-        webView("http://172.16.23.210:3006/src/view/api.html");
         mLodingTime();
         intentOkhttp();
+        initviewTitle();
+        intentAppNameOkhttp();
+        webView(url);
+    }
+
+    private void initviewTitle() {
+        mApplyBackImage3.setOnClickListener(new View.OnClickListener() {  //返回
+            @Override
+            public void onClick(View v) {
+                if (mNewWeb != null && mNewWeb.canGoBack()) {
+                    /*if (goBackUrl.contains("systemIndex")) { //电子看板
+                        finish();
+                    } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                        finish();
+                    } else if (goBackUrl.contains("index.html")) {  //图纸通
+                        finish();
+                    } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                        finish();
+                    } else if (goBackUrl.contains("app/home")) { //自主控制
+                        finish();
+                    } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                        finish();
+                    } else*/ if (mWebError.getVisibility() == View.VISIBLE) {
+                        finish();
+                    } else {
+                        mNewWeb.goBack();
+                    }
+                } else {
+                    finish();
+                }
+            }
+        });
+
+        mApplyMenuImage3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backgroundAlpha(ApplyThirdActivity.this, 0.5f);//0.0-welcome1.0
+                View centerView = LayoutInflater.from(ApplyThirdActivity.this).inflate(R.layout.windowpopup, null);
+                PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                popupWindow.setTouchable(true);
+                popupWindow.setFocusable(true);
+                popupWindow.setOutsideTouchable(false);
+                popupWindow.setAnimationStyle(R.style.pop_animation);
+                popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+                mGridPopup = centerView.findViewById(R.id.grid_popup);
+                RelativeLayout mRelativeLayout = centerView.findViewById(R.id.go_apply_home);
+                Button mDismissPopupButton = centerView.findViewById(R.id.dismiss_popup_button);
+                pagerView();
+                adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
+                    @Override
+                    public void onClosePopupClick(String name) {
+                        if (name.equals("关闭") && popupWindow.isShowing()) {
+                            popupWindow.dismiss();
+                        }
+                    }
+                });
+                popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+
+                    @Override
+                    public void onDismiss() {
+                        backgroundAlpha(ApplyThirdActivity.this, 1f);
+                    }
+                });
+                mDismissPopupButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        backgroundAlpha(ApplyThirdActivity.this, 1f);
+                        popupWindow.dismiss();
+                    }
+                });
+                mRelativeLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        SharedPreferences sp = ApplyThirdActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                        SharedPreferences.Editor edit = sp.edit();
+                        edit.putString("apply_url", Constant.apply_url);
+                        edit.commit();
+                        Intent intent1 = new Intent(ApplyThirdActivity.this, MainActivity.class);
+                        startActivity(intent1);
+                    }
+                });
+            }
+        });
+
+        mApplyMenuHome3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "3onClick: close");
+//                SharedPreferences sp1 = ApplyThirdActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+//                SharedPreferences.Editor edit1 = sp1.edit();
+//                edit1.putString("apply_url", Constant.text_url);
+//                edit1.commit();
+                Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     /**
@@ -282,33 +401,39 @@ public class ApplyThirdActivity extends AppCompatActivity {
         }
         WebSettings webSettings = mNewWeb.getSettings();
         String userAgentString = webSettings.getUserAgentString();
-        webSettings.setUserAgentString(userAgentString + "; application-center");
-        WebViewSetting.initweb(webSettings);
+        webSettings.setUserAgentString(userAgentString + "; application-center-pad");
+        if (webSettings != null) {
+            WebViewSetting.initweb(webSettings);
+        }
         mNewWeb.loadUrl(url);
-        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        if (goBackUrl.contains("systemIndex")) { //电子看板
-                            finish();
-                        } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                            finish();
-                        } else if (goBackUrl.contains("index.html")) {  //图纸通
-                            finish();
-                        } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
-                            finish();
-                        } else if (mWebError.getVisibility() == View.VISIBLE) {
-                            finish();
-                        } else {
-                            mNewWeb.goBack();
-                        }
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
+
+        //js交互接口定义
+        mNewWeb.addJavascriptInterface(new MJavaScriptInterface(getApplicationContext()), "ApplyFunc");
+
+//        mNewWeb.setOnKeyListener(new View.OnKeyListener() {
+//            @Override
+//            public boolean onKey(View v, int keyCode, KeyEvent event) {
+//                if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+//                    if (mNewWeb != null && mNewWeb.canGoBack()) {
+//                        if (goBackUrl.contains("systemIndex")) { //电子看板
+//                            finish();
+//                        } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+//                            finish();
+//                        } else if (goBackUrl.contains("index.html")) {  //图纸通
+//                            finish();
+//                        } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+//                            finish();
+//                        } else if (mWebError.getVisibility() == View.VISIBLE) {
+//                            finish();
+//                        } else {
+//                            mNewWeb.goBack();
+//                        }
+//                        return true;
+//                    }
+//                }
+//                return false;
+//            }
+//        });
         wvClientSetting(mNewWeb);
         /**
          * 获取版本号
@@ -318,7 +443,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
             public void handler(String data, CallBackFunction function) {
                 try {
                     Log.e(TAG, "获取版本号: " + SystemUtil.getSystemVersion());
-                    function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + 7.0 + "\"" + ",\"" + "model" + "\"" + ":\"" + "小米" + "\"" + "}");
+                    function.onCallBack("{" + "\"" + "version" + "\"" + ":\"" + "Android" + SystemUtil.getSystemVersion() + "\"" + ",\"" + "model" + "\"" + ":\"" + SystemUtil.getSystemModel() + "\"" + "}");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -442,7 +567,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
                         @Override
                         public void onFinish(float seconds, String filePath) {
-                            String s = tobase64(filePath);
+                            String s = BaseUtil.tobase64(filePath);
                             function.onCallBack("{" + "\"" + "success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
                             if (popupWindow.isShowing()) {
                                 popupWindow.dismiss();
@@ -509,7 +634,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                                 if (appId.equals(ApplyId)) {
                                     Log.e(TAG, "nihao" + newReplaceUrl);
                                     char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String pinYinHeadChar = BaseUtil.getPinYinHeadChar(chars);
                                     String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
                                     downFilePath(FileLoad, newReplaceUrl);
                                 }
@@ -521,7 +646,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                                 String ApplyId = String.valueOf(Listdata.get(i).getAppId());
                                 if (appId.equals(ApplyId)) {
                                     char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String pinYinHeadChar = BaseUtil.getPinYinHeadChar(chars);
                                     String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
                                     downFilePath(FileLoad, num);
                                 }
@@ -801,6 +926,125 @@ public class ApplyThirdActivity extends AppCompatActivity {
         });
     }
 
+    class MJavaScriptInterface {
+        private Context context;
+
+        public MJavaScriptInterface(Context context) {
+            this.context = context;
+        }
+
+        //联系客服  打开通讯录
+        @JavascriptInterface
+        public void OpenPayIntent(String intentOpenPay) {
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+
+        //打开系统通知界面 无Bridge
+        @JavascriptInterface
+        public void openNotification() {
+            gotoSet();
+        }
+
+        //用户取消权限
+        @JavascriptInterface
+        public void cancelAuthorization() {
+//            returnActivityA = false;
+            finish();
+        }
+
+        //存储本地数据 无Bridge
+        @JavascriptInterface
+        public void setStoreData(String storeData) {
+            Log.e("wangpan", appId);
+            SharedPreferences sp = context.getSharedPreferences(appId, MODE_PRIVATE);
+            SharedPreferences.Editor edit = sp.edit();
+            edit.putString("storeData", storeData);
+            edit.commit();
+        }
+
+        //扫一扫
+        @JavascriptInterface
+        public void startIntentZing() {
+            Intent intent = new Intent(ApplyThirdActivity.this, CaptureActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_SCAN);
+        }
+
+        //启动本地浏览器
+        @JavascriptInterface
+        public void intentBrowser(String browser) {
+            Gson gson = new Gson();
+            BrowserBean browserBean = gson.fromJson(browser, BrowserBean.class);
+            if (!browser.isEmpty()) {
+                Intent intent = new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse(browserBean.getUrl());
+                intent.setData(content_url);
+                startActivity(intent);
+            }
+        }
+
+        //登录异常回到首页
+        @JavascriptInterface
+        public void backHome() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.text_url);
+            edit1.commit();
+            Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
+            startActivity(intent);
+        }
+
+        //登陆异常到登录页
+        @JavascriptInterface
+        public void goLogin() {
+            SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+            SharedPreferences.Editor edit1 = sp1.edit();
+            edit1.putString("apply_url", Constant.login_url);
+            edit1.commit();
+            Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
+            startActivity(intent);
+        }
+
+        //下载文件保存到PartLib/download/
+        @JavascriptInterface
+        public void downLoadFile(String downPath) {
+            Toast.makeText(context, "请稍后...", Toast.LENGTH_SHORT).show();
+            List<RecentlyApps.DataBean> data = recentlyApps.getData();
+            for (int i = 0; i < data.size() - 1; i++) {
+                String ApplyId = String.valueOf(data.get(i).getAppId());
+                if (appId.equals(ApplyId)) {
+                    char[] chars = data.get(i).getAppName().toCharArray();
+                    String pinYinHeadChar = BaseUtil.getPinYinHeadChar(chars);
+                    String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
+                    downFilePath(FileLoad, downPath);
+                }
+            }
+        }
+
+        /**
+         * @param cookiemessage 用于存储用户临时数据
+         */
+        @JavascriptInterface
+        public void setCookie(String cookiemessage) {
+            String cookieKey = "key";
+            String cookieValue = "value";
+            ArrayList<Object> list = new ArrayList<>();
+            List objects = JSONObject.parseObject(cookiemessage, List.class);
+            if (objects != null && objects.size() > 0) {
+                for (Object o : objects) {
+                    if (o != null) {
+                        Map map = JSONObject.parseObject(o.toString(), Map.class);
+                        String key = (String) map.get(cookieKey);
+                        String value = (String) map.get(cookieValue);
+                        hashMap.put(key, value);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * 跳转系统通知
      */
@@ -900,53 +1144,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
         }
         Log.e(TAG, "现subUrl: " + subUrl);
         return subUrl == null ? url.substring(url.lastIndexOf("/") + 1) : subUrl;
-    }
-
-    public static String getPinYinHeadChar(char[] chars) {
-        StringBuffer sb = new StringBuffer();
-        HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
-        defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
-        defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
-        for (int i = 0; i < chars.length; i++) {
-            if (chars[i] > 128) {
-                try {
-                    sb.append(PinyinHelper.toHanyuPinyinStringArray(chars[i], defaultFormat)[0]);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                sb.append(chars[i]);
-            }
-        }
-        return sb.toString();
-    }
-
-    public String tobase64(String url) {
-        try {
-            File file = new File(url);
-            // 下载网络文件
-            int bytesum = 0;
-            int byteread = 0;
-            InputStream inStream = new FileInputStream(file);
-            int size = inStream.available();
-            byte[] buffer = new byte[size];
-            while ((byteread = inStream.read(buffer)) != -1) {
-                inStream.read(buffer);
-                inStream.close();
-                byte[] bytes = Base64.encodeBase64(buffer);
-//                byte[] bytes = new byte[]{};
-                String str = new String(bytes);
-                if (str != null) {
-                    str = str.replaceAll(System.getProperty("line.separator"), "");
-                    str = str.replaceAll("=", "");
-                    str = str.replaceAll(" ", "");
-                }
-                return str;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     /**
@@ -1062,6 +1259,15 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 Log.e(TAG, "onCityClick: " + name);
                 WebBackForwardList webBackForwardList = mNewWeb.copyBackForwardList();
                 boolean b = webBackForwardList.getCurrentIndex() != webBackForwardList.getSize() - 1;
+                try {
+                    if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
+                        mApplyBackImage3.setVisibility(View.GONE);
+                    } else {
+                        mApplyBackImage3.setVisibility(View.VISIBLE);
+                    }
+                } catch (Exception e) {
+                    mApplyBackImage3.setVisibility(View.VISIBLE);
+                }
 //                try {
 //                    if (name.contains("/api-oa/oauth")) {  //偶然几率报错  用try
 //                        mApplyBackImage1.setVisibility(View.GONE);
@@ -1131,7 +1337,6 @@ public class ApplyThirdActivity extends AppCompatActivity {
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 String[] acceptTypes = fileChooserParams.getAcceptTypes();
                 uploadMessageAboveL = filePathCallback;
-                Log.e(TAG, "onShowFileChooser:这个是什么鬼 "+acceptTypes[0] );
                 if (acceptTypes[0].equals("*/*")) {
                     openFileChooserActivity(); //文件系统管理
                 } else if (acceptTypes[0].equals("image/*")) {
@@ -1314,6 +1519,38 @@ public class ApplyThirdActivity extends AppCompatActivity {
     }
 
     /**
+     * 获取当前应用链接
+     */
+    private void intentAppNameOkhttp() {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request builder = new Request.Builder()
+                .url(Constant.GETAPPLY_URL + appId)
+                .get()
+                .build();
+        okHttpClient.newCall(builder).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.code() == 200) {
+                    String string = response.body().string();
+                    Gson gson = new Gson();
+                    TitleName titleName = gson.fromJson(string, TitleName.class);
+                    Message message = new Message();
+                    message.what = TITLENAME;
+                    message.obj = titleName.getData();
+                    handler.sendMessage(message);
+                } else {
+
+                }
+            }
+        });
+    }
+
+    /**
      * 获取悬浮窗接口信息
      */
     private void intentOkhttp() {
@@ -1359,35 +1596,89 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghomechange);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
+                SharedPreferences sp1 = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit1 = sp1.edit();
+                edit1.putString("apply_url", Constant.text_url);
+                edit1.commit();
                 Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
+                intent.putExtra("apply_url", Constant.text_url);
                 startActivity(intent);
                 break;
             case R.id.tv_myPublish:
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapplychange);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
+                SharedPreferences sp = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+                SharedPreferences.Editor edit = sp.edit();
+                edit.putString("apply_url", Constant.apply_url);
+                edit.commit();
+                Intent intent1 = new Intent(ApplyThirdActivity.this, MainActivity.class);
+                intent1.putExtra("apply_url", Constant.apply_url);
+                startActivity(intent1);
                 break;
             case R.id.tv_relation:
+//                mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
+//                mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
+//                mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);
+//                mGridPopup.setVisibility(View.VISIBLE);
+//                pagerView();
+//                adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
+//                    @Override
+//                    public void onClosePopupClick(String name) {
+//                        if (name.equals("关闭")) {
+//                            mGridPopup.setVisibility(View.GONE);
+//                        }
+//                    }
+//                });
+                backgroundAlpha(this, 0.5f);//0.0-welcome1.0
+                View centerView = LayoutInflater.from(ApplyThirdActivity.this).inflate(R.layout.windowpopup, null);
+                PopupWindow popupWindow = new PopupWindow(centerView, ViewGroup.LayoutParams.MATCH_PARENT,
+                        620);
+                popupWindow.setTouchable(true);
+                popupWindow.setFocusable(true);
+                popupWindow.setOutsideTouchable(false);
+                popupWindow.setAnimationStyle(R.style.pop_animation);
+                popupWindow.showAtLocation(centerView, Gravity.BOTTOM, 0, 0);
+                mGridPopup = centerView.findViewById(R.id.grid_popup);
+                Button mDismissPopupButton = centerView.findViewById(R.id.dismiss_popup_button);
+                pagerView();
+
                 mTvPublish.setBackgroundResource(R.mipmap.floatinghome);
                 mTvMyPublish.setBackgroundResource(R.mipmap.floatingapply);
                 mTvRelation.setBackgroundResource(R.mipmap.floatingappchange);
-                mGridPopup.setVisibility(View.VISIBLE);
-                pagerView();
+                switchPopup();
                 adapter.setOnClosePopupListener(new MyContactAdapter.OnClosePopupListener() {
                     @Override
                     public void onClosePopupClick(String name) {
-                        if (name.equals("关闭")) {
-                            mGridPopup.setVisibility(View.GONE);
+                        if (name.equals("关闭") && popupWindow.isShowing()) {
+                            popupWindow.dismiss();
                         }
                     }
                 });
+                popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
 
+                    @Override
+                    public void onDismiss() {
+                        backgroundAlpha(ApplyThirdActivity.this, 1f);
+                    }
+                });
+                mDismissPopupButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        backgroundAlpha(ApplyThirdActivity.this, 1f);
+                        popupWindow.dismiss();
+                    }
+                });
                 break;
             case R.id.fab_more:
-
+                switchPopup();
+                break;
+            case R.id.dimiss_popup:
+                mDimissPopup.setVisibility(View.GONE);
+                switchPopup();
                 break;
         }
-        switchPopup();
+//        switchPopup();
     }
 
     /**
@@ -1401,6 +1692,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
 //            objectAnimator.start();
 
             mLlPopup.setVisibility(View.VISIBLE);
+            mDimissPopup.setVisibility(View.VISIBLE);
             ScaleAnimation scaleAnimation = new ScaleAnimation(0f, 1.0f, 1.0f, 1.0f,
                     Animation.RELATIVE_TO_SELF, 1f, Animation.RELATIVE_TO_SELF, 0.5f);
             scaleAnimation.setDuration(300);
@@ -1424,6 +1716,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
             scaleAnimation.setDuration(300);
             mLlPopup.startAnimation(scaleAnimation);
             mLlPopup.setVisibility(View.GONE);
+            mDimissPopup.setVisibility(View.GONE);
 
             if (mLlCourseNone.getVisibility() == View.VISIBLE) {
                 float fY = mFabMore.getY();
@@ -1451,14 +1744,21 @@ public class ApplyThirdActivity extends AppCompatActivity {
      * 初始页加载
      */
     private void mLodingTime() {
-        final AnimationView hideAnimation = new AnimationView();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideAnimation.getHideAnimation(mLoadingPage, 500);
-                mLoadingPage.setVisibility(View.GONE);
-            }
-        }, 3000);
+//        final AnimationView hideAnimation = new AnimationView();
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                hideAnimation.getHideAnimation(mLoadingPage, 500);
+//                mLoadingPage.setVisibility(View.GONE);
+//            }
+//        }, 3000);
+        ImageView imageView = findViewById(R.id.image_view);
+        int res = R.drawable.loding_gif;
+        Glide.with(this).
+                load(res).placeholder(res).
+                error(res).
+                diskCacheStrategy(DiskCacheStrategy.NONE).
+                into(imageView);
     }
 
 
@@ -1475,6 +1775,33 @@ public class ApplyThirdActivity extends AppCompatActivity {
         } else {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mNewWeb != null && mNewWeb.canGoBack()) {
+            Log.e(TAG, "onClick: 可以返回" );
+            if (goBackUrl.contains("systemIndex")) { //电子看板
+                finish();
+            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                finish();
+            } else if (goBackUrl.contains("index.html")) {  //图纸通
+                finish();
+            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                finish();
+            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                finish();
+            } else if (goBackUrl.contains("app/home")) { //自主控制
+                finish();
+            } else if (mWebError.getVisibility() == View.VISIBLE) {
+                finish();
+            } else {
+                mNewWeb.goBack();
+            }
+        } else {
+            finish();
+        }
+        return true;
     }
 
     /**
@@ -1552,6 +1879,12 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK) {
                     if (data != null) {
                         String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
+                        mNewWeb.evaluateJavascript("window.sdk.getCodeUrl(\"" + stringExtra + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+
+                            }
+                        });
                         /**
                          * 一下注释掉的功能延期开放
                          */
@@ -1573,6 +1906,11 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     mNewWeb.post(new Runnable() {
                         @Override
                         public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                }
+                            });
                             mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                                 @Override
                                 public void onCallBack(String data) {
@@ -1587,10 +1925,15 @@ public class ApplyThirdActivity extends AppCompatActivity {
             {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
-                    String realPathFromUri = getRealPathFromUri(this, uri);
+                    String realPathFromUri = BaseUtil.getRealPathFromUri(this, uri);
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
                         gotoClipActivity(uri);
                     } else {
+                        mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+                            }
+                        });
                         mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                             @Override
                             public void onCallBack(String data) {
@@ -1603,6 +1946,11 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     mNewWeb.post(new Runnable() {
                         @Override
                         public void run() {
+                            mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
+                                }
+                            });
                             mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                                 @Override
                                 public void onCallBack(String data) {
@@ -1625,6 +1973,11 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     Log.e(TAG, "onActivityResult: " + cropImagePath);
                     takePhoneUrl(cropImagePath);
                 } else {
+                    mNewWeb.evaluateJavascript("window.sdk.AlreadyPhoto(\"" + "取消" + "\")", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                        }
+                    });
                     mNewWeb.callHandler("AlreadyPhoto", "取消", new CallBackFunction() {
                         @Override
                         public void onCallBack(String data) {
@@ -1650,9 +2003,9 @@ public class ApplyThirdActivity extends AppCompatActivity {
             return;
         }
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
-            path = getPath(this, uri);
+            path = BaseUtil.getPath(this, uri);
         } else {//4.4以下下系统调用方法
-            path = getRealPathFromURI(uri);
+            path = BaseUtil.getRealPathFromURI(uri);
         }
 
         Uri[] results = null;
@@ -1768,120 +2121,5 @@ public class ApplyThirdActivity extends AppCompatActivity {
         });
     }
 
-    public static String getRealPathFromUri(Context context, Uri contentUri) {
-        Cursor cursor = null;
-        try {
-            String[] proj = {MediaStore.Images.Media.DATA};
-            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
 
-    //4.4以下下系统调用方法 将uri转文件真实路径
-    public String getRealPathFromURI(Uri contentUri) {
-        String res = null;
-        String[] proj = {MediaStore.Images.Media.DATA};
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if (null != cursor && cursor.moveToFirst()) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            res = cursor.getString(column_index);
-            cursor.close();
-        }
-        return res;
-    }
-
-    /**
-     * 专为Android4.4设计的从Uri获取文件绝对路径，以前的方法已不好使
-     */
-    @SuppressLint("NewApi")
-    public String getPath(final Context context, final Uri uri) {
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-        // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-            // ExternalStorageProvider
-            if (isExternalStorageDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
-                }
-            }
-            // DownloadsProvider
-            else if (isDownloadsDocument(uri)) {
-
-                final String id = DocumentsContract.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-                return getDataColumn(context, contentUri, null, null);
-            }
-            // MediaProvider
-            else if (isMediaDocument(uri)) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-
-                Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                }
-
-                final String selection = "_id=?";
-                final String[] selectionArgs = new String[]{split[1]};
-                return getDataColumn(context, contentUri, selection, selectionArgs);
-            }
-        }
-        // MediaStore (and general)
-        else if ("content".equalsIgnoreCase(uri.getScheme())) {
-            return getDataColumn(context, uri, null, null);
-        }
-        // File
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            return uri.getPath();
-        }
-        return null;
-    }
-
-    public String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
-
-        Cursor cursor = null;
-        final String column = "_data";
-        final String[] projection = {column};
-
-        try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
-            if (cursor != null && cursor.moveToFirst()) {
-                final int column_index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(column_index);
-            }
-        } finally {
-            if (cursor != null)
-                cursor.close();
-        }
-        return null;
-    }
-
-    public boolean isExternalStorageDocument(Uri uri) {
-        return "com.android.externalstorage.documents".equals(uri.getAuthority());
-    }
-
-    public boolean isDownloadsDocument(Uri uri) {
-        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
-    }
-
-    public boolean isMediaDocument(Uri uri) {
-        return "com.android.providers.media.documents".equals(uri.getAuthority());
-    }
 }

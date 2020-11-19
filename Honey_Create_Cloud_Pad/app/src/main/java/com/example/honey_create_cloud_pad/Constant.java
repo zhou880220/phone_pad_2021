@@ -1,5 +1,7 @@
 package com.example.honey_create_cloud_pad;
 
+import java.util.Date;
+
 //常量类
 public class Constant {
     /**
@@ -29,8 +31,9 @@ public class Constant {
 
 
     public static String profile = "test";//dev prod test
-    public static final String PAGE_URL = String.format("https://%s.zhizaoyun.com/", getCurrentDomain()[0]);
+    public static final String PAGE_URL = String.format("https://%s.zhizaoyun.com/", getCurrentDomain()[0]); // 172.16.23.253:3001/";//172.16.23.138:3003/
     public static final String INTERFACE_URL =  String.format("https://%s.zhizaoyun.com/gateway/", getCurrentDomain()[1]);
+    public static final String equipmentId = "2";
 
     //mq 地址
     public static final String MQ_ADDRESS = "119.3.28.24";
@@ -49,15 +52,17 @@ public class Constant {
     public static final String QQ_APP_ID = "1110555495";
     //以下为页面前缀
     public static final String locahost_url = PAGE_URL + "cashierDesk"; //路径前缀  "http://172.16.23.116:3001/"
-    public static final String text_url = PAGE_URL + "home"; //用户首页
+    public static final String text_url = PAGE_URL + "index.html"; //用户首页
     public static final String login_url = PAGE_URL + "login"; //登录页
     public static final String apply_url = PAGE_URL + "apply"; //用户中心
     public static final String register_url = PAGE_URL + "register"; //用户注册
-    public static final String APP_NOTICE_LIST = PAGE_URL + "appNoticeList"; //消息页
+    public static final String APP_NOTICE_LIST = PAGE_URL + "home/notice"; //消息页
     public static final String MyOrderList = PAGE_URL + "myOrder";//订单列表
+    public static final String MyNews = PAGE_URL + "news"; //咨询页面
     public static final String test_shoppingCart = PAGE_URL + "shoppingCart"; //支付页面订单列表
     //以下为接口前缀      TEST_INTERFACE_URL = "https://njtesthoneycomb.zhizaoyun.com/gateway/";
-    public static final String Apply_Details = INTERFACE_URL + "api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
+    public static final String Apply_Details = INTERFACE_URL + "api-apps/client/recentlyApps?equipmentId=2&userId="; //获取悬浮窗应用
+    public static final String Apply_Details_POP = INTERFACE_URL + "api-apps/client/recentlyApps"; //获取悬浮窗应用
     public static final String upload_multifile = INTERFACE_URL + "api-f/upload/multifile"; //上传图片
     public static final String headPic = INTERFACE_URL + "api-u/headPic"; //获取头像是否修改成功
     public static final String TAKE_PHOTO = INTERFACE_URL + "api-f/download/getFileUrl";//获取头像URL
@@ -68,19 +73,27 @@ public class Constant {
     public static final String TOKEN_IS_OK = INTERFACE_URL + "api-u/users/current?access_token=";//token是否有效
     public static final String DELETE_QUEUE = INTERFACE_URL + "api-n/notification-anon/queue/delete?userId=";//用户登录删除队列
     public static final String GETAPPLY_URL = INTERFACE_URL + "api-apps/operation/apps-anon/appName?appId="; //获取当前三方应用首页链接
+    public static final String GETRabbitMQAddress = INTERFACE_URL+"api-apps/menu/apps-anon/rabbitMqInfo";//获取RabbitMq推送服务地址
+    public static final String userPushRelation = INTERFACE_URL+"api-msg/userPushRelation";//保存用户推送关系
+    public static final String userPushRelationUpdate = INTERFACE_URL+"api-msg/userPushRelation/update";//保存用户推送关系
+    public static final String GET_H5_VERSION = INTERFACE_URL+"api-apps/apps-anon/client/h5Url";//获取h5版本号
+
 
     public static String[] getCurrentDomain() {
         String page_head = "";
         String interface_head = "";
         switch (profile) {
             case "test" :
-                page_head = "njtesthoneycomb";
-                interface_head = "njtestyyzx";
+                page_head = "njtestyyzx";
+                interface_head = "njtesthoneycomb";
                 break;
             case "prod" :
                 page_head = "mobileclient";
                 interface_head = "ulogin";
                 break;
+            case "dev":
+//                page_head = "njtestyyzx";
+                interface_head = "njtesthoneycomb";
         }
         String[] str = {page_head, interface_head};
         return  str;

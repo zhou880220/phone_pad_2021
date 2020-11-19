@@ -1,9 +1,11 @@
 package com.example.honey_create_cloud_pad.util;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.provider.Settings;
+import android.telephony.TelephonyManager;
 
 import java.util.Locale;
 
@@ -50,15 +52,24 @@ public class SystemUtil {
     /**
      * 获取手机IMEI(需要“android.permission.READ_PHONE_STATE”权限)
      */
-//    @SuppressLint("MissingPermission")
-//    public static String getIMEI(Context ctx) {
-//        TelephonyManager tm = (TelephonyManager) ctx.getSystemService(Activity.TELEPHONY_SERVICE);
+    @SuppressLint("MissingPermission")
+    public static String getIMEI(Context ctx) {
+        String imei;
+
+        TelephonyManager telephonyManager = null;
+        try {
+            telephonyManager = (TelephonyManager) ctx.getSystemService(Activity.TELEPHONY_SERVICE);
+            imei = telephonyManager.getDeviceId();
+        } catch (Exception e) {
+            imei = "";
+        }
+        return  imei;
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 //            return tm.getImei();
 //        } else {
 //            return tm.getDeviceId();
 //        }
-//    }
+    }
 
     /**
      *   ANDROID_ID(恢复出厂+刷机会变) + 序列号(android 10会unknown/android 9需要设备权限)+品牌    +机型

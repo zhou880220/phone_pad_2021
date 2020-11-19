@@ -3,32 +3,78 @@ package com.example.honey_create_cloud_pad.ui;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.honey_create_cloud_pad.Constant;
+import com.example.honey_create_cloud_pad.MyApplication;
 import com.example.honey_create_cloud_pad.R;
+import com.example.honey_create_cloud_pad.bean.Result;
+import com.example.honey_create_cloud_pad.http.CallBackUtil;
+import com.example.honey_create_cloud_pad.http.OkhttpUtil;
+import com.example.honey_create_cloud_pad.util.NetworkUtils;
 import com.example.honey_create_cloud_pad.util.QMUITouchableSpan;
+import com.example.honey_create_cloud_pad.util.SPUtils;
+import com.example.honey_create_cloud_pad.util.VersionUtils;
+import com.google.gson.Gson;
+import com.xj.library.utils.ToastUtils;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import okhttp3.Call;
 
 public class StartPageActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private boolean isFirstUse;//是否是第一次使用
+    private AgreementDialog agreementDialog;
+    @BindView(R.id.web_error)
+    RelativeLayout webError;
+    @BindView(R.id.tv_fresh)
+    TextView tvFresh;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start_page);
-        //固定为横屏
-        StartPageActivity.this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        ButterKnife.bind(this);
+        boolean flag = checkNet();
+
         //全屏
         initScreen();
-        showAlterpPolicy();
+
+        initClick();
+
+        if (!flag) {
+            handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        showAlterpPolicy();
+                    }
+            }, 500);
+
+//            MyApplication.Install(this);//初始化推送
+
+            //获取h5版本号
+            getH5Version();
+        }
     }
 
     //全屏显示
@@ -49,12 +95,62 @@ public class StartPageActivity extends AppCompatActivity {
         }
     }
 
+    private void initClick(){
+        tvFresh.setOnClickListener(v->{
+            if (NetworkUtils.isConnected()) {
+                startHome();
+            }else {
+                showAlertDialog("温馨提示","请确保您的设备已联网！");
+            }
+
+        });
+    }
+
+    public void showAlertDialog(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                checkNet();
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private boolean checkNet() {
+        Log.i("pad_start", "checkNet: "+NetworkUtils.isConnected());
+        boolean flag = false;
+        if (!NetworkUtils.isConnected()) {
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    webError.setVisibility(View.VISIBLE);
+                }
+            }, 500);
+            flag = true;
+        }else {
+            if (webError.getVisibility() == View.VISIBLE) {
+                webError.setVisibility(View.GONE);
+            }
+            flag =false;
+        }
+        return flag;
+    }
+
     private void showAlterpPolicy() {
         final SharedPreferences preferences = getSharedPreferences("isFirstUse", MODE_PRIVATE);
         //默认设置为true
         isFirstUse = preferences.getBoolean("isFirstUse", true);
+        Log.i("StartPageActivity", "isFinishing: "+this.isFinishing() + " agreementDialog:"+agreementDialog);
         if (isFirstUse == true) {
-            new AgreementDialog(this, generateSp("亲爱的用户，欢迎您信任并使用蜂巢制造云！\n" +
+            if (!this.isFinishing() && agreementDialog!=null) {
+                agreementDialog.show();
+                return;
+            }
+            agreementDialog = new AgreementDialog(this, generateSp("亲爱的用户，欢迎您信任并使用蜂巢制造云！\n" +
                     "您在使用蜂巢制造云产品或服务前，请认真阅读并充分理解相关用户条款、平台规则及隐私政策。当您点击同意相关条款" +
                     "，并开始使用产品或服务，即表示您已经理解并同意该条款，该条款将构成对您具有法律约束力的文件。" +
                     "用户隐私政策主要包含以下内容：个人信息及设备权限（手机号、用户名、邮箱、设备属性信息、设备位置信息、设备连接信息等）" +
@@ -80,7 +176,9 @@ public class StartPageActivity extends AppCompatActivity {
                                     break;
                             }
                         }
-                    }).show();
+                    });
+            Log.i("StartPageActivity", "showAlterpPolicy: ");
+            agreementDialog.show();
         } else {
             startHome();
         }
@@ -96,6 +194,8 @@ public class StartPageActivity extends AppCompatActivity {
             }
         }, 2500);
     }
+
+
 
     private SpannableString generateSp(String text) {
         //定义需要操作的内容
@@ -159,9 +259,40 @@ public class StartPageActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 获取h5版本
+     */
+    private void getH5Version() {
+        if (NetworkUtils.isConnected()) {
+            Map<String, String> paramsMap =  new HashMap<>();
+            paramsMap.put("equipmentId", Constant.equipmentId);
+            paramsMap.put("versionCode", ""+ VersionUtils.getVersion(this));
+            OkhttpUtil.okHttpGet(Constant.GET_H5_VERSION, paramsMap, new CallBackUtil.CallBackString() {
+                @Override
+                public void onFailure(Call call, Exception e) {
+                    Log.e("StartPageActivity", "onFailure: "+e.getMessage());
+                }
+
+                @Override
+                public void onResponse(String response) {
+                    Log.e("StartPageActivity_TAG", "onResponse: " + response);
+                    Result result = new Gson().fromJson(response, Result.class);
+                    SPUtils.getInstance().put("context_url", result.getData().toString());
+                }
+            });
+        }else {
+            Toast.makeText(this,"请检查网络", Toast.LENGTH_SHORT);
+            return;
+        }
+
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (agreementDialog !=null) {
+            agreementDialog.dismiss();
+        }
         finish();
     }
 }
