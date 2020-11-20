@@ -281,6 +281,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private RecentlyApps recentlyApps;
     private RecyclerView mGridPopup;
     private String zxIdTouTiao;
+    private String content_url;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -288,6 +289,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         setContentView(R.layout.activity_apply);
         ButterKnife.bind(this);
         initScreen();
+        content_url = (String)SPUtils.getInstance().get("context_url", "");
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
         token = intent.getStringExtra("token");
@@ -818,7 +820,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 try {
                     SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                     SharedPreferences.Editor edit1 = sp1.edit();
-                    edit1.putString("apply_url", Constant.text_url);
+                    edit1.putString("apply_url", content_url);//Constant.text_url);
                     edit1.commit();
                     finish();
                 } catch (Exception e) {
@@ -1041,7 +1043,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         public void backHome() {
             SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
             SharedPreferences.Editor edit1 = sp1.edit();
-            edit1.putString("apply_url", Constant.text_url);
+            edit1.putString("apply_url", content_url);//Constant.text_url);
             edit1.commit();
             finish();
         }
@@ -1398,7 +1400,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
 //                startActivity(intent);
                 SharedPreferences sp1 = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
+                edit1.putString("apply_url", content_url);//Constant.text_url);
                 edit1.commit();
                 finish();
                 break;

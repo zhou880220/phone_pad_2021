@@ -8,10 +8,20 @@
     <color name="white">#FFFFFF</color>
     <color name="text_color_false">#000000</color>
     <color name="black">#000000</color>
+
     <color name="text_backcolor_true">#2F83FF</color>
     <color name="blue">#5cabfa</color>
     <color name="titleBar">#2393fc</color>
 
     <color name="text_color_true">#FFFFFF</color>
     <color name="notice_tip">#5cabfa</color>
+
+    <color name="bbutton_danger_pressed">#2F83FF</color>
+    <color name="bbutton_danger_edge">#2393fc</color>
+    <color name="bbutton_danger_disabled">#2393fc</color>
+    <color name="bbutton_danger_disabled_edge">#2393fc</color>
+    <color name="bbutton_danger">#2F83FF</color>
+    <color name="text_font_white">#FFFFFF</color>
+
+    <color name="black87">#D8000000</color>
 </resources>

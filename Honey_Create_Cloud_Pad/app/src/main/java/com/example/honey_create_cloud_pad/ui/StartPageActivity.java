@@ -17,6 +17,7 @@ import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,7 +49,7 @@ public class StartPageActivity extends AppCompatActivity {
     @BindView(R.id.web_error)
     RelativeLayout webError;
     @BindView(R.id.tv_fresh)
-    TextView tvFresh;
+    Button tvFresh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

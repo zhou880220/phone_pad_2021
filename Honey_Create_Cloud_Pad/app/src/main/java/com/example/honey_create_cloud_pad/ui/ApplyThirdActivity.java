@@ -78,6 +78,7 @@ import com.example.honey_create_cloud_pad.bean.TitleName;
 import com.example.honey_create_cloud_pad.recorder.AudioRecorderButton;
 import com.example.honey_create_cloud_pad.util.BaseUtil;
 import com.example.honey_create_cloud_pad.util.FileUtil;
+import com.example.honey_create_cloud_pad.util.SPUtils;
 import com.example.honey_create_cloud_pad.util.SystemUtil;
 import com.example.honey_create_cloud_pad.view.AnimationView;
 import com.example.honey_create_cloud_pad.webclient.MWebChromeClient;
@@ -274,7 +275,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private final static int FILE_CHOOSER_RESULT_CODE = 10000;
     private RecentlyApps recentlyApps;
     private RecyclerView mGridPopup;
-
+    private String content_url;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -286,6 +287,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
+        content_url = (String) SPUtils.getInstance().get("context_url", "");
         Log.i("nihao", url + token + userid+"---"+appId);
         mLodingTime();
         intentOkhttp();
@@ -766,7 +768,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 try {
                     SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                     SharedPreferences.Editor edit1 = sp1.edit();
-                    edit1.putString("apply_url", Constant.text_url);
+                    edit1.putString("apply_url", content_url);//Constant.text_url);
                     edit1.commit();
                     Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
                     startActivity(intent);
@@ -990,7 +992,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         public void backHome() {
             SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
             SharedPreferences.Editor edit1 = sp1.edit();
-            edit1.putString("apply_url", Constant.text_url);
+            edit1.putString("apply_url", content_url);//Constant.text_url);
             edit1.commit();
             Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
             startActivity(intent);
@@ -1598,10 +1600,10 @@ public class ApplyThirdActivity extends AppCompatActivity {
                 mTvRelation.setBackgroundResource(R.mipmap.floatingapp);
                 SharedPreferences sp1 = this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
                 SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
+                edit1.putString("apply_url", content_url);//Constant.text_url);
                 edit1.commit();
                 Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
-                intent.putExtra("apply_url", Constant.text_url);
+                intent.putExtra("apply_url", content_url);// Constant.text_url);
                 startActivity(intent);
                 break;
             case R.id.tv_myPublish:

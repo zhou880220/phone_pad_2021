@@ -6,19 +6,15 @@ import java.util.Date;
 public class Constant {
     /**
      * 测试环境前缀
-     * 页面前缀 ：https://njtestyyzx.zhizaoyun.com/
+     * 页面前缀 ：https://njtestyyzxpad.zhizaoyun.com/
      * 接口前缀 ：https://njtesthoneycomb.zhizaoyun.com/gateway/
      */
-    public static final String TEST_PAGE_URL = "https://njtestyyzx.zhizaoyun.com/";
-    public static final String TEST_INTERFACE_URL = "https://njtesthoneycomb.zhizaoyun.com/gateway/";
 
     /**
      * 生产环境前缀
-     * 页面前缀 ：https://mobileclient.zhizaoyun.com/
+     * 页面前缀 ：https://padclient.zhizaoyun.com/
      * 接口前缀 ：https://ulogin.zhizaoyun.com/gateway/
      */
-    public static final String PRODUCTION_PAGE_URL = "https://mobileclient.zhizaoyun.com/";
-    public static final String PRODUCTION_INTERFACE_URL = "https://ulogin.zhizaoyun.com/gateway/";
 
     /**
      * 调试环境前缀
@@ -84,11 +80,11 @@ public class Constant {
         String interface_head = "";
         switch (profile) {
             case "test" :
-                page_head = "njtestyyzx";
+                page_head = "njtestyyzxpad";
                 interface_head = "njtesthoneycomb";
                 break;
             case "prod" :
-                page_head = "mobileclient";
+                page_head = "padclient";
                 interface_head = "ulogin";
                 break;
             case "dev":

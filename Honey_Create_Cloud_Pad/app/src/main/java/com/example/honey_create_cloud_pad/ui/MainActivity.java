@@ -38,6 +38,7 @@ import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -138,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.web_error)
     View mWebError;
     @BindView(R.id.tv_fresh)
-    TextView tvFresh;
+    Button tvFresh;
 
     private static final String[] PERMISSIONS_APPLICATION = { //应用中心授权
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -280,6 +281,7 @@ public class MainActivity extends AppCompatActivity {
     private String huaWeiToken;
     private String oppoToken;
     private Unbinder unbinder;
+    private String content_url;
 
     @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -338,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
             }
             Log.i(TAG, "onCreate: 1");
 
-            String content_url = (String)SPUtils.getInstance().get("context_url", "");
+            content_url = (String)SPUtils.getInstance().get("context_url", "");
             Log.i(TAG, "onCreate: 2"+content_url);
             webView(content_url);//Constant.text_url);
             Intent intent1 = getIntent();
@@ -616,7 +618,7 @@ public class MainActivity extends AppCompatActivity {
                         if (myOrder.contains("/home")) { //首页拦截物理返回键  直接关闭应用
                             finish();
                         } else if (myOrder.contains("/information")) { //确保从该页面返回的是首页
-                            webView(Constant.text_url);
+                            webView(content_url);//Constant.text_url);
                         } else {
                             mNewWeb.goBack();
                         }
