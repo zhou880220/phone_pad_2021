@@ -14,7 +14,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /><!-- 支付需要 -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 华为角标 -->
     <uses-permission android:name=" com.huawei.android.launcher.permission. CHANGE_BADGE" /><!-- 华为角标 -->
 
@@ -55,7 +54,7 @@
 
         <activity android:name=".ui.ReminderActivity"></activity>
         <activity
-            android:name=".ui.StartPageActivity"
+            android:name=".StartPageActivity"
             android:screenOrientation="landscape"
             android:theme="@style/AppTheme">
             <intent-filter>
@@ -213,14 +212,14 @@
             </intent-filter>
         </activity>-->
 
-        <!--华为推送集成-
+        <!--华为推送集成 -->
         <service
             android:name=".pushmessage.HuaWeiPushHmsMessageService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.huawei.push.action.MESSAGING_EVENT"/>
             </intent-filter>
-        </service> -->
+        </service>
 
         <meta-data
             android:name="push_kit_auto_init_enabled"

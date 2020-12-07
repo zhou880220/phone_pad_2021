@@ -1,14 +1,13 @@
-package com.example.honey_create_cloud_pad.ui;
+package com.example.honey_create_cloud_pad;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,24 +15,21 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.honey_create_cloud_pad.Constant;
-import com.example.honey_create_cloud_pad.MyApplication;
-import com.example.honey_create_cloud_pad.R;
 import com.example.honey_create_cloud_pad.bean.Result;
 import com.example.honey_create_cloud_pad.http.CallBackUtil;
 import com.example.honey_create_cloud_pad.http.OkhttpUtil;
+import com.example.honey_create_cloud_pad.ui.AgreementDialog;
+import com.example.honey_create_cloud_pad.ui.MainActivity;
+import com.example.honey_create_cloud_pad.ui.ReminderActivity;
 import com.example.honey_create_cloud_pad.util.NetworkUtils;
 import com.example.honey_create_cloud_pad.util.QMUITouchableSpan;
 import com.example.honey_create_cloud_pad.util.SPUtils;
 import com.example.honey_create_cloud_pad.util.VersionUtils;
 import com.google.gson.Gson;
-import com.xj.library.utils.ToastUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +46,7 @@ public class StartPageActivity extends AppCompatActivity {
     RelativeLayout webError;
     @BindView(R.id.tv_fresh)
     Button tvFresh;
+    private Context mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +54,7 @@ public class StartPageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_start_page);
         ButterKnife.bind(this);
         boolean flag = checkNet();
+        mContext = this;
 
         //全屏
         initScreen();
@@ -151,8 +149,8 @@ public class StartPageActivity extends AppCompatActivity {
                 agreementDialog.show();
                 return;
             }
-            agreementDialog = new AgreementDialog(this, generateSp("亲爱的用户，欢迎您信任并使用蜂巢制造云！\n" +
-                    "您在使用蜂巢制造云产品或服务前，请认真阅读并充分理解相关用户条款、平台规则及隐私政策。当您点击同意相关条款" +
+            agreementDialog = new AgreementDialog(this, generateSp("亲爱的用户，欢迎您信任并使用蜂巢制造云HD！\n" +
+                    "您在使用蜂巢制造云HD产品或服务前，请认真阅读并充分理解相关用户条款、平台规则及隐私政策。当您点击同意相关条款" +
                     "，并开始使用产品或服务，即表示您已经理解并同意该条款，该条款将构成对您具有法律约束力的文件。" +
                     "用户隐私政策主要包含以下内容：个人信息及设备权限（手机号、用户名、邮箱、设备属性信息、设备位置信息、设备连接信息等）" +
                     "的收集、使用与调用等。您可以通过阅读完整版的《用户协议》和《隐私政策》了解详细信息。如您同意，" +
@@ -268,6 +266,7 @@ public class StartPageActivity extends AppCompatActivity {
             Map<String, String> paramsMap =  new HashMap<>();
             paramsMap.put("equipmentId", Constant.equipmentId);
             paramsMap.put("versionCode", ""+ VersionUtils.getVersion(this));
+            Log.i("StartPageActivity_TAG", "getH5Version: "+Constant.GET_H5_VERSION);
             OkhttpUtil.okHttpGet(Constant.GET_H5_VERSION, paramsMap, new CallBackUtil.CallBackString() {
                 @Override
                 public void onFailure(Call call, Exception e) {
@@ -278,7 +277,13 @@ public class StartPageActivity extends AppCompatActivity {
                 public void onResponse(String response) {
                     Log.e("StartPageActivity_TAG", "onResponse: " + response);
                     Result result = new Gson().fromJson(response, Result.class);
-                    SPUtils.getInstance().put("context_url", result.getData().toString());
+                    if (result.getCode() == 200) {
+                        if (result.getData() !=null) {
+                            SPUtils.getInstance().put("context_url", result.getData().toString());
+                        }
+                    }else {
+                        Toast.makeText(mContext,"服务器系统异常", Toast.LENGTH_SHORT);
+                    }
                 }
             });
         }else {

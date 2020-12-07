@@ -52,13 +52,6 @@ public class MWebChromeClient extends WebChromeClient {
 
     @Override
     public void onProgressChanged(WebView view, int newProgress) {
-        Log.i("当前页面",view.getUrl());
-
-        if (onCloseListener != null) {
-            onCloseListener.onCloseClick(newProgress);
-        }
-
-        super.onProgressChanged(view, newProgress);
         if (newProgress == 100) {
             //进度条消失
             progressBar.setVisibility(View.GONE);
@@ -67,6 +60,12 @@ public class MWebChromeClient extends WebChromeClient {
             progressBar.setVisibility(View.VISIBLE);
             progressBar.setProgress(newProgress);
         }
+
+        if (onCloseListener != null) {
+            onCloseListener.onCloseClick(newProgress);
+        }
+
+        super.onProgressChanged(view, newProgress);
     }
 
 

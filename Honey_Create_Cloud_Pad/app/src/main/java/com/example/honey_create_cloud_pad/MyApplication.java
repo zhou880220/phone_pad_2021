@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.example.honey_create_cloud_pad.ui.MainActivity;
+import com.example.honey_create_cloud_pad.util.SPUtils;
 import com.heytap.msp.push.HeytapPushManager;
 import com.heytap.msp.push.callback.ICallBackResultService;
 import com.huawei.hms.push.HmsMessaging;
@@ -55,16 +56,17 @@ public class MyApplication extends Application {
         //热修复
 //        initTinker();
 
-        XiaomiPush();//小米推送
-        VivoPush();//Vivo推送
-        OppoPush();//Oppo推送
-//        HuaweiPush(); // 华为推送 在添加的agconnect-services.json中
+//        XiaomiPush();//小米推送
+//        VivoPush();//Vivo推送
+//        OppoPush();//Oppo推送
+        HuaweiPush(); // 华为推送 在添加的agconnect-services.json中
     }
 
     private void HuaweiPush() {
         if (Build.BRAND.toLowerCase().contains("huawei")) {
             Log.e(TAG, "AppPush: 检测到该手机是huawei定制商");
             HmsMessaging.getInstance(this);
+            SPUtils.getInstance().put("isHw","1");
         }else{
             Log.e(TAG, "AppPush: 检测到该手机不是huawei定制商");
         }

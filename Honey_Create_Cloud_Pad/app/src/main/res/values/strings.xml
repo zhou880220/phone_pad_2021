@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">制造云Pad</string>
+    <string name="app_name">蜂巢制造云HD</string>
     <string name="str_recorder_normal">按住说话</string>
     <string name="web_error">数据获取失败,  请检查网络后再重试 ~</string>
 

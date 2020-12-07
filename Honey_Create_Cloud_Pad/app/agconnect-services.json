@@ -4,13 +4,15 @@
 		"url":"connect-drcn.hispace.hicloud.com"
 	},
 	"client":{
+		"appType":"1",
 		"cp_id":"890086000300420275",
-		"product_id":"736430079244542411",
-		"client_id":"397435150268368064",
-		"client_secret":"912204CC18C8EF45E5B2B63C1FD08A3E6BBDFE1A93D52561B9FFF1F15B9DA1B2",
-		"app_id":"102495961",
-		"package_name":"com.example.honey_create_cloud_pad",
-		"api_key":"CgB6e3x9B9Y7rWq77unIxlHIX+BAjrns4YLnKt8vXRSZaD4oS6/rsFOjfW49bJLrwMuspyTpFaAHqTJbbNNaZ6fd"
+		"product_id":"736430079244722261",
+		"client_id":"507825578309595776",
+		"client_secret":"D1AF15F74537FA5313530231825B751C515C62B307879629CEF3E511054D2D2C",
+		"project_id":"736430079244722261",
+		"app_id":"103344451",
+		"api_key":"CgB6e3x9Z10F1ryJQ6WQz1AS7tun5msuLL0btvNjBs8J/fRHfxAT0cG3/b2gAsSpQt3N/AYu94+wCmdiS3ZnBTkh",
+		"package_name":"com.example.honey_create_cloud_pad"
 	},
 	"service":{
 		"analytics":{

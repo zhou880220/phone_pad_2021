@@ -26,20 +26,16 @@ public class Constant {
 
 
 
-    public static String profile = "test";//dev prod test
+    public static String profile = "prod";//dev prod test
     public static final String PAGE_URL = String.format("https://%s.zhizaoyun.com/", getCurrentDomain()[0]); // 172.16.23.253:3001/";//172.16.23.138:3003/
     public static final String INTERFACE_URL =  String.format("https://%s.zhizaoyun.com/gateway/", getCurrentDomain()[1]);
     public static final String equipmentId = "2";
 
-    //mq 地址
-    public static final String MQ_ADDRESS = "119.3.28.24";
-    public static final int MQ_PORT = 5672;
-
 
     // 测试及调试环境桶名
-    public static final String bucket_Name = "njdeveloptest";
+//    public static final String bucket_Name = "njdeveloptest";
     // 生产环境桶名
-//    public static final String bucket_Name = "honeycom-service";
+    public static final String bucket_Name = "honeycom-service";
 
     ///接口调用
     // APP_ID 替换为你的应用从官方网站申请到的合法appId
@@ -71,7 +67,8 @@ public class Constant {
     public static final String GETAPPLY_URL = INTERFACE_URL + "api-apps/operation/apps-anon/appName?appId="; //获取当前三方应用首页链接
     public static final String GETRabbitMQAddress = INTERFACE_URL+"api-apps/menu/apps-anon/rabbitMqInfo";//获取RabbitMq推送服务地址
     public static final String userPushRelation = INTERFACE_URL+"api-msg/userPushRelation";//保存用户推送关系
-    public static final String userPushRelationUpdate = INTERFACE_URL+"api-msg/userPushRelation/update";//保存用户推送关系
+    public static final String userPushRelationUpdate = INTERFACE_URL+"api-msg/userPushRelation/updateInfo";//保存用户推送关系
+    public static final String userFirstUpdate = INTERFACE_URL+"api-msg/userPushRelation/firstUpdate";//用户第一次登录
     public static final String GET_H5_VERSION = INTERFACE_URL+"api-apps/apps-anon/client/h5Url";//获取h5版本号
 
 
@@ -89,7 +86,7 @@ public class Constant {
                 break;
             case "dev":
 //                page_head = "njtestyyzx";
-                interface_head = "njtesthoneycomb";
+                interface_head = "mobileclientthird";
         }
         String[] str = {page_head, interface_head};
         return  str;

@@ -1,18 +1,24 @@
 package com.example.honey_create_cloud_pad.pushmessage;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.example.honey_create_cloud_pad.bean.HwNotification;
+import com.google.gson.Gson;
 import com.huawei.hms.push.HmsMessageService;
 import com.huawei.hms.push.RemoteMessage;
+import com.huawei.hms.push.SendException;
 
 import java.util.Arrays;
 
 
 public class HuaWeiPushHmsMessageService extends HmsMessageService {
     private String TAG = "HAUWEI";
-
+    private final static String CODELABS_ACTION = "com.example.honey_create_cloud_pad";
 
     @Override
     public void onNewToken(String token) {
@@ -46,15 +52,16 @@ public class HuaWeiPushHmsMessageService extends HmsMessageService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        Log.e(TAG, "sending token to server. token:" + remoteMessage.getToken());
+        Log.e(TAG, "onMessageReceived token:" + remoteMessage.getToken());
         if (remoteMessage == null) {
-            Log.e("huawei", "Received remoteMessage entity is null!");
+            Log.e(TAG, "Received remoteMessage entity is null!");
             return;
         }
-        Log.i("huawei", "getCollapseKey: " + remoteMessage.getCollapseKey()
+        Log.e(TAG, "getCollapseKey: " + remoteMessage.getCollapseKey()
                 + "\n getData: " + remoteMessage.getData()
                 + "\n getFrom: " + remoteMessage.getFrom()
                 + "\n getTo: " + remoteMessage.getTo()
+                + "\n getDataOfMap: " + remoteMessage.getDataOfMap().get("Badge")
                 + "\n getMessageId: " + remoteMessage.getMessageId()
                 + "\n getOriginalUrgency: " + remoteMessage.getOriginalUrgency()
                 + "\n getUrgency: " + remoteMessage.getUrgency()
@@ -62,11 +69,25 @@ public class HuaWeiPushHmsMessageService extends HmsMessageService {
                 + "\n getMessageType: " + remoteMessage.getMessageType()
                 + "\n getTtl: " + remoteMessage.getTtl());
 
-
+        try {
+            HwNotification hw = new Gson().fromJson(remoteMessage.getData(), HwNotification.class);
+            Log.e(TAG, "hw getBadgeNumber: "+ hw.getBadge());
+            String badge = remoteMessage.getDataOfMap().get("badge");
+            int i = hw.getBadge();//Integer.parseInt(hw.getBadge());
+            Log.e(TAG, "getBadgeNumber: "+badge );
+            Bundle extra = new Bundle();
+            extra.putString("package", "com.example.honey_create_cloud_pad");
+            extra.putString("class", "com.example.honey_create_cloud_pad.StartPageActivity");
+            extra.putInt("badgenumber", i);
+            getApplicationContext().getContentResolver().call(Uri.parse("content://com.huawei.android.launcher.settings/badge/"), "change_badge", null, extra);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
         RemoteMessage.Notification notification = remoteMessage.getNotification();
         if (notification != null) {
-            Log.i("huawei", "\n getImageUrl: " + notification.getImageUrl()
+            Log.e("huawei", "\n getImageUrl: " + notification.getImageUrl()
                     + "\n getTitle: " + notification.getTitle()
+                    + "\n getTitle: " + notification.getBadgeNumber()
                     + "\n getTitleLocalizationKey: " + notification.getTitleLocalizationKey()
                     + "\n getTitleLocalizationArgs: " + Arrays.toString(notification.getTitleLocalizationArgs())
                     + "\n getBody: " + notification.getBody()
@@ -81,6 +102,12 @@ public class HuaWeiPushHmsMessageService extends HmsMessageService {
                     + "\n getLink: " + notification.getLink()
                     + "\n getNotifyId: " + notification.getNotifyId());
         }
+    }
+
+
+    @Override
+    public void onTokenError(Exception e) {
+        super.onTokenError(e);
     }
 
 }
