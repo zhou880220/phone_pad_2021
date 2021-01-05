@@ -225,6 +225,10 @@ public class MyApplication extends Application {
         ApplicationContext = context;
     }
 
+    public static Context getContext() {
+        return ApplicationContext;
+    }
+
     public static class DemoHandler extends Handler {
 
         private Context context;

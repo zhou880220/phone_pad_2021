@@ -49,6 +49,7 @@ import com.google.gson.Gson;
 import com.tencent.mm.opensdk.modelpay.PayReq;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.xj.library.utils.ToastUtils;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -175,6 +176,10 @@ public class IntentOpenActivity extends AppCompatActivity {
                     startActivity(intent);
                     break;
                 }
+                case ALAONMALY: {
+                    Toast.makeText(IntentOpenActivity.this, "支付异常", Toast.LENGTH_SHORT).show();
+                    break;
+                }
                 case PcAONMALY: {
                     String Pcaonmaly = (String) msg.obj;
                     Toast.makeText(IntentOpenActivity.this, Pcaonmaly, Toast.LENGTH_SHORT).show();
@@ -193,8 +198,9 @@ public class IntentOpenActivity extends AppCompatActivity {
     private static final int SDK_PAY_FLAG = 1;
     private static final int SDK_AUTH_FLAG = 2;
     private static final int AONMALY = 0; //手机端在次code重复支付
+    private static final int ALAONMALY = 4; //手机端支付异常
     private static final int PcAONMALY = 3; //微信支付PC端支付在手机端支付提示
-    private String TAG = "TAG";
+    private String TAG = "_TAG";
     //    // 用来计算返回键的点击间隔时间
     private long exitTime = 0;
     private String userId;
@@ -204,6 +210,7 @@ public class IntentOpenActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate: pay start");
         setContentView(R.layout.activity_intent_open);
         ButterKnife.inject(this);
         EventBus.getDefault().register(this);
@@ -483,7 +490,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String string = response.body().string();
-                Log.e(TAG, "onResponse: " + string);
+                Log.e(TAG, "pay1 onResponse: " + string);
                 Gson gson = new Gson();
                 PayType payType = gson.fromJson(string, PayType.class);
                 if (payType.getCode() == 200) {
@@ -538,9 +545,11 @@ public class IntentOpenActivity extends AppCompatActivity {
     }
 
     private void alipayOkhttp(PayBean payBean) {
+        String payUrl = Constant.appOrderInfo + payBean.getOutTradeNo();
+        Log.i(TAG, "alipayOkhttp: "+payUrl);
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url(Constant.appOrderInfo + payBean.getOutTradeNo())
+                .url(payUrl)
                 .addHeader("Authorization", "Bearer " + token)
                 .get()
                 .build();
@@ -556,7 +565,7 @@ public class IntentOpenActivity extends AppCompatActivity {
             public void onResponse(Call call, Response response) throws IOException {
                 if (response.code() == 200) {
                     String string = response.body().string();
-                    Log.e(TAG, "onResponse: " + string);
+                    Log.e(TAG, "pay2 onResponse: " + string);
                     Gson gson = new Gson();
                     appOrderInfo = gson.fromJson(string, AppOrderInfo.class);
                     //orderInfo为通过接口获取的订单信息中的url
@@ -578,8 +587,12 @@ public class IntentOpenActivity extends AppCompatActivity {
                     payThread.start();
                 } else {
                     Message message = new Message();
-                    message.what = AONMALY;
-                    message.obj = appOrderInfo.getMsg();
+                    if (appOrderInfo !=null){
+                        message.what = AONMALY;
+                        message.obj = appOrderInfo.getMsg();
+                    }else {//提示支付异常
+                        message.what = ALAONMALY;
+                    }
                     mHandler.sendMessage(message);
                 }
             }

@@ -8,8 +8,8 @@ android {
         applicationId "com.example.honey_create_cloud"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 5
-        versionName "1.4.0"
+        versionCode 7
+        versionName "1.5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
 
@@ -67,6 +67,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.core:core:1.5.0-alpha04'
 
     implementation 'com.google.android.material:material:1.0.0'
     //recyclerview
@@ -94,7 +95,7 @@ dependencies {
     // 支付宝 SDK AAR 包所需的配置
     implementation(name: 'alipaySdk-15.7.4-20200228192259', ext: 'aar')
     /*扫一扫*/
-    implementation 'com.github.yuzhiqiang1993:zxing:2.0.0'
+    implementation 'com.github.yuzhiqiang1993:zxing:2.2.8'
     //微信支付
     api 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:+'
     //EventBus
@@ -128,4 +129,10 @@ dependencies {
     implementation(name: 'com.heytap.msp-push-2.1.0', ext: 'aar')
     //华为推送集成
     implementation 'com.huawei.hms:push:5.0.2.300'
+    //版本更新
+    implementation 'com.qianwen:update-app:3.5.2'
+    implementation 'com.qianwen:okhttp-utils:3.8.0'
+    implementation 'com.lzy.net:okgo:3.0.4'
+    implementation 'com.tbruyelle.rxpermissions:rxpermissions:0.9.4@aar'
+
 }

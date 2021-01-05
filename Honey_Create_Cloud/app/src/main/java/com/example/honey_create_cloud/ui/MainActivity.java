@@ -65,11 +65,13 @@ import com.example.honey_create_cloud.bean.RabbitMQBean;
 import com.example.honey_create_cloud.bean.TokenIsOkBean;
 import com.example.honey_create_cloud.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud.file.CleanDataUtils;
+import com.example.honey_create_cloud.http.UpdateAppHttpUtil;
 import com.example.honey_create_cloud.pushmessage.HuaWeiPushHmsMessageService;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.MarketTools;
 import com.example.honey_create_cloud.util.QMUITouchableSpan;
 import com.example.honey_create_cloud.util.SystemUtil;
+import com.example.honey_create_cloud.util.VersionUtils;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
 import com.example.honey_create_cloud.webclient.MyWebViewClient;
 import com.example.honey_create_cloud.webclient.WebViewSetting;
@@ -90,9 +92,12 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.vector.update_app.UpdateAppManager;
+import com.vector.update_app.listener.ExceptionHandler;
 import com.vivo.push.IPushActionListener;
 import com.vivo.push.PushClient;
 import com.xiaomi.mipush.sdk.MiPushClient;
+import com.xj.library.utils.ToastUtils;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -266,6 +271,9 @@ public class MainActivity extends AppCompatActivity {
     private String imei = "";
     private String huaWeiToken;
     private String oppoToken;
+    private boolean isPrepareFinish = false;
+    private static final int WAIT_INTERVAL = 2000;
+    private long exitTime = 0;
 
     @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -284,9 +292,11 @@ public class MainActivity extends AppCompatActivity {
         myRequetPermission(PERMISSIONS_APPLICATION);//申请权限
         initVersionName();//获取安装包信息
         Uri uri = getIntent().getData();
+        Log.e(TAG, "onCreate uri: "+uri);
         if (uri != null) {
             String thirdId = uri.getQueryParameter("thirdId");
             String open = uri.getQueryParameter("open");
+            Log.e(TAG, "huaweiUrl open: " + open);
             if (thirdId != null) {
                 Intent intent = new Intent(this, NewsActivity.class);
                 intent.putExtra("url", thirdId);
@@ -315,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 3000);//2秒后执行Runnable中的run方法
+                }, 1000);//2秒后执行Runnable中的run方法
             }
         }
         mTextPolicyReminder.setText(generateSp(PolicyAndReminder));
@@ -348,9 +358,16 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 3000);//2秒后执行Runnable中的run方法
+                }, 1000);//2秒后执行Runnable中的run方法
             }
         }
+
+        myHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateApp();
+            }
+        }, 5000);
     }
 
     /**
@@ -439,6 +456,35 @@ public class MainActivity extends AppCompatActivity {
     private void sendRegTokenToServer(String token) {
         Log.i(TAG, "sending token to server. token:" + token);
     }
+
+    //版本更新
+    public void updateApp() {
+        int sysVersion = VersionUtils.getVersion(this);
+        Log.e(TAG, "updateApp: "+sysVersion);
+        new UpdateAppManager
+                .Builder()
+                //当前Activity
+                .setActivity(this)
+                //更新地址
+                .setUpdateUrl(Constant.WEBVERSION + sysVersion)
+                .handleException(new ExceptionHandler() {
+                    @Override
+                    public void onException(Exception e) {
+                        Log.e(TAG, "updateApp Exception: "+e.getMessage());
+                        e.printStackTrace();
+                    }
+                })
+                //实现httpManager接口的对象
+                .setHttpManager(new UpdateAppHttpUtil())
+                .setTopPic(R.mipmap.top_3)
+                //为按钮，进度条设置颜色。
+                .setThemeColor(0xff47bbf1)
+                .build()
+                //为按钮，进度条设置颜色。
+                .update();
+    }
+
+
 
     /**
      * 获取RabbitMQ服务地址
@@ -586,11 +632,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    Log.e(TAG, "onKey: web back  1");
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
-                        SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
-                        String userInfo = sb.getString("userInfo", "");
+                        Log.e(TAG, "onKey: web back  2"+myOrder);
+//                        SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
+//                        String userInfo = sb.getString("userInfo", "");
                         if (myOrder.contains("/home")) { //首页拦截物理返回键  直接关闭应用
                             finish();
+//                            mNewWeb.goBack();
                         } else if (myOrder.contains("/information")) { //确保从该页面返回的是首页
                             webView(Constant.text_url);
                         } else {
@@ -885,7 +934,7 @@ public class MainActivity extends AppCompatActivity {
                     if (!data.isEmpty()) {
                         Log.e(TAG, "跳转第三方:1 " + data);
                         Map map = JSONObject.parseObject(data, Map.class);
-                        String redirectUrl = (String) map.get("redirectUrl");
+                        String redirectUrl = (String) map.get("redirectUrl");//"http://mobileclientthird.zhizaoyun.com/jsapi/view";
 
                         int appLyId = (int) map.get("appId");
                         String appId = String.valueOf(appLyId);
@@ -1201,7 +1250,7 @@ public class MainActivity extends AppCompatActivity {
                     ", token:'" + UserPushToken + '\'' +
                     ", userId:'" + userid1 + '\'' +
                     '}';
-            Log.e(TAG, "PushTokenRelation: " + accessEquipmentType + "" + imei + "" + UserPushToken + "" + userid1 + "");
+            Log.e(TAG, "PushTokenRelation: " + accessEquipmentType + " imei:" + imei + " pushToken:" + UserPushToken + " userId:" + userid1 + "");
             MediaType FORM_CONTENT_TYPE = MediaType.parse("application/json;charset=utf-8");
             RequestBody requestBody = RequestBody.create(FORM_CONTENT_TYPE, PushHuaweiBody);
 
@@ -1228,7 +1277,7 @@ public class MainActivity extends AppCompatActivity {
                     ", equipmentType:'" + "3" + '\'' +
                     ", equipmentIdCode:'" + imei + '\'' +
                     ", status:'" + "0" + '\'' +
-                    ", token:'" + "" + '\'' +
+                    ", token:'" + UserPushToken + '\'' +
                     ", userId:'" + userid1 + '\'' +
                     '}';
 
@@ -1720,6 +1769,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         super.onResume();
+        Log.e(TAG, "onResume: 111" );
 //        refreshLogInfo();
     }
 
@@ -2010,7 +2060,7 @@ public class MainActivity extends AppCompatActivity {
                     final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
                     builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
                     builder.addFormDataPart("fileNames", "");
-                    builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
+                    builder.addFormDataPart("bucketName", Constant.bucket_Name);
                     builder.addFormDataPart("folderName", "headPic");
                     MultipartBody requestBody = builder.build();
                     final Request request = new Request.Builder()
@@ -2071,6 +2121,22 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+
+    @Override
+    public void onBackPressed() {
+        Log.e(TAG, "onBackPressed: "+isPrepareFinish);
+        if(!isPrepareFinish){
+            new Handler().postDelayed(
+                    () -> isPrepareFinish = false,WAIT_INTERVAL
+            );
+            isPrepareFinish = true;
+            Toast.makeText(this, "再按一次退出", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            super.onBackPressed();
+        }
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -2106,7 +2172,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 3000);//2秒后执行Runnable中的run方法
+                }, 1000);//2秒后执行Runnable中的run方法
             }
         }
 
@@ -2131,7 +2197,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                     }
-                }, 3000);//2秒后执行Runnable中的run方法
+                }, 1000);//2秒后执行Runnable中的run方法
             }
         }
     }

@@ -197,7 +197,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     OkHttpClient client1 = new OkHttpClient();
                     final FormBody formBody = new FormBody.Builder()
                             .add("fileNames", userid)
-                            .add("bucketName", Constant.test_bucket_Name)
+                            .add("bucketName", Constant.bucket_Name)
                             .add("folderName", "menu")
                             .build();
                     Request request = new Request.Builder()
@@ -2038,7 +2038,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         final MediaType mediaType = MediaType.parse("image/jpeg");//创建媒房类型
         builder.addFormDataPart("fileObjs", file.getName(), RequestBody.create(mediaType, file));
         builder.addFormDataPart("fileNames", "");
-        builder.addFormDataPart("bucketName", Constant.test_bucket_Name);
+        builder.addFormDataPart("bucketName", Constant.bucket_Name);
         builder.addFormDataPart("folderName", "menu");
         MultipartBody requestBody = builder.build();
         final Request request = new Request.Builder()
@@ -2558,29 +2558,32 @@ public class ApplyThirdActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (mNewWeb != null && mNewWeb.canGoBack()) {
-            Log.e(TAG, "onClick: 可以返回" );
-            if (goBackUrl.contains("eboard_mobile/systemIndex")) { //电子看板
-                finish();
-            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                finish();
-            } else if (goBackUrl.contains("index.html")) {  //图纸通
-                finish();
-            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
-                finish();
-            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
-                finish();
-            } else if (goBackUrl.contains("app/home")) { //自主控制
-                finish();
-            } else if (mWebError.getVisibility() == View.VISIBLE) {
-                finish();
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            if (mNewWeb != null && mNewWeb.canGoBack()) {
+                Log.e(TAG, "onClick: 可以返回");
+                if (goBackUrl.contains("eboard_mobile/systemIndex")) { //电子看板
+                    finish();
+                } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
+                    finish();
+                } else if (goBackUrl.contains("index.html")) {  //图纸通
+                    finish();
+                } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
+                    finish();
+                } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                    finish();
+                } else if (goBackUrl.contains("app/home")) { //自主控制
+                    finish();
+                } else if (mWebError.getVisibility() == View.VISIBLE) {
+                    finish();
+                } else {
+                    mNewWeb.goBack();
+                }
             } else {
-                mNewWeb.goBack();
+                finish();
             }
-        } else {
-            finish();
+            return true;
         }
-        return true;
+        return super.onKeyDown(keyCode, event);
     }
 
 

@@ -42,6 +42,10 @@
     <uses-permission android:name="com.coloros.mcs.permission.RECIEVE_MCS_MESSAGE" />
     <uses-permission android:name="com.heytap.mcs.permission.RECIEVE_MCS_MESSAGE" />
 
+    <meta-data
+        android:name="UPDATE_APP_KEY"
+        android:value="b35bea014531123f94c3ba7b7afbaad2"/>
+
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
