@@ -26,16 +26,20 @@ public class Constant {
 
 
 
-    public static String profile = "prod";//dev prod test
+    public static String profile = "test";//dev prod test
+
+//    public static final String PAGE_URL = "http://172.16.23.59:3002/";//"https://njtestyyzx.zhizaoyun.com/";//"https://mobileclientthird.zhizaoyun.com/";
+//    public static final String INTERFACE_URL = "http://172.16.14.231:18080/";//"https://mobileclientthird.zhizaoyun.com/gateway/";
+
     public static final String PAGE_URL = String.format("https://%s.zhizaoyun.com/", getCurrentDomain()[0]); // 172.16.23.253:3001/";//172.16.23.138:3003/
     public static final String INTERFACE_URL =  String.format("https://%s.zhizaoyun.com/gateway/", getCurrentDomain()[1]);
     public static final String equipmentId = "2";
 
 
     // 测试及调试环境桶名
-//    public static final String bucket_Name = "njdeveloptest";
+    public static final String bucket_Name = "njdeveloptest";
     // 生产环境桶名
-    public static final String bucket_Name = "honeycom-service";
+//    public static final String bucket_Name = "honeycom-service";
 
     ///接口调用
     // APP_ID 替换为你的应用从官方网站申请到的合法appId
@@ -44,7 +48,7 @@ public class Constant {
     public static final String QQ_APP_ID = "1110555495";
     //以下为页面前缀
     public static final String locahost_url = PAGE_URL + "cashierDesk"; //路径前缀  "http://172.16.23.116:3001/"
-    public static final String text_url = PAGE_URL + "index.html"; //用户首页
+    public static final String text_url = PAGE_URL + "home/desk"; //用户首页
     public static final String login_url = PAGE_URL + "login"; //登录页
     public static final String apply_url = PAGE_URL + "apply"; //用户中心
     public static final String register_url = PAGE_URL + "register"; //用户注册
@@ -70,6 +74,13 @@ public class Constant {
     public static final String userPushRelationUpdate = INTERFACE_URL+"api-msg/userPushRelation/updateInfo";//保存用户推送关系
     public static final String userFirstUpdate = INTERFACE_URL+"api-msg/userPushRelation/firstUpdate";//用户第一次登录
     public static final String GET_H5_VERSION = INTERFACE_URL+"api-apps/apps-anon/client/h5Url";//获取h5版本号
+    public static final String WEBVERSION = INTERFACE_URL+"api-apps/apps-anon/client/version/details?equipmentId=2&updateVersion=";//apk升级功能
+    public static final String APP_AUTH_CHECK = INTERFACE_URL+"api-apps/apps-anon/client/platformPermissionAndPutaway";//http://172.16.14.231:18089/
+
+
+    public static final String NO_AUTH_TIP = "您的企业暂未开通此应用，请联系企业管理页开通后再试。";
+
+    public static final String ERROR_SERVER_TIP = "平台服务器出现未知异常。";
 
 
     public static String[] getCurrentDomain() {

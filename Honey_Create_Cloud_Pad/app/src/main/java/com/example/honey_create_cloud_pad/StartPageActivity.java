@@ -31,6 +31,7 @@ import com.example.honey_create_cloud_pad.util.SPUtils;
 import com.example.honey_create_cloud_pad.util.VersionUtils;
 import com.google.gson.Gson;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -72,7 +73,7 @@ public class StartPageActivity extends AppCompatActivity {
 //            MyApplication.Install(this);//初始化推送
 
             //获取h5版本号
-            getH5Version();
+//            getH5Version();
         }
     }
 
@@ -279,9 +280,11 @@ public class StartPageActivity extends AppCompatActivity {
                     Result result = new Gson().fromJson(response, Result.class);
                     if (result.getCode() == 200) {
                         if (result.getData() !=null) {
-                            SPUtils.getInstance().put("context_url", result.getData().toString());
+                            Date d = new Date();
+                            String contentUrl = "http://172.16.23.59:3003?r="+d.getTime();
+                            SPUtils.getInstance().put("context_url", contentUrl);
                         }
-                    }else {
+                    } else {
                         Toast.makeText(mContext,"服务器系统异常", Toast.LENGTH_SHORT);
                     }
                 }

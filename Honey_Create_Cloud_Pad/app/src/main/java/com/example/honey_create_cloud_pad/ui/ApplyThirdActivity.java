@@ -139,7 +139,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     @BindView(R.id.new_Web3)
     BridgeWebView mNewWeb;
     @BindView(R.id.web_error)
-    View mWebError;
+    RelativeLayout mWebError;
     @BindView(R.id.glide_gif)
     View mLoadingPage;
     @BindView(R.id.reload_tv)
@@ -1781,29 +1781,20 @@ public class ApplyThirdActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (mNewWeb != null && mNewWeb.canGoBack()) {
-            Log.e(TAG, "onClick: 可以返回" );
-            if (goBackUrl.contains("systemIndex")) { //电子看板
-                finish();
-            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                finish();
-            } else if (goBackUrl.contains("index.html")) {  //图纸通
-                finish();
-            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
-                finish();
-            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
-                finish();
-            } else if (goBackUrl.contains("app/home")) { //自主控制
-                finish();
-            } else if (mWebError.getVisibility() == View.VISIBLE) {
-                finish();
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            if (mNewWeb != null && mNewWeb.canGoBack()) {
+                Log.e(TAG, "onClick: 可以返回" );
+                if (mWebError.getVisibility() == View.VISIBLE) {
+                    finish();
+                } else {
+                    mNewWeb.goBack();
+                }
             } else {
-                mNewWeb.goBack();
+                finish();
             }
-        } else {
-            finish();
+            return true;
         }
-        return true;
+        return super.onKeyDown(keyCode, event);
     }
 
     /**

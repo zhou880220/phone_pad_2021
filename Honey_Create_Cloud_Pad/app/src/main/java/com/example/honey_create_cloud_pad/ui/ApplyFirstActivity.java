@@ -145,8 +145,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
     ProgressBar mNewWebProgressbar;
     @BindView(R.id.new_Web1)
     BridgeWebView mNewWeb;
-    @BindView(R.id.error_iv)
-    View mWebError;
+    @BindView(R.id.web_error)
+    RelativeLayout mWebError;
     @BindView(R.id.glide_gif)
     View mLoadingPage;
     @BindView(R.id.reload_tv)
@@ -267,7 +267,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String token;
     private String url;
     private String userid;
-    private List<RecentlyApps.DataBean> data;
+    private List<RecentlyApps.DataBean> appData;
     private MWebChromeClient mWebChromeClient;
     private String appId; //应用Id
     private File tempFile; //调用照相机返回图片文件
@@ -1350,7 +1350,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 Log.e(TAG, "intentOkhttp onResponse: " + response);
                 Gson gson = new Gson();
                 recentlyApps = gson.fromJson(response, RecentlyApps.class);
-                data = recentlyApps.getData();
+                appData = recentlyApps.getData();
 //                String s = recentlyApps.toString();
 //                Log.i(TAG, s);
             }
@@ -1535,7 +1535,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(ApplyFirstActivity.this);//添加布局管理器
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);//设置为横向水平滚动，默认是垂直
         mGridPopup.setLayoutManager(layoutManager);//设置布局管理器
-        adapter = new MyContactAdapter(data, this, userid, token, url);
+        adapter = new MyContactAdapter(appData, this, userid, token, url);
         mGridPopup.setAdapter(adapter);
     }
 
@@ -2282,29 +2282,21 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (mNewWeb != null && mNewWeb.canGoBack()) {
-            Log.e(TAG, "onClick: 可以返回" );
-            /*if (goBackUrl.contains("systemIndex")) { //电子看板
-                finish();
-            } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
-                finish();
-            } else if (goBackUrl.contains("index.html")) {  //图纸通
-                finish();
-            } else if (goBackUrl.contains("yyzx_dianji/")) { //电机功率
-                finish();
-            } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
-                finish();
-            } else if (goBackUrl.contains("app/home")) { //自主控制
-                finish();
-            } else*/ if (mWebError.getVisibility() == View.VISIBLE) {
-                finish();
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            Log.e(TAG, "onClick: back"+mNewWeb.canGoBack() );
+            if (mNewWeb != null && mNewWeb.canGoBack()) {
+                Log.e(TAG, "onClick: 可以返回" );
+                if (mWebError.getVisibility() == View.VISIBLE) {
+                    finish();
+                } else {
+                    mNewWeb.goBack();
+                }
             } else {
-                mNewWeb.goBack();
+                finish();
             }
-        } else {
-            finish();
+            return true;
         }
-        return true;
+        return super.onKeyDown(keyCode, event);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)

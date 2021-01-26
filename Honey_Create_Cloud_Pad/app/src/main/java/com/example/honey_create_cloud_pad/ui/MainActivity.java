@@ -64,8 +64,10 @@ import com.example.honey_create_cloud_pad.bean.NotificationBean;
 import com.example.honey_create_cloud_pad.bean.PictureUpload;
 import com.example.honey_create_cloud_pad.bean.RabbitMQBean;
 import com.example.honey_create_cloud_pad.bean.TokenIsOkBean;
+import com.example.honey_create_cloud_pad.bean.VersionInfo;
 import com.example.honey_create_cloud_pad.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud_pad.file.CleanDataUtils;
+import com.example.honey_create_cloud_pad.http.UpdateAppHttpUtil;
 import com.example.honey_create_cloud_pad.pushmessage.HuaWeiPushHmsMessageService;
 import com.example.honey_create_cloud_pad.util.BaseUtil;
 import com.example.honey_create_cloud_pad.util.FileUtil;
@@ -73,6 +75,7 @@ import com.example.honey_create_cloud_pad.util.MarketTools;
 import com.example.honey_create_cloud_pad.util.NetworkUtils;
 import com.example.honey_create_cloud_pad.util.SPUtils;
 import com.example.honey_create_cloud_pad.util.SystemUtil;
+import com.example.honey_create_cloud_pad.util.VersionUtils;
 import com.example.honey_create_cloud_pad.view.AnimationView;
 import com.example.honey_create_cloud_pad.webclient.MWebChromeClient;
 import com.example.honey_create_cloud_pad.webclient.MWebViewClient;
@@ -95,9 +98,14 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.vector.update_app.UpdateAppManager;
+import com.vector.update_app.listener.ExceptionHandler;
 import com.vivo.push.IPushActionListener;
 import com.vivo.push.PushClient;
 import com.xiaomi.mipush.sdk.MiPushClient;
+import com.xj.library.utils.ToastUtils;
+
+import org.simple.eventbus.EventBus;
 
 import java.io.File;
 import java.io.IOException;
@@ -160,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
 
     //调用照相机返回图片文件
     private File tempFile;
-    private long exitTime;
+    private long exitTime = 0;
     //权限
     private static final int NOT_NOTICE = 2;//如果勾选了不再询问
     private AlertDialog alertDialog;
@@ -281,16 +289,21 @@ public class MainActivity extends AppCompatActivity {
     private String huaWeiToken;
     private String oppoToken;
     private Unbinder unbinder;
-    private String content_url;
+//    private String content_url;
     private int NOTIFICATION_SHOW_SHOW_AT_MOST = 5;
+    private boolean isPrepareFinish = false;
+    private static final int WAIT_INTERVAL = 2000;
+    private Context mContext;
 
     @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
         setContentView(R.layout.activity_main);
         unbinder = ButterKnife.bind(this);
+//        EventBus.getDefault().register(this);
         myRequetPermission(PERMISSIONS_APPLICATION);
 
         boolean hasNet = checkNet();
@@ -300,9 +313,10 @@ public class MainActivity extends AppCompatActivity {
             createNotificationChannel();
             initPush(); //平台群推注册
 
-            content_url = (String)SPUtils.getInstance().get("context_url", "");
-            Log.i(TAG, "onCreate: 2"+content_url);
-            webView(content_url);//Constant.text_url);
+//            Date d = new Date();
+//            (String)SPUtils.getInstance().get("context_url", "");
+//            Log.i(TAG, "onCreate: 2"+content_url);
+            webView(Constant.text_url);
             iniVersionName();
 
             Uri uri = getIntent().getData();
@@ -375,6 +389,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+
+        myHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateApp();
+            }
+        }, 5000);
     }
 
     private void initClick(){
@@ -552,6 +573,33 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "sending token to server. token:" + token);
     }
 
+    //版本更新
+    public void updateApp() {
+        int sysVersion = VersionUtils.getVersion(this);
+        Log.e(TAG, "updateApp: "+sysVersion);
+        new UpdateAppManager
+                .Builder()
+                //当前Activity
+                .setActivity(this)
+                //更新地址
+                .setUpdateUrl(Constant.WEBVERSION + sysVersion)
+                .handleException(new ExceptionHandler() {
+                    @Override
+                    public void onException(Exception e) {
+                        Log.e(TAG, "updateApp Exception: "+e.getMessage());
+                        e.printStackTrace();
+                    }
+                })
+                //实现httpManager接口的对象
+                .setHttpManager(new UpdateAppHttpUtil())
+                .setTopPic(R.mipmap.top_3)
+                //为按钮，进度条设置颜色。
+                .setThemeColor(0xff47bbf1)
+                .build()
+                //为按钮，进度条设置颜色。
+                .update();
+    }
+
     /**
      * 获取RabbitMQ服务地址
      */
@@ -641,14 +689,25 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
+                Log.e(TAG, "onKey: web back"+keyCode);
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    Log.e(TAG, "onKey: web back  1");
                     if (mNewWeb != null && mNewWeb.canGoBack()) {
+                        Log.e(TAG, "onKey: web back  2"+myOrder);
                         SharedPreferences sb = getSharedPreferences("userInfoSafe", MODE_PRIVATE);
                         String userInfo = sb.getString("userInfo", "");
                         if (myOrder.contains("/home")) { //首页拦截物理返回键  直接关闭应用
-                            finish();
+                            if ((System.currentTimeMillis() - exitTime) > 2000) {
+                                ToastUtils.show("再按一次退出程序");
+                                exitTime = System.currentTimeMillis();
+                                Log.e(TAG, "show tip: " +exitTime);
+                            } else {
+                                Log.e(TAG, "exit: app" );
+                                finish();
+                            }
+                            mNewWeb.goBack();
                         } else if (myOrder.contains("/information")) { //确保从该页面返回的是首页
-                            webView(content_url);//Constant.text_url);
+                            webView(Constant.text_url);
                         } else {
                             mNewWeb.goBack();
                         }
@@ -665,7 +724,9 @@ public class MainActivity extends AppCompatActivity {
             public void handler(String data, CallBackFunction function) {
                 if (!mVersionName.isEmpty()) {
 //                    mEditText.setText("通过调用Native方法接收数据：\n" + data);
-                    function.onCallBack("版本号V" + mVersionName);
+                    int sysVersion = VersionUtils.getVersion(mContext);
+                    VersionInfo versionInfo = new VersionInfo(mVersionName, sysVersion);
+                    function.onCallBack(new Gson().toJson(versionInfo));
                 }
             }
         });
@@ -1441,6 +1502,7 @@ public class MainActivity extends AppCompatActivity {
         ShortcutBadger.removeCount(this);
         SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
         String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
+        Log.e(TAG, "onStart: "+apply_url);
         if (!TextUtils.isEmpty(apply_url)) {
             webView(apply_url);
         }
@@ -2098,6 +2160,46 @@ public class MainActivity extends AppCompatActivity {
                     getSystemService(Context.NOTIFICATION_SERVICE);
         }
     }
+
+//    @Override
+//    public void onBackPressed() {
+//        Log.e(TAG, "onBackPressed: "+isPrepareFinish);
+//        if(!isPrepareFinish){
+//            new Handler().postDelayed(
+//                    () -> isPrepareFinish = false, WAIT_INTERVAL
+//            );
+//            isPrepareFinish = true;
+//            Toast.makeText(this, "再按一次退出", Toast.LENGTH_SHORT).show();
+//        }
+//        else {
+//            super.onBackPressed();
+//        }
+//    }
+
+//    /**
+//     *  双击退出程序
+//     * @param keyCode
+//     * @param event
+//     * @return
+//     */
+//    public boolean onKeyDown(int keyCode, KeyEvent event) {
+//        Log.e(TAG, "onKeyDown: "+ (keyCode == KeyEvent.KEYCODE_BACK) );
+//        if (keyCode == KeyEvent.KEYCODE_BACK) {
+//            Log.e(TAG, "what?: " +(System.currentTimeMillis() - exitTime));
+//            if ((System.currentTimeMillis() - exitTime) > 2000) {
+//                ToastUtils.show("再按一次退出程序");
+//                exitTime = System.currentTimeMillis();
+//                Log.e(TAG, "show tip: " +exitTime);
+//            } else {
+//                Log.e(TAG, "exit: app" );
+////                super.finish();
+//            }
+//            Log.e(TAG, "what2: " +exitTime);
+//            return false;
+//        }
+//        return super.onKeyDown(keyCode, event);
+//    }
+
 
     @Override
     protected void onNewIntent(Intent intent) {

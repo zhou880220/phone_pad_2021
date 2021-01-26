@@ -76,6 +76,7 @@
 
     <include
         android:id="@+id/web_error"
+        android:layout_below="@+id/popup_menu_2"
         layout="@layout/layout_load_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

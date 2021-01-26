@@ -9,19 +9,30 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.honey_create_cloud_pad.Constant;
 import com.example.honey_create_cloud_pad.R;
 import com.example.honey_create_cloud_pad.bean.RecentlyApps;
+import com.example.honey_create_cloud_pad.bean.Result;
+import com.example.honey_create_cloud_pad.http.CallBackUtil;
+import com.example.honey_create_cloud_pad.http.OkhttpUtil;
 import com.example.honey_create_cloud_pad.ui.ApplyFirstActivity;
 import com.example.honey_create_cloud_pad.ui.ApplySecondActivity;
 import com.example.honey_create_cloud_pad.ui.ApplyThirdActivity;
+import com.google.gson.Gson;
+import com.xj.library.utils.ToastUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import okhttp3.Call;
 
 /**
  * Created by wangpan on 2020/3/12
@@ -85,28 +96,54 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                     onClosePopupListener.onClosePopupClick("关闭");
                 }
                 Log.i("_TAG", "onClick: "+position + " url："+url);
-                if (position == 0) {
-                    Intent intent = new Intent(context, ApplyFirstActivity.class);
-                    intent.putExtra("userid", userid);
-                    intent.putExtra("token", token);
-                    intent.putExtra("url", mContactList.get(0).getAppInterfaceUrl());
-                    intent.putExtra("appId", mContactList.get(0).getAppId() + "");
-                    context.startActivity(intent);
-                } else if (position == 1) {
-                    Intent intent = new Intent(context, ApplySecondActivity.class);
-                    intent.putExtra("userid", userid);
-                    intent.putExtra("token", token);
-                    intent.putExtra("url", mContactList.get(1).getAppInterfaceUrl());
-                    intent.putExtra("appId", mContactList.get(1).getAppId() + "");
-                    context.startActivity(intent);
-                } else if (position == 2) {
-                    Intent intent = new Intent(context, ApplyThirdActivity.class);
-                    intent.putExtra("userid", userid);
-                    intent.putExtra("token", token);
-                    intent.putExtra("url", mContactList.get(2).getAppInterfaceUrl());
-                    intent.putExtra("appId", mContactList.get(2).getAppId() + "");
-                    context.startActivity(intent);
-                }
+                //权限判断
+                int appId =  mContactList.get(position).getAppId();
+                Map<String, String> paramsMap =  new HashMap<>();
+                paramsMap.put("appId", appId+"");
+                paramsMap.put("userId", userid);
+                OkhttpUtil.okHttpGet(Constant.APP_AUTH_CHECK, paramsMap, new CallBackUtil.CallBackString() {
+                    @Override
+                    public void onFailure(Call call, Exception e) {
+                        Log.e("MyContactAdapter", "onFailure: "+e.getMessage());
+                    }
+
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("MyContactAdapter", "checkAuth onResponse: " + response);
+                        Gson gson = new Gson();
+                        Result result = gson.fromJson(response, Result.class);
+                        if (result.getCode() == 200) {
+                            if((Boolean)result.getData()){
+                                if (position == 0) {
+                                    Intent intent = new Intent(context, ApplyFirstActivity.class);
+                                    intent.putExtra("userid", userid);
+                                    intent.putExtra("token", token);
+                                    intent.putExtra("url", mContactList.get(0).getAppInterfaceUrl());
+                                    intent.putExtra("appId", mContactList.get(0).getAppId() + "");
+                                    context.startActivity(intent);
+                                } else if (position == 1) {
+                                    Intent intent = new Intent(context, ApplySecondActivity.class);
+                                    intent.putExtra("userid", userid);
+                                    intent.putExtra("token", token);
+                                    intent.putExtra("url", mContactList.get(1).getAppInterfaceUrl());
+                                    intent.putExtra("appId", mContactList.get(1).getAppId() + "");
+                                    context.startActivity(intent);
+                                } else if (position == 2) {
+                                    Intent intent = new Intent(context, ApplyThirdActivity.class);
+                                    intent.putExtra("userid", userid);
+                                    intent.putExtra("token", token);
+                                    intent.putExtra("url", mContactList.get(2).getAppInterfaceUrl());
+                                    intent.putExtra("appId", mContactList.get(2).getAppId() + "");
+                                    context.startActivity(intent);
+                                }
+                            }else {
+                                showToast(Constant.NO_AUTH_TIP);
+                            }
+                        } else {
+                            showToast(Constant.ERROR_SERVER_TIP);
+                        }
+                    }
+                });
             }
         });
         return viewHolder;
@@ -127,5 +164,16 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
 
     public interface OnClosePopupListener {
         void onClosePopupClick(String name);
+    }
+
+    public void showToast(final String msg) {
+        android.os.Handler handler = new android.os.Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                //要执行的操作
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+            }
+        }, 30);
     }
 }

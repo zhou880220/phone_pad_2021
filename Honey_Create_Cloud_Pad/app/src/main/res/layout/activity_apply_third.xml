@@ -78,6 +78,7 @@
         layout="@layout/layout_load_error"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/popup_menu_3"
         android:visibility="gone" />
 
 <!--    <androidx.recyclerview.widget.RecyclerView-->

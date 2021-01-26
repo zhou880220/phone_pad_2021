@@ -40,6 +40,10 @@
     <uses-permission android:name="com.coloros.mcs.permission.RECIEVE_MCS_MESSAGE" />
     <uses-permission android:name="com.heytap.mcs.permission.RECIEVE_MCS_MESSAGE" />
 
+    <meta-data
+        android:name="UPDATE_APP_KEY"
+        android:value="d59bea014531123f94c3ba7b7af36657"/>
+
     <application
         android:name=".MyApplication"
         android:icon="@drawable/logo"

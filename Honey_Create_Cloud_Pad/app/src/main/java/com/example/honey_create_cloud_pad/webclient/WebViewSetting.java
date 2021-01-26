@@ -22,7 +22,7 @@ public class WebViewSetting {
         webSettings.setBuiltInZoomControls(true);
         webSettings.setAllowFileAccess(true); //设置可以访问文件
 
-        webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         webSettings.setLoadsImagesAutomatically(true);
         webSettings.setDefaultTextEncodingName("utf-8");
