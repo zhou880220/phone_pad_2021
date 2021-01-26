@@ -2,23 +2,41 @@ package com.example.honey_create_cloud;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.telephony.TelephonyManager;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.honey_create_cloud.bean.Result;
+import com.example.honey_create_cloud.http.CallBackUtil;
+import com.example.honey_create_cloud.http.OkhttpUtil;
 import com.example.honey_create_cloud.ui.AgreementDialog;
 import com.example.honey_create_cloud.ui.MainActivity;
 import com.example.honey_create_cloud.ui.ReminderActivity;
 import com.example.honey_create_cloud.util.QMUITouchableSpan;
+import com.example.honey_create_cloud.util.SPUtils;
 import com.example.honey_create_cloud.util.ScreenAdapterUtil;
+import com.example.honey_create_cloud.util.VersionUtils;
+import com.google.gson.Gson;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import okhttp3.Call;
 
 public class StartPageActivity extends AppCompatActivity {
     private Handler handler = new Handler();
@@ -31,6 +49,7 @@ public class StartPageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_start_page);
         MyApplication.Install(this);//初始化推送
         showAlterpPolicy();
+        getInstallInfo();
     }
 
     private void showAlterpPolicy() {
@@ -141,6 +160,103 @@ public class StartPageActivity extends AppCompatActivity {
         } else {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
+    }
+
+    /**
+     * 统计安装次数
+     */
+    private void getInstallInfo () {
+        String hasInstall = (String)SPUtils.getInstance().get(Constant.HAS_INSTALL, "0");
+        int phoneType = MyApplication.getPhoneType();//(Integer) SPUtils.getInstance().get(Constant.PHONE_TYPE, Constant.PHONE_TYPE_OTHER);
+        Log.e("StartPageActivity", "sendInstallInfoToServer: "+hasInstall + " phoneType:"+phoneType);
+        if (hasInstall.equals("0")){//调用服务器统计数据接口
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    sendInstallInfoToServer(phoneType);
+                }
+            }, 500);
+
+        }
+    }
+
+
+    private void sendInstallInfoToServer(int phoneType) {
+        Map<String, String> paramsMap =  new HashMap<>();
+        paramsMap.put("equipmentId", 3+"");
+        paramsMap.put("accessEquipment", phoneType+"");
+        paramsMap.put("version",  "v"+VersionUtils.getVersionName(this));
+        paramsMap.put("systemName", "android "+VersionUtils.getSystemVersion());
+        paramsMap.put("operationMacAddress", getId());
+        String jsonStr = new Gson().toJson(paramsMap);
+        Log.e("StartPageActivity", "jsonStr: "+jsonStr);
+        OkhttpUtil.okHttpPostJson(Constant.APP_INSTALL_TIMES, jsonStr, new CallBackUtil.CallBackString() {
+            @Override
+            public void onFailure(Call call, Exception e) {
+                Log.e("StartPageActivity", "onFailure: "+e.getMessage());
+            }
+
+            @Override
+            public void onResponse(String response) {
+                Log.e("StartPageActivity_TAG", "onResponse: " + response);
+                Result result = new Gson().fromJson(response, Result.class);
+                if (result.getCode() == 200) {
+                    SPUtils.getInstance().put(Constant.HAS_INSTALL, "1");
+                } else {
+                    Log.e("StartPageActivity", "服务器系统异常");
+                }
+            }
+        });
+    }
+
+    //获取手机唯一标识
+    private String getId() {
+        StringBuilder deviceId = new StringBuilder();
+        // 渠道标志
+        try {
+            //IMEI（imei）
+            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
+            if (!TextUtils.isEmpty(imei)) {
+                deviceId.append("imei");
+                deviceId.append(imei);
+                return deviceId.toString();
+            }
+            //序列号（sn）
+            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
+            if (!TextUtils.isEmpty(sn)) {
+                deviceId.append("sn");
+                deviceId.append(sn);
+                return deviceId.toString();
+            }
+            //如果上面都没有， 则生成一个id：随机码
+            String uuid = getUUID();
+            if (!TextUtils.isEmpty(uuid)) {
+                deviceId.append(uuid);
+                return deviceId.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            deviceId.append(getUUID());
+        }
+        return deviceId.toString();
+    }
+
+    /**
+     * 得到全局唯一UUID
+     */
+    private String uuid;
+
+    public String getUUID() {
+        SharedPreferences mShare = getSharedPreferences("uuid", MODE_PRIVATE);
+        if (mShare != null) {
+            uuid = mShare.getString("uuid", "");
+        }
+        if (TextUtils.isEmpty(uuid)) {
+            uuid = UUID.randomUUID().toString();
+            mShare.edit().putString("uuid", uuid).commit();
+        }
+        return uuid;
     }
 
     @Override

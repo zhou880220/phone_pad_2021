@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Environment;
 
 public class VersionUtils {
+
     /**
      * 检查是否存在SDCard
      *
@@ -48,6 +49,15 @@ public class VersionUtils {
             e.printStackTrace();
         }
         return "";
+    }
+
+    /**
+     * 获取当前手机系统版本号
+     *
+     * @return  系统版本号
+     */
+    public static String getSystemVersion() {
+        return android.os.Build.VERSION.RELEASE;
     }
 
 }

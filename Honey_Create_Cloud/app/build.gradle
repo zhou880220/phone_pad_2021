@@ -8,7 +8,7 @@ android {
         applicationId "com.example.honey_create_cloud"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 7
+        versionCode 6
         versionName "1.5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }

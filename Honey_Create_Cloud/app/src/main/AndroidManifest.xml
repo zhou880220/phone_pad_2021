@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.honey_create_cloud">
-
     <!-- 网络权限 -->
     <uses-permission android:name="android.permission.INTERNET" /> <!-- 读写权限 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -44,7 +43,7 @@
 
     <meta-data
         android:name="UPDATE_APP_KEY"
-        android:value="b35bea014531123f94c3ba7b7afbaad2"/>
+        android:value="b35bea014531123f94c3ba7b7afbaad2" />
 
     <application
         android:name=".MyApplication"
@@ -58,8 +57,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-
-
+        <activity android:name=".ui.AppDetailActivity" android:screenOrientation="portrait" />
         <activity android:name=".ui.ReminderActivity" />
         <activity
             android:name=".StartPageActivity"
@@ -99,9 +97,7 @@
             android:name="android.notch_support"
             android:value="false" />
 
-        <activity
-            android:name=".ui.ClipImageActivity"
-            android:screenOrientation="portrait" />
+        <activity android:name=".ui.ClipImageActivity" android:screenOrientation="portrait" />
         <activity
             android:name=".ui.ZingWebActivity"
             android:screenOrientation="portrait"
@@ -160,8 +156,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <receiver android:name=".broadcast.NotificationClickReceiver" />
-        <!-- 小米推送集成 -->
+        <receiver android:name=".broadcast.NotificationClickReceiver" /> <!-- 小米推送集成 -->
         <service
             android:name="com.xiaomi.push.service.XMJobService"
             android:enabled="true"
@@ -209,13 +204,11 @@
             <intent-filter>
                 <action android:name="com.xiaomi.push.PING_TIMER" />
             </intent-filter>
-        </receiver>
-        <!-- vivo推送集成 -->
+        </receiver> <!-- vivo推送集成 -->
         <!-- Vivo Push 需要配置的 service、activity -->
         <service
             android:name="com.vivo.push.sdk.service.CommandClientService"
-            android:exported="true" />
-        <!-- Vivo Push 开放平台中应用的 appid 和 api key -->
+            android:exported="true" /> <!-- Vivo Push 开放平台中应用的 appid 和 api key -->
         <meta-data
             android:name="com.vivo.push.api_key"
             android:value="fd251dabd0ed845cf385694bfc2e8f3e" />
@@ -229,16 +222,14 @@
                 <!-- 接收push消息 -->
                 <action android:name="com.vivo.pushclient.action.RECEIVE" />
             </intent-filter>
-        </receiver>
-        <!-- oppo推送集成 -->
+        </receiver> <!-- oppo推送集成 -->
         <service
             android:name=".pushmessage.PushMessageService"
             android:permission="com.coloros.mcs.permission.SEND_MCS_MESSAGE">
             <intent-filter>
                 <action android:name="com.coloros.mcs.action.RECEIVE_MCS_MESSAGE" />
             </intent-filter>
-        </service>
-        <!-- 兼容Q以下版本 -->
+        </service> <!-- 兼容Q以下版本 -->
         <service
             android:name=".pushmessage.AppPushMessageService"
             android:permission="com.heytap.mcs.permission.SEND_PUSH_MESSAGE">
@@ -246,21 +237,19 @@
                 <action android:name="com.heytap.mcs.action.RECEIVE_MCS_MESSAGE" />
                 <action android:name="com.heytap.msp.push.RECEIVE_MCS_MESSAGE" />
             </intent-filter>
-        </service>
-        <!-- 兼容Q版本 -->
+        </service> <!-- 兼容Q版本 -->
         <activity android:name=".ui.OPPOPushMessageActivity">
             <intent-filter>
                 <action android:name="com.coloros.push.demo.internal" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
-
-        <!--华为推送集成-->
+        </activity> <!-- 华为推送集成 -->
         <service
             android:name=".pushmessage.HuaWeiPushHmsMessageService"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.huawei.push.action.MESSAGING_EVENT"/>
+                <action android:name="com.huawei.push.action.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 

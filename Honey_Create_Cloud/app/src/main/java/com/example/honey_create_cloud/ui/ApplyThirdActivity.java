@@ -295,6 +295,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private RecyclerView mGridPopup;
     private String appUrlData;
     private Uri imageUriThreeApply;
+    private String fromDetail="0";
 
 
     @RequiresApi(api = Build.VERSION_CODES.P)
@@ -308,6 +309,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         token = intent.getStringExtra("token");
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
+        fromDetail = intent.getStringExtra("fromDetail");
         intentOkhttp();
         intentAppNameOkhttp();
         initviewTitle();
@@ -403,13 +405,21 @@ public class ApplyThirdActivity extends AppCompatActivity {
         mApplyMenuHome3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences sp1 = ApplyThirdActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
-                edit1.commit();
-                Intent intent = new Intent(ApplyThirdActivity.this, MainActivity.class);
-                intent.putExtra("apply_url", Constant.text_url);
-                startActivity(intent);
+                mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                    }
+                });
+                finish();
+//                if (fromDetail.equals("1")) {
+//                    finish();
+//                }else {
+//                    SharedPreferences sp1 = ApplyThirdActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+//                    SharedPreferences.Editor edit1 = sp1.edit();
+//                    edit1.putString("apply_url", Constant.apply_url);
+//                    edit1.commit();
+//                    finish();
+//                }
             }
         });
     }
@@ -675,6 +685,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "shareInterface: " + data);
                 try {
                     if (!data.isEmpty()) {
                         //微信初始化
@@ -2259,7 +2270,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(ApplyThirdActivity.this);//添加布局管理器
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);//设置为横向水平滚动，默认是垂直
         mGridPopup.setLayoutManager(layoutManager);//设置布局管理器
-        adapter = new MyContactAdapter(data, this, userid, token, url);
+        adapter = new MyContactAdapter(data, this, userid, token, url, fromDetail);
         mGridPopup.setAdapter(adapter);
     }
 

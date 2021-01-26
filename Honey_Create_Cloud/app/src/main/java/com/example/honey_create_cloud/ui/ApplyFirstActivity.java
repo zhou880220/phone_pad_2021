@@ -92,6 +92,7 @@ import com.github.lzyzsd.jsbridge.BridgeHandler;
 import com.github.lzyzsd.jsbridge.BridgeWebView;
 import com.github.lzyzsd.jsbridge.CallBackFunction;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloader;
@@ -151,6 +152,7 @@ import okhttp3.Response;
 
 import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
 import static com.example.honey_create_cloud.ui.MainActivity.getRealPathFromUri;
+import static com.example.honey_create_cloud.ui.MainActivity.logList;
 
 public class ApplyFirstActivity extends AppCompatActivity {
     @InjectView(R.id.NewWebProgressbar)
@@ -263,7 +265,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String token;
     private String url;
     private String userid;
-    private List<RecentlyApps.DataBean> data;
+    private List<RecentlyApps.DataBean> appData;
     private MWebChromeClient mWebChromeClient;
     public static boolean returnActivityA;
     private String appId;
@@ -301,6 +303,8 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String appUrlData;
     private Uri imageUriThreeApply;
     private String applyTitleName;
+    private String isFromHome = "0";
+    private String fromDetail = "0";
 
     private static final String[] APPLY_PERMISSIONS_APPLICATION = { //第三方应用授权
             Manifest.permission.RECORD_AUDIO,
@@ -309,6 +313,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
     private static final int ADDRESS_PERMISSIONS_CODE = 1;
     private String zxIdTouTiao;
+    private ShareSDK_Web shareSDK_web;
+    private PopupWindow popupWindow1;
+    private PopupWindow popupWindow;
+    private Context mContext;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
@@ -316,6 +324,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_apply_first);
         ButterKnife.inject(this);
+        mContext = this;
 
         Intent intent = getIntent();
         url = intent.getStringExtra("url");
@@ -323,6 +332,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
         userid = intent.getStringExtra("userid");
         appId = intent.getStringExtra("appId");
         zxIdTouTiao = intent.getStringExtra("zxIdTouTiao");
+        isFromHome = intent.getStringExtra("isFromHome");
+        fromDetail = intent.getStringExtra("fromDetail");
+        Log.e(TAG, "onCreate: fromDetail: "+fromDetail );
         if (zxIdTouTiao != null) {
             Map map = JSONObject.parseObject(zxIdTouTiao, Map.class);
             String num = (String) map.get("str");
@@ -442,11 +454,22 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mApplyMenuHome1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences sp1 = ApplyFirstActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
-                SharedPreferences.Editor edit1 = sp1.edit();
-                edit1.putString("apply_url", Constant.text_url);
-                edit1.commit();
+                mNewWeb.evaluateJavascript("window.sdk.notification()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                    }
+                });
                 finish();
+//                if (fromDetail.equals("1")) {
+//                    finish();
+//                }else {
+//                    SharedPreferences sp1 = ApplyFirstActivity.this.getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
+//                    SharedPreferences.Editor edit1 = sp1.edit();
+//                    Log.e(TAG, "onClick: "+ isFromHome);
+//                    edit1.putString("apply_url",  isFromHome.equals("1") ? Constant.text_url : Constant.apply_url);
+//                    edit1.commit();
+//                    finish();
+//                }
             }
         });
 
@@ -717,9 +740,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                boolean isShareSuc = false;
                 try {
+                    Log.e(TAG, "shareInterface: " + data);
                     if (!data.isEmpty()) {
-                        Log.e(TAG, "shareInterface: " + data);
                         //微信初始化
                         wxApi = WXAPIFactory.createWXAPI(ApplyFirstActivity.this, Constant.APP_ID);
                         wxApi.registerApp(Constant.APP_ID);
@@ -736,6 +760,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         if (type == 1) {
                             boolean wxAppInstalled = isWxAppInstalled(ApplyFirstActivity.this);
                             if (wxAppInstalled == true) {
+                                isShareSuc = true;
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
@@ -748,6 +773,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         } else if (type == 2) {
                             boolean wxAppInstalled1 = isWxAppInstalled(ApplyFirstActivity.this);
                             if (wxAppInstalled1 == true) {
+                                isShareSuc = true;
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
@@ -760,6 +786,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         } else if (type == 3) {
                             boolean qqClientAvailable = isQQClientAvailable(ApplyFirstActivity.this);
                             if (qqClientAvailable == true) {
+                                isShareSuc = true;
                                 qqFriend(shareSdkBean);
                             } else {
                                 Toast.makeText(ApplyFirstActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
@@ -771,6 +798,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                function.onCallBack(isShareSuc+"");
             }
         });
         /**
@@ -954,6 +982,19 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mNewWeb.registerHandler("shareSDKData", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                try {
+                    Log.e(TAG, "shareSDKData: " + data);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+
     }
 
 
@@ -1121,6 +1162,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         //分享功能
         @JavascriptInterface
         public void shareSDKData(String shareData) {
+            Log.e(TAG, "shareData: " + shareData);
             //微信初始化
             wxApi = WXAPIFactory.createWXAPI(ApplyFirstActivity.this, Constant.APP_ID);
             wxApi.registerApp(Constant.APP_ID);
@@ -1226,6 +1268,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
             }
         }
     }
+
+
+
 
     /**
      * 判断是否安装了QQ
@@ -1700,6 +1745,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
      * 获取悬浮窗接口信息
      */
     private void intentOkhttp() {
+        Log.e(TAG, "intentOkhttp: get app data");
         OkHttpClient client = new OkHttpClient();
         final Request request = new Request.Builder()
                 .url(Constant.Apply_Details + userid)
@@ -1713,12 +1759,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                String string = response.body().string();
+                Log.e(TAG, "onResponse: " + string);
                 if (response.code() == 200) {
-                    String string = response.body().string();
-                    Log.e(TAG, "onResponse: " + string);
                     Gson gson = new Gson();
                     recentlyApps = gson.fromJson(string, RecentlyApps.class);
-                    data = recentlyApps.getData();
+                    appData = recentlyApps.getData();
                 } else {
 
                 }
@@ -2314,6 +2360,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 mDimissPopup.setVisibility(View.GONE);
                 switchPopup();
                 break;
+
+
+
         }
     }
 
@@ -2383,7 +2432,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(ApplyFirstActivity.this);//添加布局管理器
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);//设置为横向水平滚动，默认是垂直
         mGridPopup.setLayoutManager(layoutManager);//设置布局管理器
-        adapter = new MyContactAdapter(data, this, userid, token, url);
+        adapter = new MyContactAdapter(appData, this, userid, token, url,  fromDetail);
         mGridPopup.setAdapter(adapter);
     }
 

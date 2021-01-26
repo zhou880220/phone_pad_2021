@@ -47,6 +47,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
     private String userid;
     private String token;
     private String url;
+    private String fromDetail;
 
     public void setOnClosePopupListener(OnClosePopupListener onClosePopupListener) {
         this.onClosePopupListener = onClosePopupListener;
@@ -68,12 +69,13 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
         }
     }
 
-    public MyContactAdapter(List<RecentlyApps.DataBean> mContactList, Context context,String userid, String token,String url) {
+    public MyContactAdapter(List<RecentlyApps.DataBean> mContactList, Context context,String userid, String token,String url, String fromDetail) {
         this.mContactList = mContactList;
         this.context = context;
         this.userid = userid;
         this.token = token;
         this.url = url;
+        this.fromDetail = fromDetail;
     }
 
     @NonNull
@@ -115,6 +117,8 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                                    intent.putExtra("token",token);
                                    intent.putExtra("url",mContactList.get(0).getAppInterfaceUrl());
                                    intent.putExtra("appId",mContactList.get(0).getAppId()+"");
+                                   intent.putExtra("fromDetail",fromDetail);
+
                                    context.startActivity(intent);
                                }else if(position == 1){
                                    Intent intent = new Intent(context, ApplySecondActivity.class);
@@ -122,6 +126,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                                    intent.putExtra("token",token);
                                    intent.putExtra("url",mContactList.get(1).getAppInterfaceUrl());
                                    intent.putExtra("appId",mContactList.get(1).getAppId()+"");
+                                   intent.putExtra("fromDetail", fromDetail);
                                    context.startActivity(intent);
                                }else if(position == 2){
                                    Intent intent = new Intent(context, ApplyThirdActivity.class);
@@ -129,6 +134,7 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
                                    intent.putExtra("token",token);
                                    intent.putExtra("url",mContactList.get(2).getAppInterfaceUrl());
                                    intent.putExtra("appId",mContactList.get(2).getAppId()+"");
+                                   intent.putExtra("fromDetail", fromDetail);
                                    context.startActivity(intent);
                                }
                            } else {

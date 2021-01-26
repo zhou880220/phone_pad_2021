@@ -23,8 +23,8 @@ public class Constant {
      * 页面前缀 ：https://mobileclientthird.zhizaoyun.com/
      * 接口前缀 ：https://mobileclientthird.zhizaoyun.com/gateway/
      */
-//    public static final String PAGE_URL = "https://njtestyyzx.zhizaoyun.com/";//"https://mobileclientthird.zhizaoyun.com/";
-//    public static final String INTERFACE_URL = "http://172.16.14.231:18089/";//"https://mobileclientthird.zhizaoyun.com/gateway/";
+//    public static final String PAGE_URL = "http://172.16.23.59:3001/";//"https://njtestyyzx.zhizaoyun.com/";//"https://mobileclientthird.zhizaoyun.com/";
+//    public static final String INTERFACE_URL = "http://172.16.14.231:18080/";//"https://mobileclientthird.zhizaoyun.com/gateway/";
 
     // 测试环境桶名
     public static final String bucket_Name = "njdeveloptest";
@@ -47,6 +47,7 @@ public class Constant {
     public static final String MyOrderList = PAGE_URL + "myOrder";//订单列表
     public static final String MyNews = PAGE_URL + "news"; //咨询页面
     public static final String test_shoppingCart = PAGE_URL + "shoppingCart"; //支付页面订单列表
+    public static final String bind_url = PAGE_URL + "bindPhone"; //绑定手机号码
     //以下为接口前缀      TEST_INTERFACE_URL = "https://njtesthoneycomb.zhizaoyun.com/gateway/";
     public static final String Apply_Details = INTERFACE_URL + "api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
     public static final String upload_multifile = INTERFACE_URL + "api-f/upload/multifile"; //上传图片
@@ -63,12 +64,22 @@ public class Constant {
     public static final String userPushRelation = INTERFACE_URL+"api-msg/userPushRelation";//第一次打开应用保存
     public static final String userFirstUpdate = INTERFACE_URL+"api-msg/userPushRelation/firstUpdate";//用户第一次登录
     public static final String userPushRelationUpdate = INTERFACE_URL+"api-msg/userPushRelation/updateInfo";//用户退出
-    public static final String WEBVERSION = INTERFACE_URL+"api-apps/apps-anon/internal/client/version/details?equipmentId=3&updateVersion=";//apk升级功能  api-apps/
+    public static final String WEBVERSION = INTERFACE_URL+"api-apps/apps-anon/client/version/details?equipmentId=3&updateVersion=";//apk升级功能  api-apps/
     public static final String APP_AUTH_CHECK = INTERFACE_URL+ "api-apps/apps-anon/client/platformPermissionAndPutaway";
+    public static final String APP_INSTALL_TIMES = INTERFACE_URL+"api-apps/apps-anon/phone/install";
 
 
     public static final String NO_AUTH_TIP = "您的企业暂未开通此应用，请联系企业管理页开通后再试。";
     public static final String ERROR_SERVER_TIP = "平台服务器出现未知异常。";
+
+    //手机类型(2：huawei；3：mi；4：oppo；5：vivo; 6:其他手机)
+    public static final String PHONE_TYPE = "PHONE_TYPE";
+    public static final String HAS_INSTALL = "has_install";
+    public static final int PHONE_TYPE_HW = 2;
+    public static final int PHONE_TYPE_MI = 3;
+    public static final int PHONE_TYPE_OP = 4;
+    public static final int PHONE_TYPE_VO = 5;
+    public static final int PHONE_TYPE_OTHER = 6;
 
 
 

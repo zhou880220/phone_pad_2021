@@ -62,7 +62,10 @@ import com.example.honey_create_cloud.bean.HeadPic;
 import com.example.honey_create_cloud.bean.NotificationBean;
 import com.example.honey_create_cloud.bean.PictureUpload;
 import com.example.honey_create_cloud.bean.RabbitMQBean;
+import com.example.honey_create_cloud.bean.ShareSdkBean;
+import com.example.honey_create_cloud.bean.ShareSdkPackages;
 import com.example.honey_create_cloud.bean.TokenIsOkBean;
+import com.example.honey_create_cloud.bean.VersionInfo;
 import com.example.honey_create_cloud.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.http.UpdateAppHttpUtil;
@@ -92,6 +95,15 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.tencent.connect.share.QQShare;
+import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
+import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
+import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.tencent.tauth.IUiListener;
+import com.tencent.tauth.Tencent;
+import com.tencent.tauth.UiError;
 import com.vector.update_app.UpdateAppManager;
 import com.vector.update_app.listener.ExceptionHandler;
 import com.vivo.push.IPushActionListener;
@@ -103,8 +115,11 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -274,6 +289,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean isPrepareFinish = false;
     private static final int WAIT_INTERVAL = 2000;
     private long exitTime = 0;
+    private Context mContext;
+
+    //分享
+    private IWXAPI wxApi;
+    public static Tencent mTencent;
+    private ShareSdkBean shareSdkBean;
 
     @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -281,6 +302,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mContext = this;
 //        getRabbitMQAddressOkhttp();//获取RabbitMq推送服务地址
 
 
@@ -598,6 +620,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCityClick(String name) {  //动态监听页面加载链接
                 myOrder = name;
+                Log.e(TAG, "onCityClick: "+name);
                 if (name != null) {
                     if (name.equals(Constant.login_url)) {
                         mTextPolicyReminder.setVisibility(View.VISIBLE);
@@ -609,7 +632,13 @@ public class MainActivity extends AppCompatActivity {
                         mCloseLoginPage.setVisibility(View.VISIBLE);
                         mTextPolicyReminderBack.setVisibility(View.GONE);
                         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-                    } else if (name.contains("/about")) {
+                    } else if (name.contains("bindPhone")) {
+                        Log.e(TAG, "onCityClick: bind");
+                        mTextPolicyReminder.setVisibility(View.VISIBLE);
+                        mCloseLoginPage.setVisibility(View.VISIBLE);
+                        mTextPolicyReminderBack.setVisibility(View.GONE);
+                        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+                    }  else if (name.contains("/about")) {
                         mTextPolicyReminder.setVisibility(View.VISIBLE);
                         mCloseLoginPage.setVisibility(View.GONE);
                         mTextPolicyReminderBack.setVisibility(View.VISIBLE);
@@ -676,7 +705,10 @@ public class MainActivity extends AppCompatActivity {
             public void handler(String data, CallBackFunction function) {
                 try {
                     if (!mVersionName.isEmpty()) {
-                        function.onCallBack("V" + mVersionName);
+//                        function.onCallBack("V" + mVersionName);
+                        int sysVersion = VersionUtils.getVersion(mContext);
+                        VersionInfo versionInfo = new VersionInfo(mVersionName, sysVersion);
+                        function.onCallBack(new Gson().toJson(versionInfo));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -931,33 +963,52 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handler(String data, CallBackFunction function) {
                 try {
+                    Log.e(TAG, "跳转第三方:1 " + data);
                     if (!data.isEmpty()) {
-                        Log.e(TAG, "跳转第三方:1 " + data);
                         Map map = JSONObject.parseObject(data, Map.class);
-                        String redirectUrl = (String) map.get("redirectUrl");//"http://mobileclientthird.zhizaoyun.com/jsapi/view";
-
+                        String redirectUrl = (String) map.get("redirectUrl");//"https://mobileclientthird.zhizaoyun.com/jsapi/view/api.html";//
+                        String currentUrl = mNewWeb.getUrl();
+                        Log.e(TAG, "currentUrl: "+currentUrl );
                         int appLyId = (int) map.get("appId");
+                        int toDetail = map.get("toDetail") ==null ? 0 : (int) map.get("toDetail");
+                        int fromDetail = map.get("fromDetail") ==null ? 0 : (int) map.get("fromDetail");
                         String appId = String.valueOf(appLyId);
                         if (!redirectUrl.isEmpty()) {
                             Log.e(TAG, "跳转第三方:2 " + redirectUrl);
-                            if (zxIdTouTiao == null || zxIdTouTiao.isEmpty()) {
-                                Log.e(TAG, "跳转第三方:3 " + redirectUrl);
-                                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                            Log.e(TAG, (toDetail == 1) +" toDetail: "+toDetail);
+                            if (toDetail == 1) {//改版应用详情页面
+                                Intent intent = new Intent(MainActivity.this, AppDetailActivity.class);
                                 intent.putExtra("url", redirectUrl);
                                 intent.putExtra("token", usertoken1);
                                 intent.putExtra("userid", userid1);
                                 intent.putExtra("appId", appId);
+                                intent.putExtra("isFromHome", currentUrl.contains("apply") ? "0": "1");
                                 startActivity(intent);
                             } else {
-                                Log.e(TAG, "跳转第三方:4" + redirectUrl);
-                                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
-                                intent.putExtra("url", redirectUrl);
-                                intent.putExtra("token", usertoken1);
-                                intent.putExtra("userid", userid1);
-                                intent.putExtra("appId", appId);
-                                intent.putExtra("zxIdTouTiao", zxIdTouTiao);
-                                startActivity(intent);
-                                zxIdTouTiao = "";
+                                Log.e(TAG, "to other: ");
+                                if (zxIdTouTiao == null || zxIdTouTiao.isEmpty()) {
+                                    Log.e(TAG, "跳转第三方:3 " + redirectUrl);
+                                    Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                    intent.putExtra("url", redirectUrl);
+                                    intent.putExtra("token", usertoken1);
+                                    intent.putExtra("userid", userid1);
+                                    intent.putExtra("appId", appId);
+                                    intent.putExtra("isFromHome", currentUrl.contains("apply") ? "0": "1");
+                                    intent.putExtra("fromDetail", fromDetail+"");
+                                    startActivity(intent);
+                                } else {
+                                    Log.e(TAG, "跳转第三方:4" + redirectUrl);
+                                    Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                    intent.putExtra("url", redirectUrl);
+                                    intent.putExtra("token", usertoken1);
+                                    intent.putExtra("userid", userid1);
+                                    intent.putExtra("appId", appId);
+                                    intent.putExtra("zxIdTouTiao", zxIdTouTiao);
+                                    intent.putExtra("isFromHome", currentUrl.contains("apply") ? "0": "1");
+                                    intent.putExtra("fromDetail", fromDetail+"");
+                                    startActivity(intent);
+                                    zxIdTouTiao = "";
+                                }
                             }
                         }
                     }
@@ -993,13 +1044,13 @@ public class MainActivity extends AppCompatActivity {
         mNewWeb.registerHandler("showNewsParams", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
+                Log.e(TAG, "跳转咨询页面: " + data);
                 try {
                     if (!data.isEmpty()) {
-                        Log.e(TAG, "跳转咨询页面: " + data);
                         Map map = JSONObject.parseObject(data, Map.class);
                         String link = (String) map.get("link");
-                        String code = (String) map.get("code");
-                        String token = (String) map.get("token");
+//                        String code = (String) map.get("code");
+//                        String token = (String) map.get("token");
                         String from = (String) map.get("from");
                         if (!data.isEmpty()) {
                             Intent intent = new Intent(MainActivity.this, NewsActivity.class);
@@ -1196,6 +1247,82 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        /**
+         * 分享更具传递的type类型进行分享的页面
+         */
+        mNewWeb.registerHandler("shareInterface", new BridgeHandler() {
+            @Override
+            public void handler(String data, CallBackFunction function) {
+                boolean isShareSuc = false;
+                try {
+                    Log.e(TAG, "shareInterface: " + data);
+                    if (!data.isEmpty()) {
+                        //微信初始化
+                        wxApi = WXAPIFactory.createWXAPI(MainActivity.this, Constant.APP_ID);
+                        wxApi.registerApp(Constant.APP_ID);
+                        //QQ初始化
+                        mTencent = Tencent.createInstance(Constant.QQ_APP_ID, MainActivity.this);
+
+//                        Map map = new Gson().fromJson(data, Map.class);// JSONObject.parseObject(num, Map.class);
+//                        String num = (String) map.get("obj");
+//                        Log.e(TAG, "type: " + num);
+//                        Map mapType = new Gson().fromJson(num, Map.class);
+//                        int type = (int) mapType.get("type");
+//                        Log.e(TAG, "type: " + type);
+//                        String value = String.valueOf(mapType.get("data"));
+//                        Gson gson = new Gson();
+//                        ShareSdkBean shareSdkBean = gson.fromJson(value, ShareSdkBean.class);
+
+                        ShareSdkPackages shareSdkPackages = new Gson().fromJson(data, ShareSdkPackages.class);
+                        int type = shareSdkPackages.getType();
+                        Log.e(TAG, "type: " + type);
+                        ShareSdkBean shareSdkBean = shareSdkPackages.getData();
+                        Log.e(TAG, "url: " + shareSdkBean.getUrl());
+                        if (type == 1) {
+                            boolean wxAppInstalled = isWxAppInstalled(MainActivity.this);
+                            if (wxAppInstalled == true) {
+                                isShareSuc = true;
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(0, shareSdkBean); //好友
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(MainActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                            }
+                        } else if (type == 2) {
+                            boolean wxAppInstalled1 = isWxAppInstalled(MainActivity.this);
+                            if (wxAppInstalled1 == true) {
+                                isShareSuc = true;
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        wechatShare(1, shareSdkBean); //朋友圈
+                                    }
+                                }).start();
+                            } else {
+                                Toast.makeText(MainActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
+                            }
+                        } else if (type == 3) {
+                            boolean qqClientAvailable = isQQClientAvailable(MainActivity.this);
+                            if (qqClientAvailable == true) {
+                                isShareSuc = true;
+                                qqFriend(shareSdkBean);
+                            } else {
+                                Toast.makeText(MainActivity.this, "手机未安装QQ", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                function.onCallBack(isShareSuc+"");
+            }
+        });
     }
 
     /**
@@ -1376,19 +1503,19 @@ public class MainActivity extends AppCompatActivity {
          * @param interfaceUrl
          * @param appId
          */
-        @JavascriptInterface
-        public void showApplyParams(String interfaceUrl, String appId) {
-            if (!interfaceUrl.isEmpty()) {
-                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
-                intent.putExtra("url", interfaceUrl);
-                intent.putExtra("token", usertoken1);
-                intent.putExtra("userid", userid1);
-                intent.putExtra("appId", appId);
-                startActivity(intent);
-            } else {
-                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
-            }
-        }
+//        @JavascriptInterface
+//        public void showApplyParams(String interfaceUrl, String appId) {
+//            if (!interfaceUrl.isEmpty()) {
+//                Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+//                intent.putExtra("url", interfaceUrl);
+//                intent.putExtra("token", usertoken1);
+//                intent.putExtra("userid", userid1);
+//                intent.putExtra("appId", appId);
+//                startActivity(intent);
+//            } else {
+//                Toast.makeText(context, "暂无数据", Toast.LENGTH_SHORT).show();
+//            }
+//        }
 
         /**
          * 获取跳转咨询url
@@ -1811,6 +1938,7 @@ public class MainActivity extends AppCompatActivity {
         ShortcutBadger.removeCount(this);
         SharedPreferences sp1 = getSharedPreferences("apply_urlSafe", MODE_PRIVATE);
         String apply_url = sp1.getString("apply_url", "");//从其它页面回调，并加载要回调的页面
+        Log.e(TAG, " onStart: "+ apply_url);
         if (!TextUtils.isEmpty(apply_url)) {
             webView(apply_url);
         }
@@ -2268,6 +2396,169 @@ public class MainActivity extends AppCompatActivity {
         }
         return uuid;
     }
+
+
+    /**
+     * 判断微信是否安装
+     *
+     * @param context
+     * @return true 已安装   false 未安装
+     */
+    public static boolean isWxAppInstalled(Context context) {
+        IWXAPI wxApi = WXAPIFactory.createWXAPI(context, null);
+        wxApi.registerApp(Constant.APP_ID);
+        boolean bIsWXAppInstalled = false;
+        bIsWXAppInstalled = wxApi.isWXAppInstalled();
+        return bIsWXAppInstalled;
+    }
+
+    private Bitmap compressImage(Bitmap image) {
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
+        int options = 100;
+        while (baos.toByteArray().length / 1024 > 32) {  //循环判断如果压缩后图片是否大于32kb,大于继续压缩
+            baos.reset();//重置baos即清空baos
+            image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
+            options -= 1;//每次都减少1
+        }
+        ByteArrayInputStream isBm = new ByteArrayInputStream(baos.toByteArray());//把压缩后的数据baos存放到ByteArrayInputStream中
+        Bitmap bitmap = BitmapFactory.decodeStream(isBm, null, null);//把ByteArrayInputStream数据生成图片
+        return bitmap;
+    }
+
+    public static byte[] bmpToByteArray(final Bitmap bmp, final boolean needRecycle) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, output);
+        if (needRecycle) {
+            bmp.recycle();
+        }
+        byte[] result = output.toByteArray();
+        try {
+            output.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    private String buildTransaction(final String type) {
+        return (type == null) ? String.valueOf(System.currentTimeMillis()) : type + System.currentTimeMillis();
+    }
+
+    /**
+     * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
+     */
+    private void wechatShare(int flag, ShareSdkBean shareSdkBean) {
+        WXWebpageObject webpage = new WXWebpageObject();
+        webpage.webpageUrl = shareSdkBean.getUrl();
+        WXMediaMessage msg = new WXMediaMessage(webpage);
+        msg.title = shareSdkBean.getTitle();
+        msg.description = shareSdkBean.getTxt();
+        //这里替换一张自己工程里的图片资源
+//        Bitmap thumb = BitmapFactory.decodeResource(getResources(), R.drawable.wechat);
+        Bitmap thumb = null;
+        try {
+            thumb = BitmapFactory.decodeStream(new URL(shareSdkBean.getIcon()).openStream());
+//注意下面的这句压缩，120，150是长宽。
+//一定要压缩，不然会分享失败
+            Bitmap thumbBmp = compressImage(thumb);
+//Bitmap回收
+//            bitmap1.recycle();
+            msg.thumbData = bmpToByteArray(thumbBmp, true);
+//      msg.setThumbImage(thumb);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        msg.setThumbImage(bitmap1);
+        SendMessageToWX.Req req = new SendMessageToWX.Req();
+        req.transaction = buildTransaction("webpage");
+//        req.transaction = String.valueOf(System.currentTimeMillis());
+        req.message = msg;
+        req.scene = flag == 0 ? SendMessageToWX.Req.WXSceneSession : SendMessageToWX.Req.WXSceneTimeline;
+        Log.e(TAG, "wechatShare: send" );
+        wxApi.sendReq(req);
+        Log.e(TAG, "wechatShare: end" );
+    }
+
+
+    /**
+     * 判断是否安装了QQ
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isQQClientAvailable(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
+        if (pinfo != null) {
+            for (int i = 0; i < pinfo.size(); i++) {
+                String pn = pinfo.get(i).packageName;
+                if (pn.equals("com.tencent.mobileqq")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 发送给QQ朋友
+     */
+    int shareType = 1;
+    //IMG
+    public static String IMG = "";
+    int mExtarFlag = 0x00;
+
+    private void qqFriend(ShareSdkBean shareSdkBean) {
+        final Bundle params = new Bundle();
+        //
+        params.putString(QQShare.SHARE_TO_QQ_TITLE, shareSdkBean.getTitle()); //分享的标题
+        params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, shareSdkBean.getUrl());//分享的链接
+        params.putString(QQShare.SHARE_TO_QQ_SUMMARY, shareSdkBean.getTxt());//分享的摘要
+
+        params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, shareSdkBean.getIcon());//分享的图片
+//        params.putString(shareType == QQShare.SHARE_TO_QQ_TYPE_IMAGE ? QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL
+//                : QQShare.SHARE_TO_QQ_IMAGE_URL, IMG);
+        params.putString(QQShare.SHARE_TO_QQ_APP_NAME, getPackageName());
+        params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, shareType);
+        params.putInt(QQShare.SHARE_TO_QQ_EXT_INT, mExtarFlag);
+
+        doShareToQQ(params);
+        return;
+    }
+
+    private void doShareToQQ(final Bundle params) {
+
+        // QQ分享要在主线程做
+        new Handler().post(new Runnable() {
+
+            @Override
+            public void run() {
+                if (null != mTencent) {
+                    mTencent.shareToQQ(MainActivity.this, params, qqShareListener);
+                }
+            }
+        });
+    }
+
+    IUiListener qqShareListener = new IUiListener() {
+        @Override
+        public void onCancel() {
+            if (shareType != QQShare.SHARE_TO_QQ_TYPE_IMAGE) {
+            }
+        }
+
+        @Override
+        public void onComplete(Object response) {
+        }
+
+        @Override
+        public void onError(UiError e) {
+        }
+    };
+
+
 
     @Override
     protected void onDestroy() {

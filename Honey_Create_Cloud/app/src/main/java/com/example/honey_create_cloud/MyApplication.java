@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.example.honey_create_cloud.ui.MainActivity;
+import com.example.honey_create_cloud.util.SPUtils;
 import com.heytap.msp.push.HeytapPushManager;
 import com.heytap.msp.push.callback.ICallBackResultService;
 import com.huawei.hms.push.HmsMessaging;
@@ -47,6 +48,8 @@ public class MyApplication extends Application {
     //热修复
     private ApplicationLike tinkerPatchApplicationLike;
 
+    private static int PHONE_TYPE = Constant.PHONE_TYPE_OTHER;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -61,7 +64,9 @@ public class MyApplication extends Application {
 
     private void HuaweiPush() {
         if (android.os.Build.BRAND.toLowerCase().contains("huawei")) {
+            setPhoneType(Constant.PHONE_TYPE_HW);
             Log.e(TAG, "AppPush: 检测到该手机是huawei定制商");
+//            SPUtils.getInstance().put(Constant.PHONE_TYPE, Constant.PHONE_TYPE_HW);
             HmsMessaging.getInstance(this);
         }else{
             Log.e(TAG, "AppPush: 检测到该手机不是huawei定制商");
@@ -70,7 +75,10 @@ public class MyApplication extends Application {
 
     private void OppoPush() {
         if (android.os.Build.BRAND.toLowerCase().contains("oppo")) {
+//            PHONE_TYPE = Constant.PHONE_TYPE_OP;
+            setPhoneType(Constant.PHONE_TYPE_OP);
             Log.e(TAG, "AppPush: 检测到该手机是oppo定制商");
+//            SPUtils.getInstance().put(Constant.PHONE_TYPE, Constant.PHONE_TYPE_OP);
             initOppoPush();
         } else {
             Log.e(TAG, "AppPush: 检测到该手机不是oppo定制商");
@@ -138,6 +146,8 @@ public class MyApplication extends Application {
 
     private void VivoPush() {
         if (Build.BRAND.toLowerCase().contains("vivo")) {
+            setPhoneType(Constant.PHONE_TYPE_VO);
+//            SPUtils.getInstance().put(Constant.PHONE_TYPE, Constant.PHONE_TYPE_VO);
             //vivo推送集成初始化
             PushClient.getInstance(getApplicationContext()).initialize();
             PushClient.getInstance(getApplicationContext()).turnOnPush(new IPushActionListener() {
@@ -155,6 +165,8 @@ public class MyApplication extends Application {
 
     private void XiaomiPush() {
         if (android.os.Build.BRAND.toLowerCase().contains("xiaomi")) {
+            setPhoneType(Constant.PHONE_TYPE_MI);
+//            SPUtils.getInstance().put(Constant.PHONE_TYPE, Constant.PHONE_TYPE_MI);
             Log.e(TAG, "AppPush: 检测到该手机为小米定制商");
             if (shouldInit()) {
                 MiPushClient.registerPush(this, APP_ID, APP_KEY);
@@ -227,6 +239,14 @@ public class MyApplication extends Application {
 
     public static Context getContext() {
         return ApplicationContext;
+    }
+
+    public static int getPhoneType() {
+        return PHONE_TYPE;
+    }
+
+    public static void setPhoneType(int phoneType) {
+        PHONE_TYPE = phoneType;
     }
 
     public static class DemoHandler extends Handler {
