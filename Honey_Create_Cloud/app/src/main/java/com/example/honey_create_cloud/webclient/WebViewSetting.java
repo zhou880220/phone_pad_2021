@@ -16,6 +16,8 @@ public class WebViewSetting {
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
 
+
+
         webSettings.setSupportZoom(false);
         webSettings.setTextZoom(100);
         webSettings.setDisplayZoomControls(false);
