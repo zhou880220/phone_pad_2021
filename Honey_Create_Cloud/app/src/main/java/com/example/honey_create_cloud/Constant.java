@@ -23,8 +23,8 @@ public class Constant {
      * 页面前缀 ：https://mobileclientthird.zhizaoyun.com/
      * 接口前缀 ：https://mobileclientthird.zhizaoyun.com/gateway/
      */
-//    public static final String PAGE_URL = "http://172.16.23.59:3001/";//"https://njtestyyzx.zhizaoyun.com/";//"https://mobileclientthird.zhizaoyun.com/";
-//    public static final String INTERFACE_URL = "http://172.16.14.231:18080/";//"https://mobileclientthird.zhizaoyun.com/gateway/";
+//    public static final String PAGE_URL = "http://172.16.41.4:3002/";//"https://njtestyyzx.zhizaoyun.com/";//"https://mobileclientthird.zhizaoyun.com/";
+//    public static final String INTERFACE_URL = "https://mobileclientthird.zhizaoyun.com/gateway/";//"http://172.16.14.231:18080/";//
 
     // 测试环境桶名
     public static final String bucket_Name = "njdeveloptest";
@@ -48,6 +48,8 @@ public class Constant {
     public static final String MyNews = PAGE_URL + "news"; //咨询页面
     public static final String test_shoppingCart = PAGE_URL + "shoppingCart"; //支付页面订单列表
     public static final String bind_url = PAGE_URL + "bindPhone"; //绑定手机号码
+    public static final String config_url = PAGE_URL + "config.json"; //获取配置
+
     //以下为接口前缀      TEST_INTERFACE_URL = "https://njtesthoneycomb.zhizaoyun.com/gateway/";
     public static final String Apply_Details = INTERFACE_URL + "api-apps/client/recentlyApps?equipmentId=3&userId="; //获取悬浮窗应用
     public static final String upload_multifile = INTERFACE_URL + "api-f/upload/multifile"; //上传图片
@@ -80,6 +82,12 @@ public class Constant {
     public static final int PHONE_TYPE_OP = 4;
     public static final int PHONE_TYPE_VO = 5;
     public static final int PHONE_TYPE_OTHER = 6;
+
+    public static final  String CODED_CONTENT = "codedContent";
+
+    //h5 版本
+    public static final String H5_VERSION = "H5_VERSION";
+    public static final String HAS_UDATE = "has_update";
 
 
 

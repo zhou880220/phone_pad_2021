@@ -26,7 +26,7 @@ public class Constant {
 
 
 
-    public static String profile = "test";//dev prod test
+    public static String profile = "prod";//dev prod test
 
 //    public static final String PAGE_URL = "http://172.16.23.59:3002/";//"https://njtestyyzx.zhizaoyun.com/";//"https://mobileclientthird.zhizaoyun.com/";
 //    public static final String INTERFACE_URL = "http://172.16.14.231:18080/";//"https://mobileclientthird.zhizaoyun.com/gateway/";
@@ -37,9 +37,9 @@ public class Constant {
 
 
     // 测试及调试环境桶名
-    public static final String bucket_Name = "njdeveloptest";
+//    public static final String bucket_Name = "njdeveloptest";
     // 生产环境桶名
-//    public static final String bucket_Name = "honeycom-service";
+    public static final String bucket_Name = "honeycom-service";
 
     ///接口调用
     // APP_ID 替换为你的应用从官方网站申请到的合法appId

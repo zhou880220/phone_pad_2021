@@ -70,9 +70,12 @@ import com.example.honey_create_cloud.broadcast.NotificationClickReceiver;
 import com.example.honey_create_cloud.file.CleanDataUtils;
 import com.example.honey_create_cloud.http.UpdateAppHttpUtil;
 import com.example.honey_create_cloud.pushmessage.HuaWeiPushHmsMessageService;
+import com.example.honey_create_cloud.util.BaseUtils;
+import com.example.honey_create_cloud.util.BitmapUtil;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.MarketTools;
 import com.example.honey_create_cloud.util.QMUITouchableSpan;
+import com.example.honey_create_cloud.util.SPUtils;
 import com.example.honey_create_cloud.util.SystemUtil;
 import com.example.honey_create_cloud.util.VersionUtils;
 import com.example.honey_create_cloud.webclient.MWebChromeClient;
@@ -88,6 +91,7 @@ import com.huawei.hmf.tasks.Task;
 import com.huawei.hms.aaid.HmsInstanceId;
 import com.huawei.hms.common.ApiException;
 import com.huawei.hms.push.HmsMessaging;
+import com.huawei.hms.utils.StringUtil;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -97,6 +101,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.tencent.connect.share.QQShare;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
+import com.tencent.mm.opensdk.modelmsg.WXImageObject;
 import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
@@ -118,6 +123,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -600,6 +606,11 @@ public class MainActivity extends AppCompatActivity {
      */
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void webView(String url) {
+        String hasUpdate = (String) SPUtils.getInstance().get(Constant.HAS_UDATE, "0");
+        if (hasUpdate.equals("1")) {
+            Log.e(TAG,"----> h5 page has update");
+            mNewWeb.clearCache(true);
+        }
 
         if (Build.VERSION.SDK_INT >= 19) {
             mNewWeb.getSettings().setLoadsImagesAutomatically(true);
@@ -612,6 +623,7 @@ public class MainActivity extends AppCompatActivity {
         if (webSettings != null) {
             WebViewSetting.initweb(webSettings);
         }
+
         //Handler做为通信桥梁的作用，接收处理来自H5数据及回传Native数据的处理，当h5调用send()发送消息的时候，调用MyHandlerCallBack
         mNewWeb.setDefaultHandler(new MyHandlerCallBack(mOnSendDataListener));
         myChromeWebClient = new MWebChromeClient(this, mNewWebProgressbar, mWebError);
@@ -639,9 +651,9 @@ public class MainActivity extends AppCompatActivity {
                         mTextPolicyReminderBack.setVisibility(View.GONE);
                         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
                     }  else if (name.contains("/about")) {
-                        mTextPolicyReminder.setVisibility(View.VISIBLE);
+                        mTextPolicyReminder.setVisibility(View.GONE);
                         mCloseLoginPage.setVisibility(View.GONE);
-                        mTextPolicyReminderBack.setVisibility(View.VISIBLE);
+                        mTextPolicyReminderBack.setVisibility(View.GONE);
                     } else {
                         pageReload = true;
                         mTextPolicyReminder.setVisibility(View.GONE);
@@ -966,7 +978,9 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "跳转第三方:1 " + data);
                     if (!data.isEmpty()) {
                         Map map = JSONObject.parseObject(data, Map.class);
-                        String redirectUrl = (String) map.get("redirectUrl");//"https://mobileclientthird.zhizaoyun.com/jsapi/view/api.html";//
+//                        String _redirectUrl = (String) map.get("redirectUrl");//"https://mobileclientthird.zhizaoyun.com/jsapi/view/api.html";//
+//                        Map<String,String> reqMap = BaseUtils.urlSplit(_redirectUrl);
+                        String redirectUrl = (String) map.get("redirectUrl");//"http://172.16.41.4:3001/equipment/app/home?access_token="+reqMap.get("access_token");//
                         String currentUrl = mNewWeb.getUrl();
                         Log.e(TAG, "currentUrl: "+currentUrl );
                         int appLyId = (int) map.get("appId");
@@ -988,7 +1002,13 @@ public class MainActivity extends AppCompatActivity {
                                 Log.e(TAG, "to other: ");
                                 if (zxIdTouTiao == null || zxIdTouTiao.isEmpty()) {
                                     Log.e(TAG, "跳转第三方:3 " + redirectUrl);
-                                    Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                    Intent intent;
+                                    //设备app单独跳转一个页面
+                                    if (redirectUrl.contains("equipment/app")) {
+                                        intent = new Intent(MainActivity.this, EquipmentActivity.class);
+                                    }else {
+                                        intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                    }
                                     intent.putExtra("url", redirectUrl);
                                     intent.putExtra("token", usertoken1);
                                     intent.putExtra("userid", userid1);
@@ -998,7 +1018,13 @@ public class MainActivity extends AppCompatActivity {
                                     startActivity(intent);
                                 } else {
                                     Log.e(TAG, "跳转第三方:4" + redirectUrl);
-                                    Intent intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                    Intent intent;
+                                    //设备app单独跳转一个页面
+                                    if (redirectUrl.contains("equipment/app")) {
+                                         intent = new Intent(MainActivity.this, EquipmentActivity.class);
+                                    }else {
+                                         intent = new Intent(MainActivity.this, ApplyFirstActivity.class);
+                                    }
                                     intent.putExtra("url", redirectUrl);
                                     intent.putExtra("token", usertoken1);
                                     intent.putExtra("userid", userid1);
@@ -1028,7 +1054,8 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-        }); //可能不用
+        });
+        //可能不用
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
             public void handler(String data, CallBackFunction function) {
@@ -1095,23 +1122,23 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //用户点击跳转系统手机拨打电话界面  该接口用户自己页面拨打电话
-        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
-            @Override
-            public void handler(String data, CallBackFunction function) {
-                try {
-                    if (!data.isEmpty()) {
-                        Log.e(TAG, "打开通讯录: " + data);
-                        Map map = JSONObject.parseObject(data, Map.class);
-                        String tele = (String) map.get("tele");
-                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+//        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
+//            @Override
+//            public void handler(String data, CallBackFunction function) {
+//                try {
+//                    if (!data.isEmpty()) {
+//                        Log.e(TAG, "打开通讯录: " + data);
+//                        Map map = JSONObject.parseObject(data, Map.class);
+//                        String tele = (String) map.get("tele");
+//                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        startActivity(intent);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
 
         //用户点击跳转系统手机拨打电话界面  该接口用于第三方拨打电话
         mNewWeb.registerHandler("openCall", new BridgeHandler() {
@@ -1489,13 +1516,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //联系客服  打开通讯录
-        @JavascriptInterface
-        public void OpenPayIntent(String intentOpenPay) {
-            Log.e(TAG, "OpenPayIntent: " + intentOpenPay);
-            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        }
+//        @JavascriptInterface
+//        public void OpenPayIntent(String intentOpenPay) {
+//            Log.e(TAG, "OpenPayIntent: " + intentOpenPay);
+//            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+//            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            startActivity(intent);
+//        }
 
         /**
          * 获取第三放url路径
@@ -2073,7 +2100,7 @@ public class MainActivity extends AppCompatActivity {
                     for (int result : grantResults) {
                         if (result != PackageManager.PERMISSION_GRANTED) {
                             //弹出对话框引导用户去设置
-                            showDialog();
+//                            showDialog();
                             Toast.makeText(MainActivity.this, "请求权限被拒绝", Toast.LENGTH_LONG).show();
                             break;
                         } else {
@@ -2119,21 +2146,6 @@ public class MainActivity extends AppCompatActivity {
         ClipImageActivity.goToClipActivity(this, uri);
     }
 
-    public static String getRealPathFromUri(Context context, Uri contentUri) {
-        Cursor cursor = null;
-        try {
-            String[] proj = {MediaStore.Images.Media.DATA};
-            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
-
     /**
      * 获取用户权限
      */
@@ -2156,7 +2168,7 @@ public class MainActivity extends AppCompatActivity {
             case REQUEST_PICK:  //调用系统相册返回
                 if (resultCode == RESULT_OK) {
                     Uri uri = intent.getData();
-                    String realPathFromUri = getRealPathFromUri(this, uri);
+                    String realPathFromUri = BaseUtils.getRealPathFromURI(this, uri);
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
                         gotoClipActivity(uri);
                     } else {
@@ -2351,32 +2363,32 @@ public class MainActivity extends AppCompatActivity {
     private String getId() {
         StringBuilder deviceId = new StringBuilder();
         // 渠道标志
-        try {
-            //IMEI（imei）
-            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
-            if (!TextUtils.isEmpty(imei)) {
-                deviceId.append("imei");
-                deviceId.append(imei);
-                return deviceId.toString();
-            }
-            //序列号（sn）
-            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
-            if (!TextUtils.isEmpty(sn)) {
-                deviceId.append("sn");
-                deviceId.append(sn);
-                return deviceId.toString();
-            }
-            //如果上面都没有， 则生成一个id：随机码
-            String uuid = getUUID();
-            if (!TextUtils.isEmpty(uuid)) {
-                deviceId.append(uuid);
-                return deviceId.toString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+//        try {
+//            //IMEI（imei）
+//            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+//            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
+//            if (!TextUtils.isEmpty(imei)) {
+//                deviceId.append("imei");
+//                deviceId.append(imei);
+//                return deviceId.toString();
+//            }
+//            //序列号（sn）
+//            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
+//            if (!TextUtils.isEmpty(sn)) {
+//                deviceId.append("sn");
+//                deviceId.append(sn);
+//                return deviceId.toString();
+//            }
+//            //如果上面都没有， 则生成一个id：随机码
+//            String uuid = getUUID();
+//            if (!TextUtils.isEmpty(uuid)) {
+//                deviceId.append(uuid);
+//                return deviceId.toString();
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
             deviceId.append(getUUID());
-        }
+//        }
         return deviceId.toString();
     }
 
@@ -2412,12 +2424,38 @@ public class MainActivity extends AppCompatActivity {
         return bIsWXAppInstalled;
     }
 
-    private Bitmap compressImage(Bitmap image) {
+    /**
+     * 分享图片先保存手机本地
+     * @param bmp
+     * @return
+     */
+    public String saveImageToGallery(Bitmap bmp) {
+        // 首先保存图片
+        String storePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dearxy";
+        File appDir = new File(storePath);
+        if (!appDir.exists()) {
+            appDir.mkdir();
+        }
+        String fileName = System.currentTimeMillis() + ".jpg";
+        File file = new File(appDir, fileName);
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            //通过io流的方式来压缩保存图片
+            bmp.compress(Bitmap.CompressFormat.JPEG, 60, fos);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return storePath + "/" + fileName;
+    }
+
+    private Bitmap compressImage(Bitmap image, int quality) {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
+        image.compress(Bitmap.CompressFormat.JPEG, quality, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
         int options = 100;
-        while (baos.toByteArray().length / 1024 > 32) {  //循环判断如果压缩后图片是否大于32kb,大于继续压缩
+        while (baos.toByteArray().length / 1024 > 15) {  //循环判断如果压缩后图片是否大于32kb,大于继续压缩
             baos.reset();//重置baos即清空baos
             image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
             options -= 1;//每次都减少1
@@ -2455,17 +2493,36 @@ public class MainActivity extends AppCompatActivity {
         WXMediaMessage msg = new WXMediaMessage(webpage);
         msg.title = shareSdkBean.getTitle();
         msg.description = shareSdkBean.getTxt();
+
         //这里替换一张自己工程里的图片资源
 //        Bitmap thumb = BitmapFactory.decodeResource(getResources(), R.drawable.wechat);
         Bitmap thumb = null;
         try {
+//            String icon = "https://njdeveloptest.obs.cn-east-2.myhuaweicloud.com/app/5814c3c0be2345ada27a39a026b90f2b.jpg?AccessKeyId=CLX6MAVTXA1WBLKJFVI7&Expires=1614242065&Signature=2OCNPomd914jAFlmq6tN3sXAGVk%3D";
             thumb = BitmapFactory.decodeStream(new URL(shareSdkBean.getIcon()).openStream());
+
+            String path = saveImageToGallery(thumb);
+            //初始化WXImageObject和WXMediaMessage对象
+//            WXImageObject imageObject;
+//            if (!TextUtils.isEmpty(path)) {
+//                imageObject = new WXImageObject();
+//                imageObject.setImagePath(path);
+//            } else {
+//                imageObject = new WXImageObject(thumb);
+//            }
+//            msg.mediaObject = imageObject;
+            //设置缩略图
+            Bitmap scaledBitmap = BitmapUtil.decodeSampledBitmap(path,120, 150);//Bitmap.createScaledBitmap(thumb, 120, 150, true);
+            thumb.recycle();
+            msg.thumbData = bmpToByteArray(scaledBitmap, true);
+
 //注意下面的这句压缩，120，150是长宽。
 //一定要压缩，不然会分享失败
-            Bitmap thumbBmp = compressImage(thumb);
-//Bitmap回收
-//            bitmap1.recycle();
-            msg.thumbData = bmpToByteArray(thumbBmp, true);
+//            Bitmap thumbBmp = compressImage(thumb, 10);
+////Bitmap回收
+////            bitmap1.recycle();
+//            Log.e(TAG, "wechatShare: "+thumbBmp.getByteCount());
+//            msg.thumbData = bmpToByteArray(thumbBmp, true);
 //      msg.setThumbImage(thumb);
         } catch (IOException e) {
             e.printStackTrace();
@@ -2517,6 +2574,12 @@ public class MainActivity extends AppCompatActivity {
         params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, shareSdkBean.getUrl());//分享的链接
         params.putString(QQShare.SHARE_TO_QQ_SUMMARY, shareSdkBean.getTxt());//分享的摘要
 
+        Log.e(TAG, "qqFriend: "+shareSdkBean.getIcon());
+//        if (TextUtils.isEmpty(shareSdkBean.getIcon())) {//为空取本地
+//            params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, "http://119.45.19.115/file/app/logo.png");//分享的图片
+//        } else {
+//            params.putString(QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, FileUtil.getResourcesUri(mContext, R.drawable.logo));//分享的图片
+//        }
         params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, shareSdkBean.getIcon());//分享的图片
 //        params.putString(shareType == QQShare.SHARE_TO_QQ_TYPE_IMAGE ? QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL
 //                : QQShare.SHARE_TO_QQ_IMAGE_URL, IMG);
@@ -2551,10 +2614,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onComplete(Object response) {
+            Log.e(TAG, "onComplete: share suc"+response);
         }
 
         @Override
         public void onError(UiError e) {
+            Log.e(TAG, "onComplete: share fail"+e.errorDetail);
         }
     };
 

@@ -8,7 +8,7 @@ android {
         applicationId "com.example.honey_create_cloud"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 6
+        versionCode 9
         versionName "1.5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
@@ -98,6 +98,7 @@ dependencies {
     implementation 'com.github.yuzhiqiang1993:zxing:2.2.8'
     //微信支付
     api 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:+'
+    implementation files('libs/open_sdk_r8353806_lite.jar')
     //EventBus
     implementation 'org.greenrobot:eventbus:3.0.0'
     //base64
@@ -134,5 +135,8 @@ dependencies {
     implementation 'com.qianwen:okhttp-utils:3.8.0'
     implementation 'com.lzy.net:okgo:3.0.4'
     implementation 'com.tbruyelle.rxpermissions:rxpermissions:0.9.4@aar'
+    //浮动布局
+    implementation 'com.nex3z:flow-layout:1.0.0'
+
 
 }

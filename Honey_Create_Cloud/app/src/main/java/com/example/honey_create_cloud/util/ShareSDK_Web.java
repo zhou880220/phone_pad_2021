@@ -21,7 +21,7 @@ import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
 import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
-import com.yzq.zxinglibrary.encode.CodeCreator;
+//import com.yzq.zxinglibrary.encode.CodeCreator;
 
 import java.util.HashMap;
 

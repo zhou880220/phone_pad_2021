@@ -58,6 +58,7 @@ import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
 import com.yzq.zxinglibrary.encode.CodeCreator;
+//import com.yzq.zxinglibrary.encode.CodeCreator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

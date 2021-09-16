@@ -81,4 +81,13 @@
         <item name="android:windowBackground">@color/transparent</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+
+    <style name="WrapWrapTv" parent="WrapWrap">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/selector_btn_orange</item>
+        <item name="android:onClick">onClick</item>
+        <item name="android:padding">4dp</item>
+    </style>
 </resources>

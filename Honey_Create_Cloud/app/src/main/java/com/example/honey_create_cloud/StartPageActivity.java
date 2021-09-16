@@ -50,6 +50,7 @@ public class StartPageActivity extends AppCompatActivity {
         MyApplication.Install(this);//初始化推送
         showAlterpPolicy();
         getInstallInfo();
+        getH5Version();
     }
 
     private void showAlterpPolicy() {
@@ -62,7 +63,8 @@ public class StartPageActivity extends AppCompatActivity {
                     "，并开始使用产品或服务，即表示您已经理解并同意该条款，该条款将构成对您具有法律约束力的文件。" +
                     "用户隐私政策主要包含以下内容：个人信息及设备权限（手机号、用户名、邮箱、设备属性信息、设备位置信息、设备连接信息等）" +
                     "的收集、使用与调用等。您可以通过阅读完整版的《用户协议》和《隐私政策》了解详细信息。如您同意，" +
-                    "请点击“同意并继续”开始接受我们的服务"), null, "用户协议").setBtName("同意", "不同意")
+                    "请点击“同意并继续”开始接受我们的服务"), null, "用户协议")
+                    .setBtName("同意", "暂不使用")
                     .setOnClickListener(new View.OnClickListener() {
 
                         @Override
@@ -178,6 +180,33 @@ public class StartPageActivity extends AppCompatActivity {
             }, 500);
 
         }
+    }
+
+    /**
+     * 获取h5版本信息
+     */
+    private void getH5Version () {
+
+        OkhttpUtil.okHttpGet(Constant.config_url, new CallBackUtil.CallBackString() {
+            @Override
+            public void onFailure(Call call, Exception e) { }
+
+            @Override
+            public void onResponse(String response) {
+                Log.e("StartPageActivity_TAG", "onResponse2: " + response);
+                Map<String,Object> map = new Gson().fromJson(response, HashMap.class);
+                if (map !=null ){
+                    String oldVersion = (String) SPUtils.getInstance().get(Constant.H5_VERSION, "1");
+                    Log.e("StartPageActivity_TAG", "H5_VERSION: " + map.get("H5_VERSION"));
+                    if (map.get("H5_VERSION")!=null && !map.get("H5_VERSION").equals(oldVersion)) {
+                        SPUtils.getInstance().put(Constant.HAS_UDATE, "1");
+                        SPUtils.getInstance().put(Constant.H5_VERSION, map.get("H5_VERSION"));
+                    }else {
+                        SPUtils.getInstance().put(Constant.HAS_UDATE, "0");
+                    }
+                }
+            }
+        });
     }
 
 

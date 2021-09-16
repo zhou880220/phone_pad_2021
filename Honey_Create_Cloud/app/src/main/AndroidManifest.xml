@@ -57,7 +57,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".ui.AppDetailActivity" android:screenOrientation="portrait" />
+        <activity android:name=".ui.EquipmentActivity" android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.AppDetailActivity"
+            android:screenOrientation="portrait" />
         <activity android:name=".ui.ReminderActivity" />
         <activity
             android:name=".StartPageActivity"
@@ -97,7 +100,9 @@
             android:name="android.notch_support"
             android:value="false" />
 
-        <activity android:name=".ui.ClipImageActivity" android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.ClipImageActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.ZingWebActivity"
             android:screenOrientation="portrait"

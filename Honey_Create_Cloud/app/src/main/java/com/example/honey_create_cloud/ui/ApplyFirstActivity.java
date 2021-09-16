@@ -82,6 +82,7 @@ import com.example.honey_create_cloud.bean.ShareSdkBean;
 import com.example.honey_create_cloud.bean.TakePhoneBean;
 import com.example.honey_create_cloud.bean.TitleName;
 import com.example.honey_create_cloud.recorder.AudioRecorderButton;
+import com.example.honey_create_cloud.util.BaseUtils;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
@@ -108,6 +109,8 @@ import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 import com.yzq.zxinglibrary.encode.CodeCreator;
+//import com.yzq.zxinglibrary.android.CaptureActivity;
+//import com.yzq.zxinglibrary.encode.CodeCreator;
 
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
@@ -151,8 +154,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
-import static com.example.honey_create_cloud.ui.MainActivity.getRealPathFromUri;
-import static com.example.honey_create_cloud.ui.MainActivity.logList;
 
 public class ApplyFirstActivity extends AppCompatActivity {
     @InjectView(R.id.NewWebProgressbar)
@@ -308,7 +309,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
     private static final String[] APPLY_PERMISSIONS_APPLICATION = { //第三方应用授权
             Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.READ_PHONE_STATE,
+//            Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.ACCESS_FINE_LOCATION};
 
     private static final int ADDRESS_PERMISSIONS_CODE = 1;
@@ -375,6 +376,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         mApplyBackImage1.setOnClickListener(new View.OnClickListener() {  //返回
             @Override
             public void onClick(View v) {
+                Log.e(TAG, "onClick: goBackUrl:"+goBackUrl);
                 if (mNewWeb != null && mNewWeb.canGoBack()) {
                     Log.e(TAG, "onClick: 可以返回");
                     if (goBackUrl.contains("eboard_mobile/systemIndex")) { //电子看板
@@ -389,7 +391,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
                         finish();
                     } else if (goBackUrl.contains("app/home")) { //自主控制
                         finish();
-                    } else if (mWebError.getVisibility() == View.VISIBLE) {
+                    }  else if (goBackUrl.contains("mobile/brochure.html")) { //产品样本库
+                        finish();
+                    } else if (goBackUrl.contains("mobile/doc.html")) { //技术资料库
+                        finish();
+                    } else if (goBackUrl.contains("mobile/drawing.html")) { //工程图纸库
+                        finish();
+                    }else if (mWebError.getVisibility() == View.VISIBLE) {
                         finish();
                     } else {
                         mNewWeb.goBack();
@@ -599,19 +607,19 @@ public class ApplyFirstActivity extends AppCompatActivity {
         /**
          * 获取通讯录
          */
-        mNewWeb.registerHandler("getMailList", new BridgeHandler() {
-            @Override
-            public void handler(String data, CallBackFunction function) {
-                try {
-                    stringBuffer = new StringBuffer();
-                    String allContancts = getAllContancts(stringBuffer);
-                    String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
-                    function.onCallBack(substring + "]");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+//        mNewWeb.registerHandler("getMailList", new BridgeHandler() {
+//            @Override
+//            public void handler(String data, CallBackFunction function) {
+//                try {
+//                    stringBuffer = new StringBuffer();
+//                    String allContancts = getAllContancts(stringBuffer);
+//                    String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
+//                    function.onCallBack(substring + "]");
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
         /**
          * 录制语音
          */
@@ -630,7 +638,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     mAudioRecorderButton.setAudioFinishRecorderListener(new AudioRecorderButton.AudioFinishRecorderListener() {
                         @Override
                         public void onFinish(float seconds, String filePath) {
-                            String s = tobase64(filePath);
+                            String s = BaseUtils.tobase64(filePath);
                             function.onCallBack("{" + "\"" + "success" + "\"" + ":\"" + "true" + "\"" + ",\"" + "data" + "\"" + ":\"" + s + "\"" + "}");
                             if (popupWindow.isShowing()) {
                                 popupWindow.dismiss();
@@ -696,7 +704,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                                 String ApplyId = String.valueOf(Listdata.get(i).getAppId());
                                 if (appId.equals(ApplyId)) {
                                     char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String pinYinHeadChar = BaseUtils.getPinYinHeadChar(chars);
                                     String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
                                     downFilePath(FileLoad, newReplaceUrl);
                                 }
@@ -708,7 +716,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                                 String ApplyId = String.valueOf(Listdata.get(i).getAppId());
                                 if (appId.equals(ApplyId)) {
                                     char[] chars = Listdata.get(i).getAppName().toCharArray();
-                                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                                    String pinYinHeadChar = BaseUtils.getPinYinHeadChar(chars);
                                     String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
                                     downFilePath(FileLoad, num);
                                 }
@@ -784,7 +792,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                                 Toast.makeText(ApplyFirstActivity.this, "手机未安装微信", Toast.LENGTH_SHORT).show();
                             }
                         } else if (type == 3) {
-                            boolean qqClientAvailable = isQQClientAvailable(ApplyFirstActivity.this);
+                            boolean qqClientAvailable = BaseUtils.isQQClientAvailable(ApplyFirstActivity.this);
                             if (qqClientAvailable == true) {
                                 isShareSuc = true;
                                 qqFriend(shareSdkBean);
@@ -954,23 +962,23 @@ public class ApplyFirstActivity extends AppCompatActivity {
         /**
          * 拨打电话
          */
-        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
-            @Override
-            public void handler(String data, CallBackFunction function) {
-                try {
-                    if (!data.isEmpty()) {
-                        Log.e(TAG, "打开通讯录: " + data);
-                        Map map = JSONObject.parseObject(data, Map.class);
-                        String tele = (String) map.get("tele");
-                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+//        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
+//            @Override
+//            public void handler(String data, CallBackFunction function) {
+//                try {
+//                    if (!data.isEmpty()) {
+//                        Log.e(TAG, "打开通讯录: " + data);
+//                        Map map = JSONObject.parseObject(data, Map.class);
+//                        String tele = (String) map.get("tele");
+//                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        startActivity(intent);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
         //打开手机系统通知界面
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
@@ -1011,12 +1019,12 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
 
         //联系客服  打开通讯录
-        @JavascriptInterface
-        public void OpenPayIntent(String intentOpenPay) {
-            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        }
+//        @JavascriptInterface
+//        public void OpenPayIntent(String intentOpenPay) {
+//            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+//            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            startActivity(intent);
+//        }
 
         //跳转支付页面
         @JavascriptInterface
@@ -1105,7 +1113,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 String ApplyId = String.valueOf(data.get(i).getAppId());
                 if (appId.equals(ApplyId)) {
                     char[] chars = data.get(i).getAppName().toCharArray();
-                    String pinYinHeadChar = getPinYinHeadChar(chars);
+                    String pinYinHeadChar = BaseUtils.getPinYinHeadChar(chars);
                     String FileLoad = "zhizaoyun/download/" + pinYinHeadChar + "/";
                     downFilePath(FileLoad, downPath);
                 }
@@ -1252,7 +1260,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                 }
                 break;
                 case R.id.qq:
-                    boolean qqClientAvailable = isQQClientAvailable(ApplyFirstActivity.this);
+                    boolean qqClientAvailable = BaseUtils.isQQClientAvailable(ApplyFirstActivity.this);
                     if (qqClientAvailable == true) {
                         qqFriend(shareSdkBean);
                     } else {
@@ -1272,25 +1280,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
 
 
-    /**
-     * 判断是否安装了QQ
-     *
-     * @param context
-     * @return
-     */
-    public static boolean isQQClientAvailable(Context context) {
-        final PackageManager packageManager = context.getPackageManager();
-        List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
-        if (pinfo != null) {
-            for (int i = 0; i < pinfo.size(); i++) {
-                String pn = pinfo.get(i).packageName;
-                if (pn.equals("com.tencent.mobileqq")) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+
 
     /**
      * 发送给QQ朋友
@@ -1406,24 +1396,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
 
     }
 
-    public static String getPinYinHeadChar(char[] chars) {
-        StringBuffer sb = new StringBuffer();
-        HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
-        defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
-        defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
-        for (int i = 0; i < chars.length; i++) {
-            if (chars[i] > 128) {
-                try {
-                    sb.append(PinyinHelper.toHanyuPinyinStringArray(chars[i], defaultFormat)[0]);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                sb.append(chars[i]);
-            }
-        }
-        return sb.toString();
-    }
 
     /**
      * @param flag (0:分享到微信好友，1：分享到微信朋友圈)
@@ -1441,10 +1413,10 @@ public class ApplyFirstActivity extends AppCompatActivity {
             thumb = BitmapFactory.decodeStream(new URL(shareSdkBean.getIcon()).openStream());
 //注意下面的这句压缩，120，150是长宽。
 //一定要压缩，不然会分享失败
-            Bitmap thumbBmp = compressImage(thumb);
+            Bitmap thumbBmp = BaseUtils.compressImage(thumb);
 //Bitmap回收
 //            bitmap1.recycle();
-            msg.thumbData = bmpToByteArray(thumbBmp, true);
+            msg.thumbData = BaseUtils.bmpToByteArray(thumbBmp, true);
 //      msg.setThumbImage(thumb);
         } catch (IOException e) {
             e.printStackTrace();
@@ -1456,36 +1428,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         req.message = msg;
         req.scene = flag == 0 ? SendMessageToWX.Req.WXSceneSession : SendMessageToWX.Req.WXSceneTimeline;
         wxApi.sendReq(req);
-    }
-
-    private Bitmap compressImage(Bitmap image) {
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
-        int options = 100;
-        while (baos.toByteArray().length / 1024 > 32) {  //循环判断如果压缩后图片是否大于32kb,大于继续压缩
-            baos.reset();//重置baos即清空baos
-            image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
-            options -= 1;//每次都减少1
-        }
-        ByteArrayInputStream isBm = new ByteArrayInputStream(baos.toByteArray());//把压缩后的数据baos存放到ByteArrayInputStream中
-        Bitmap bitmap = BitmapFactory.decodeStream(isBm, null, null);//把ByteArrayInputStream数据生成图片
-        return bitmap;
-    }
-
-    public static byte[] bmpToByteArray(final Bitmap bmp, final boolean needRecycle) {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.PNG, 100, output);
-        if (needRecycle) {
-            bmp.recycle();
-        }
-        byte[] result = output.toByteArray();
-        try {
-            output.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
     }
 
     private String buildTransaction(final String type) {
@@ -1536,32 +1478,32 @@ public class ApplyFirstActivity extends AppCompatActivity {
     private String getId() {
         StringBuilder deviceId = new StringBuilder();
         // 渠道标志
-        try {
-            //IMEI（imei）
-            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
-            if (!TextUtils.isEmpty(imei)) {
-                deviceId.append("imei");
-                deviceId.append(imei);
-                return deviceId.toString();
-            }
-            //序列号（sn）
-            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
-            if (!TextUtils.isEmpty(sn)) {
-                deviceId.append("sn");
-                deviceId.append(sn);
-                return deviceId.toString();
-            }
-            //如果上面都没有， 则生成一个id：随机码
-            String uuid = getUUID();
-            if (!TextUtils.isEmpty(uuid)) {
-                deviceId.append(uuid);
-                return deviceId.toString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+//        try {
+//            //IMEI（imei）
+//            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+//            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
+//            if (!TextUtils.isEmpty(imei)) {
+//                deviceId.append("imei");
+//                deviceId.append(imei);
+//                return deviceId.toString();
+//            }
+//            //序列号（sn）
+//            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
+//            if (!TextUtils.isEmpty(sn)) {
+//                deviceId.append("sn");
+//                deviceId.append(sn);
+//                return deviceId.toString();
+//            }
+//            //如果上面都没有， 则生成一个id：随机码
+//            String uuid = getUUID();
+//            if (!TextUtils.isEmpty(uuid)) {
+//                deviceId.append(uuid);
+//                return deviceId.toString();
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
             deviceId.append(getUUID());
-        }
+//        }
         return deviceId.toString();
     }
 
@@ -1585,65 +1527,65 @@ public class ApplyFirstActivity extends AppCompatActivity {
     /**
      * 获取通讯录中的联系人及号码
      */
-    private String getAllContancts(StringBuffer sb) {
-        sb.append("[");
-        // 获取手机通讯录信息
-        ContentResolver resolver = this.getContentResolver();
-        // 获取联系人信息
-        personCur = resolver.query(ContactsContract.Contacts.CONTENT_URI, null,
-                null, null, null);
-        if (personCur == null) {
-            try {//此处适配了6.0权限
-                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-            } catch (Exception e) {
-                Intent intentSet = new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
-                startActivity(intentSet);
-            }
-            return null;
-        }
-        // 循环遍历，获取每个联系人的姓名和电话号码
-        while (personCur.moveToNext()) {
-            // 联系人姓名
-            String cname = "";
-            String clientname = "clientname";
-            // 联系人电话
-            String cnum = "";
-            String clientnum = "clientnum";
-            // 联系人id号码
-            String ID;
-            ID = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts._ID));
-            // 联系人姓名
-            cname = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            // id的整型数据
-            int id = Integer.parseInt(ID);
-            if (id > 0) {
-                // 获取指定id号码的电话号码
-                Cursor c = resolver.query(
-                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                        null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + ID, null, null);
-                // 遍历游标
-                while (c.moveToNext()) {
-                    cnum = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                    if (!TextUtils.isEmpty(cname)) {
-//                        list.add(new PhoneCallBean(cname, cnum));//查询通讯录中所有联系人
-                        sb.append("{").append("\"" + clientname + "\"").append(":").append("\"" + cname + "\"").append(",")
-                                .append("\"" + clientnum + "\"").append(":").append("\"" + cnum + "\"").append("}").append(",");
-                    }
-                }
-                if (c != null && !c.isClosed())
-                    c.close();
-            }
-        }
-        try {
-            if (personCur != null && !personCur.isClosed()) {
-                personCur.close();
-            }
-        } catch (Exception e) {
-        }
-        return sb.toString();
-    }
+//    private String getAllContancts(StringBuffer sb) {
+//        sb.append("[");
+//        // 获取手机通讯录信息
+//        ContentResolver resolver = this.getContentResolver();
+//        // 获取联系人信息
+//        personCur = resolver.query(ContactsContract.Contacts.CONTENT_URI, null,
+//                null, null, null);
+//        if (personCur == null) {
+//            try {//此处适配了6.0权限
+//                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+//                intent.setData(Uri.parse("package:" + getPackageName()));
+//                startActivity(intent);
+//            } catch (Exception e) {
+//                Intent intentSet = new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+//                startActivity(intentSet);
+//            }
+//            return null;
+//        }
+//        // 循环遍历，获取每个联系人的姓名和电话号码
+//        while (personCur.moveToNext()) {
+//            // 联系人姓名
+//            String cname = "";
+//            String clientname = "clientname";
+//            // 联系人电话
+//            String cnum = "";
+//            String clientnum = "clientnum";
+//            // 联系人id号码
+//            String ID;
+//            ID = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts._ID));
+//            // 联系人姓名
+//            cname = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+//            // id的整型数据
+//            int id = Integer.parseInt(ID);
+//            if (id > 0) {
+//                // 获取指定id号码的电话号码
+//                Cursor c = resolver.query(
+//                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+//                        null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + ID, null, null);
+//                // 遍历游标
+//                while (c.moveToNext()) {
+//                    cnum = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+//                    if (!TextUtils.isEmpty(cname)) {
+////                        list.add(new PhoneCallBean(cname, cnum));//查询通讯录中所有联系人
+//                        sb.append("{").append("\"" + clientname + "\"").append(":").append("\"" + cname + "\"").append(",")
+//                                .append("\"" + clientnum + "\"").append(":").append("\"" + cnum + "\"").append("}").append(",");
+//                    }
+//                }
+//                if (c != null && !c.isClosed())
+//                    c.close();
+//            }
+//        }
+//        try {
+//            if (personCur != null && !personCur.isClosed()) {
+//                personCur.close();
+//            }
+//        } catch (Exception e) {
+//        }
+//        return sb.toString();
+//    }
 
     /**
      * 跳转到相册
@@ -1678,34 +1620,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(tempFile));
         }
         startActivityForResult(intent, REQUEST_CAPTURE);
-    }
-
-    public String tobase64(String url) {
-        try {
-            File file = new File(url);
-            // 下载网络文件
-            int bytesum = 0;
-            int byteread = 0;
-            InputStream inStream = new FileInputStream(file);
-            int size = inStream.available();
-            byte[] buffer = new byte[size];
-            while ((byteread = inStream.read(buffer)) != -1) {
-                inStream.read(buffer);
-                inStream.close();
-                byte[] bytes = Base64.encodeBase64(buffer);
-//                byte[] bytes = new byte[]{};
-                String str = new String(bytes);
-                if (str != null) {
-                    str = str.replaceAll(System.getProperty("line.separator"), "");
-                    str = str.replaceAll("=", "");
-                    str = str.replaceAll(" ", "");
-                }
-                return str;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     /**
@@ -1755,15 +1669,17 @@ public class ApplyFirstActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "intentOkhttp: " + e.getMessage());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String string = response.body().string();
-                Log.e(TAG, "onResponse: " + string);
+                Log.e(TAG, "onResponse1: " + string);
                 if (response.code() == 200) {
                     Gson gson = new Gson();
                     recentlyApps = gson.fromJson(string, RecentlyApps.class);
+                    Log.e(TAG, "onResponse2: "+recentlyApps );
                     appData = recentlyApps.getData();
                 } else {
 
@@ -1782,7 +1698,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     for (int result : grantResults) {
                         if (result != PackageManager.PERMISSION_GRANTED) {
                             //弹出对话框引导用户去设置
-                            showDialog();
+//                            showDialog();
                             Toast.makeText(ApplyFirstActivity.this, "请求权限被拒绝", Toast.LENGTH_LONG).show();
                             break;
                         } else {
@@ -1893,7 +1809,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             {
                 if (resultCode == RESULT_OK) {
                     if (data != null) {
-                        String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
+                        String stringExtra = data.getStringExtra(Constant.CODED_CONTENT);//com.yzq.zxinglibrary.common.
                         Log.e(TAG, "onActivityResult: "+ stringExtra);
                         mNewWeb.evaluateJavascript("window.sdk.getCodeUrl(\"" + stringExtra + "\")", new ValueCallback<String>() {
                             @Override
@@ -1941,7 +1857,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
             {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
-                    String realPathFromUri = getRealPathFromUri(this, uri);
+                    String realPathFromUri = BaseUtils.getRealPathFromURI(this, uri);
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
                         gotoClipActivity(uri);
                     } else {
@@ -2021,7 +1937,7 @@ public class ApplyFirstActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {//4.4以后
             path = getPath(this, uri);
         } else {//4.4以下下系统调用方法
-            path = getRealPathFromURI(uri);
+            path = BaseUtils.getRealPathFromURI(this, uri);
         }
 
         Uri[] results = null;
@@ -2078,19 +1994,6 @@ public class ApplyFirstActivity extends AppCompatActivity {
         }
         uploadMessageAboveL.onReceiveValue(results);
         uploadMessageAboveL = null;
-    }
-
-    //4.4以下下系统调用方法 将uri转文件真实路径
-    public String getRealPathFromURI(Uri contentUri) {
-        String res = null;
-        String[] proj = {MediaStore.Images.Media.DATA};
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if (null != cursor && cursor.moveToFirst()) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            res = cursor.getString(column_index);
-            cursor.close();
-        }
-        return res;
     }
 
     /**
@@ -2748,8 +2651,9 @@ public class ApplyFirstActivity extends AppCompatActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            Log.e(TAG, "onKeyDown: goBackUrl:"+goBackUrl);
             if (mNewWeb != null && mNewWeb.canGoBack()) {
-                Log.e(TAG, "onClick: 可以返回");
+                Log.e(TAG, "onKeyDown: 可以返回");
                 if (goBackUrl.contains("eboard_mobile/systemIndex")) { //电子看板
                     finish();
                 } else if (goBackUrl.contains("mobileHome/")) { //制造云头条
@@ -2762,7 +2666,13 @@ public class ApplyFirstActivity extends AppCompatActivity {
                     finish();
                 } else if (goBackUrl.contains("app/home")) { //自主控制
                     finish();
-                } else if (mWebError.getVisibility() == View.VISIBLE) {
+                } else if (goBackUrl.contains("mobile/brochure.html")) { //产品样本库
+                    finish();
+                } else if (goBackUrl.contains("mobile/doc.html")) { //技术资料库
+                    finish();
+                } else if (goBackUrl.contains("mobile/drawing.html")) { //工程图纸库
+                    finish();
+                }  else if (mWebError.getVisibility() == View.VISIBLE) {
                     finish();
                 } else {
                     mNewWeb.goBack();

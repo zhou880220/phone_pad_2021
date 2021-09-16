@@ -27,6 +27,7 @@ public class ClipImageActivity extends AppCompatActivity implements View.OnClick
 
     public static final String TYPE = "type";
     public static final int REQ_CLIP_AVATAR = 50;
+    public static final int REQ_CLIP_DEVICE_SYSTEM = 51;
 
     private ClipViewLayout mClipViewLayout;
     private ImageView mBack;

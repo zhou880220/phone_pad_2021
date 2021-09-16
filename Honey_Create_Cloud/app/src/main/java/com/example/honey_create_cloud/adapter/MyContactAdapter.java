@@ -2,6 +2,7 @@ package com.example.honey_create_cloud.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -155,12 +156,14 @@ public class MyContactAdapter extends RecyclerView.Adapter<MyContactAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (mContactList.get(position).getLogoUrl() != null){
+        if (!TextUtils.isEmpty(mContactList.get(position).getLogoUrl())){
             //            Glide.with(context).load(beanList.get(position).getSP_LOGOURL()).apply((RequestOptions.bitmapTransform
 //                    (new RoundedCorners(30)))).into((ImageView) viewHolder.studio_image);
-            Glide.with(context).load(mContactList.get(position).getLogoUrl()).apply(RequestOptions.bitmapTransform(new RoundedCorners(14))).into(holder.imageView);
+            RequestOptions requestOptions = RequestOptions.bitmapTransform(new RoundedCorners(14)).error(R.drawable.app_logo);
+            Glide.with(context).load(mContactList.get(position).getLogoUrl()).apply(requestOptions).into(holder.imageView);
             holder.appNameView.setText(mContactList.get(position).getAppName());
         }
+
     }
 
     @Override

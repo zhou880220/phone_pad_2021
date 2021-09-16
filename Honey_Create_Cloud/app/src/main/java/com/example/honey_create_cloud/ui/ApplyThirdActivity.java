@@ -78,6 +78,7 @@ import com.example.honey_create_cloud.bean.ShareSdkBean;
 import com.example.honey_create_cloud.bean.TakePhoneBean;
 import com.example.honey_create_cloud.bean.TitleName;
 import com.example.honey_create_cloud.recorder.AudioRecorderButton;
+import com.example.honey_create_cloud.util.BaseUtils;
 import com.example.honey_create_cloud.util.FileUtil;
 import com.example.honey_create_cloud.util.ShareSDK_Web;
 import com.example.honey_create_cloud.util.SystemUtil;
@@ -104,6 +105,8 @@ import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
 import com.yzq.zxinglibrary.android.CaptureActivity;
 import com.yzq.zxinglibrary.encode.CodeCreator;
+//import com.yzq.zxinglibrary.android.CaptureActivity;
+//import com.yzq.zxinglibrary.encode.CodeCreator;
 
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
@@ -147,7 +150,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.example.honey_create_cloud.ui.ClipImageActivity.REQ_CLIP_AVATAR;
-import static com.example.honey_create_cloud.ui.MainActivity.getRealPathFromUri;
 
 public class ApplyThirdActivity extends AppCompatActivity {
     @InjectView(R.id.NewWebProgressbar)
@@ -337,6 +339,12 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     } else if (goBackUrl.contains("app/home")) { //自主控制
                         finish();
                     } else if (goBackUrl.contains("apply_search/home")) { //测试环境新头条地址
+                        finish();
+                    } else if (goBackUrl.contains("mobile/brochure.html")) { //产品样本库
+                        finish();
+                    } else if (goBackUrl.contains("mobile/doc.html")) { //技术资料库
+                        finish();
+                    } else if (goBackUrl.contains("mobile/drawing.html")) { //工程图纸库
                         finish();
                     } else if (mWebError.getVisibility() == View.VISIBLE) {
                         finish();
@@ -542,20 +550,20 @@ public class ApplyThirdActivity extends AppCompatActivity {
         /**
          * 获取通讯录
          */
-        mNewWeb.registerHandler("getMailList", new BridgeHandler() {
-            @Override
-            public void handler(String data, CallBackFunction function) {
-                try {
-                    stringBuffer = new StringBuffer();
-                    String allContancts = getAllContancts(stringBuffer);
-                    String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
-                    function.onCallBack(substring + "]");
-                    Log.e(TAG, "handler: wang" + substring + "]");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+//        mNewWeb.registerHandler("getMailList", new BridgeHandler() {
+//            @Override
+//            public void handler(String data, CallBackFunction function) {
+//                try {
+//                    stringBuffer = new StringBuffer();
+//                    String allContancts = getAllContancts(stringBuffer);
+//                    String substring = allContancts.substring(0, allContancts.length() - 1);//把最后边拼接的逗号去掉
+//                    function.onCallBack(substring + "]");
+//                    Log.e(TAG, "handler: wang" + substring + "]");
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
         /**
          * 录制语音
          */
@@ -889,23 +897,23 @@ public class ApplyThirdActivity extends AppCompatActivity {
         /**
          * 拨打电话
          */
-        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
-            @Override
-            public void handler(String data, CallBackFunction function) {
-                try {
-                    if (!data.isEmpty()) {
-                        Log.e(TAG, "打开通讯录: " + data);
-                        Map map = JSONObject.parseObject(data, Map.class);
-                        String tele = (String) map.get("tele");
-                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+//        mNewWeb.registerHandler("OpenPayIntent", new BridgeHandler() {
+//            @Override
+//            public void handler(String data, CallBackFunction function) {
+//                try {
+//                    if (!data.isEmpty()) {
+//                        Log.e(TAG, "打开通讯录: " + data);
+//                        Map map = JSONObject.parseObject(data, Map.class);
+//                        String tele = (String) map.get("tele");
+//                        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tele));
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        startActivity(intent);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
 
         mNewWeb.registerHandler("openNotification", new BridgeHandler() {
             @Override
@@ -932,12 +940,12 @@ public class ApplyThirdActivity extends AppCompatActivity {
         }
 
         //联系客服  打开通讯录
-        @JavascriptInterface
-        public void OpenPayIntent(String intentOpenPay) {
-            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-        }
+//        @JavascriptInterface
+//        public void OpenPayIntent(String intentOpenPay) {
+//            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + intentOpenPay));
+//            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            startActivity(intent);
+//        }
 
         //跳转支付页面
         @JavascriptInterface
@@ -1448,32 +1456,32 @@ public class ApplyThirdActivity extends AppCompatActivity {
     private String getId() {
         StringBuilder deviceId = new StringBuilder();
         // 渠道标志
-        try {
-            //IMEI（imei）
-            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
-            if (!TextUtils.isEmpty(imei)) {
-                deviceId.append("imei");
-                deviceId.append(imei);
-                return deviceId.toString();
-            }
-            //序列号（sn）
-            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
-            if (!TextUtils.isEmpty(sn)) {
-                deviceId.append("sn");
-                deviceId.append(sn);
-                return deviceId.toString();
-            }
-            //如果上面都没有， 则生成一个id：随机码
-            String uuid = getUUID();
-            if (!TextUtils.isEmpty(uuid)) {
-                deviceId.append(uuid);
-                return deviceId.toString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+//        try {
+//            //IMEI（imei）
+//            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+//            @SuppressLint("MissingPermission") String imei = tm.getDeviceId();
+//            if (!TextUtils.isEmpty(imei)) {
+//                deviceId.append("imei");
+//                deviceId.append(imei);
+//                return deviceId.toString();
+//            }
+//            //序列号（sn）
+//            @SuppressLint("MissingPermission") String sn = tm.getSimSerialNumber();
+//            if (!TextUtils.isEmpty(sn)) {
+//                deviceId.append("sn");
+//                deviceId.append(sn);
+//                return deviceId.toString();
+//            }
+//            //如果上面都没有， 则生成一个id：随机码
+//            String uuid = getUUID();
+//            if (!TextUtils.isEmpty(uuid)) {
+//                deviceId.append(uuid);
+//                return deviceId.toString();
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
             deviceId.append(getUUID());
-        }
+//        }
         return deviceId.toString();
     }
 
@@ -1497,65 +1505,65 @@ public class ApplyThirdActivity extends AppCompatActivity {
     /**
      * 获取通讯录中的联系人及号码
      */
-    private String getAllContancts(StringBuffer sb) {
-        sb.append("[");
-        // 获取手机通讯录信息
-        ContentResolver resolver = this.getContentResolver();
-        // 获取联系人信息
-        personCur = resolver.query(ContactsContract.Contacts.CONTENT_URI, null,
-                null, null, null);
-        if (personCur == null) {
-            try {//此处适配了6.0权限
-                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-            } catch (Exception e) {
-                Intent intentSet = new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
-                startActivity(intentSet);
-            }
-            return null;
-        }
-        // 循环遍历，获取每个联系人的姓名和电话号码
-        while (personCur.moveToNext()) {
-            // 联系人姓名
-            String cname = "";
-            String clientname = "clientname";
-            // 联系人电话
-            String cnum = "";
-            String clientnum = "clientnum";
-            // 联系人id号码
-            String ID;
-            ID = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts._ID));
-            // 联系人姓名
-            cname = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            // id的整型数据
-            int id = Integer.parseInt(ID);
-            if (id > 0) {
-                // 获取指定id号码的电话号码
-                Cursor c = resolver.query(
-                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                        null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + ID, null, null);
-                // 遍历游标
-                while (c.moveToNext()) {
-                    cnum = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                    if (!TextUtils.isEmpty(cname)) {
-//                        list.add(new PhoneCallBean(cname, cnum));//查询通讯录中所有联系人
-                        sb.append("{").append("\"" + clientname + "\"").append(":").append("\"" + cname + "\"").append(",")
-                                .append("\"" + clientnum + "\"").append(":").append("\"" + cnum + "\"").append("}").append(",");
-                    }
-                }
-                if (c != null && !c.isClosed())
-                    c.close();
-            }
-        }
-        try {
-            if (personCur != null && !personCur.isClosed()) {
-                personCur.close();
-            }
-        } catch (Exception e) {
-        }
-        return sb.toString();
-    }
+//    private String getAllContancts(StringBuffer sb) {
+//        sb.append("[");
+//        // 获取手机通讯录信息
+//        ContentResolver resolver = this.getContentResolver();
+//        // 获取联系人信息
+//        personCur = resolver.query(ContactsContract.Contacts.CONTENT_URI, null,
+//                null, null, null);
+//        if (personCur == null) {
+//            try {//此处适配了6.0权限
+//                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+//                intent.setData(Uri.parse("package:" + getPackageName()));
+//                startActivity(intent);
+//            } catch (Exception e) {
+//                Intent intentSet = new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+//                startActivity(intentSet);
+//            }
+//            return null;
+//        }
+//        // 循环遍历，获取每个联系人的姓名和电话号码
+//        while (personCur.moveToNext()) {
+//            // 联系人姓名
+//            String cname = "";
+//            String clientname = "clientname";
+//            // 联系人电话
+//            String cnum = "";
+//            String clientnum = "clientnum";
+//            // 联系人id号码
+//            String ID;
+//            ID = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts._ID));
+//            // 联系人姓名
+//            cname = personCur.getString(personCur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+//            // id的整型数据
+//            int id = Integer.parseInt(ID);
+//            if (id > 0) {
+//                // 获取指定id号码的电话号码
+//                Cursor c = resolver.query(
+//                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+//                        null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + ID, null, null);
+//                // 遍历游标
+//                while (c.moveToNext()) {
+//                    cnum = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+//                    if (!TextUtils.isEmpty(cname)) {
+////                        list.add(new PhoneCallBean(cname, cnum));//查询通讯录中所有联系人
+//                        sb.append("{").append("\"" + clientname + "\"").append(":").append("\"" + cname + "\"").append(",")
+//                                .append("\"" + clientnum + "\"").append(":").append("\"" + cnum + "\"").append("}").append(",");
+//                    }
+//                }
+//                if (c != null && !c.isClosed())
+//                    c.close();
+//            }
+//        }
+//        try {
+//            if (personCur != null && !personCur.isClosed()) {
+//                personCur.close();
+//            }
+//        } catch (Exception e) {
+//        }
+//        return sb.toString();
+//    }
 
     /**
      * 跳转到相册
@@ -1746,7 +1754,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
             {
                 if (resultCode == RESULT_OK) {
                     if (data != null) {
-                        String stringExtra = data.getStringExtra(com.yzq.zxinglibrary.common.Constant.CODED_CONTENT);
+                        String stringExtra = data.getStringExtra(Constant.CODED_CONTENT);//com.yzq.zxinglibrary.common.
                         mNewWeb.evaluateJavascript("window.sdk.getCodeUrl(\"" + stringExtra + "\")", new ValueCallback<String>() {
                             @Override
                             public void onReceiveValue(String value) {
@@ -1794,7 +1802,7 @@ public class ApplyThirdActivity extends AppCompatActivity {
             {
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
-                    String realPathFromUri = getRealPathFromUri(this, uri);
+                    String realPathFromUri = BaseUtils.getRealPathFromURI(this, uri);
                     if (realPathFromUri.endsWith(".jpg") || realPathFromUri.endsWith(".png") || realPathFromUri.endsWith(".jpeg")) {
                         gotoClipActivity(uri);
                     } else {
@@ -2584,7 +2592,13 @@ public class ApplyThirdActivity extends AppCompatActivity {
                     finish();
                 } else if (goBackUrl.contains("app/home")) { //自主控制
                     finish();
-                } else if (mWebError.getVisibility() == View.VISIBLE) {
+                } else if (goBackUrl.contains("mobile/brochure.html")) { //产品样本库
+                    finish();
+                } else if (goBackUrl.contains("mobile/doc.html")) { //技术资料库
+                    finish();
+                } else if (goBackUrl.contains("mobile/drawing.html")) { //工程图纸库
+                    finish();
+                }else if (mWebError.getVisibility() == View.VISIBLE) {
                     finish();
                 } else {
                     mNewWeb.goBack();

@@ -2,6 +2,7 @@ package com.example.honey_create_cloud.util;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -10,6 +11,10 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.DrawableRes;
+
+import com.example.honey_create_cloud.R;
+
 import java.io.File;
 import java.io.FileOutputStream;
 
@@ -17,6 +22,16 @@ import java.io.FileOutputStream;
  * 文件工具类
  */
 public class FileUtil {
+
+    public static String getResourcesUri(final Context context, @DrawableRes int id) {
+        Resources r = context.getResources();
+//        String uriPath = ContentResolver.SCHEME_ANDROID_RESOURCE + "://" +
+//                resources.getResourcePackageName(id) + "/" +
+//                resources.getResourceTypeName(id) + "/" +
+//                resources.getResourceEntryName(id);
+        Uri uri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + r.getResourcePackageName(R.drawable.logo) + "/" + r.getResourceTypeName(R.drawable.logo) + "/" + r.getResourceEntryName(R.drawable.logo));
+        return uri.getPath();
+    }
 
     /**
      * 根据Uri返回文件绝对路径
